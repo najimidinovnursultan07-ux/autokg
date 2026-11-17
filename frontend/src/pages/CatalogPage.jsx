@@ -1,0 +1,222 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { getLookups, listCars } from '../api/cars.js'
+import CarGrid from '../components/cars/CarGrid.jsx'
+import { EmptyState, ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
+import { getErrorMessage } from '../utils/errors.js'
+
+const emptyFilters = {
+  search: '',
+  brand: '',
+  model: '',
+  city: '',
+  min_price: '',
+  max_price: '',
+  min_year: '',
+  max_year: '',
+  min_mileage: '',
+  max_mileage: '',
+  engine_type: '',
+  transmission: '',
+  drive_type: '',
+  body_type: '',
+  condition: '',
+  ordering: '-published_at',
+}
+
+function readFiltersFromUrl(params) {
+  return Object.fromEntries(
+    Object.entries(emptyFilters).map(([key, defaultValue]) => [
+      key,
+      params.get(key) || defaultValue,
+    ]),
+  )
+}
+
+function readPageFromUrl(params) {
+  const page = Number(params.get('page'))
+  return Number.isInteger(page) && page > 0 ? page : 1
+}
+
+function createUrlParams(filters, page = 1) {
+  const params = new URLSearchParams()
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value && value !== emptyFilters[key]) params.set(key, value)
+  })
+  if (page > 1) params.set('page', page)
+  return params
+}
+
+const filtersOptions = {
+  engine_type: [['petrol', 'Бензин'], ['diesel', 'Дизель'], ['hybrid', 'Гибрид'], ['electric', 'Электро'], ['lpg', 'Газ'], ['other', 'Другое']],
+  transmission: [['manual', 'Механика'], ['automatic', 'Автомат'], ['cvt', 'Вариатор'], ['robotic', 'Робот']],
+  drive_type: [['fwd', 'Передний'], ['rwd', 'Задний'], ['awd', 'Полный']],
+  body_type: [['sedan', 'Седан'], ['hatchback', 'Хэтчбек'], ['suv', 'Внедорожник'], ['wagon', 'Универсал'], ['coupe', 'Купе'], ['minivan', 'Минивэн'], ['pickup', 'Пикап'], ['other', 'Другое']],
+  condition: [['new', 'Новый'], ['used', 'С пробегом'], ['damaged', 'Требует ремонта']],
+}
+
+export default function CatalogPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [lookups, setLookups] = useState({ brands: [], models: [], cities: [] })
+  const [lookupsError, setLookupsError] = useState('')
+
+  useEffect(() => {
+    getLookups()
+      .then(setLookups)
+      .catch((requestError) => setLookupsError(getErrorMessage(requestError)))
+  }, [])
+
+  return (
+    <CatalogResults
+      key={searchParams.toString()}
+      searchParams={searchParams}
+      setSearchParams={setSearchParams}
+      lookups={lookups}
+      lookupsError={lookupsError}
+    />
+  )
+}
+
+function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }) {
+  const [filters, setFilters] = useState(() => readFiltersFromUrl(searchParams))
+  const [appliedFilters, setAppliedFilters] = useState(filters)
+  const [cars, setCars] = useState([])
+  const [count, setCount] = useState(0)
+  const [next, setNext] = useState(null)
+  const [previous, setPrevious] = useState(null)
+  const [page, setPage] = useState(() => readPageFromUrl(searchParams))
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+
+  const visibleModels = useMemo(
+    () => lookups.models.filter((model) => !filters.brand || String(model.brand) === filters.brand),
+    [filters.brand, lookups.models],
+  )
+
+  const loadCars = useCallback(async (targetPage = page, activeFilters = appliedFilters) => {
+    setLoading(true)
+    setError('')
+    try {
+      const params = Object.fromEntries(
+        Object.entries({ ...activeFilters, page: targetPage, page_size: 12 })
+          .filter(([, value]) => value !== ''),
+      )
+      const response = await listCars(params)
+      setCars(response.results || [])
+      setCount(response.count || 0)
+      setNext(response.next)
+      setPrevious(response.previous)
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, 'Не удалось загрузить каталог.'))
+    } finally {
+      setLoading(false)
+    }
+  }, [appliedFilters, page])
+
+  useEffect(() => {
+    loadCars(page, appliedFilters)
+  }, [loadCars, page, appliedFilters])
+
+  const update = (key, value) => {
+    setFilters((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === 'brand' ? { model: '' } : {}),
+    }))
+  }
+
+  const submitFilters = (event) => {
+    event.preventDefault()
+    setPage(1)
+    setAppliedFilters(filters)
+    setSearchParams(createUrlParams(filters))
+    setMobileFiltersOpen(false)
+  }
+
+  const clearFilters = () => {
+    setFilters(emptyFilters)
+    setAppliedFilters(emptyFilters)
+    setPage(1)
+    setSearchParams({})
+  }
+
+  const changePage = (targetPage) => {
+    setPage(targetPage)
+    setSearchParams(createUrlParams(appliedFilters, targetPage))
+  }
+
+  const orderingLabels = {
+    '-published_at': 'Последние объявления',
+    price: 'Сначала дешевле',
+    '-price': 'Сначала дороже',
+    '-year': 'Сначала новее по году',
+    mileage: 'По пробегу',
+  }
+
+  return (
+    <section className="container page-section">
+      <PageTitle
+        eyebrow="Подберите автомобиль"
+        title="Каталог автомобилей"
+        description="Сравнивайте объявления и находите автомобиль под свои задачи."
+      />
+      {lookupsError && <p className="inline-warning">{lookupsError}</p>}
+      <button
+        className="button button--outline filter-mobile-toggle"
+        type="button"
+        onClick={() => setMobileFiltersOpen((open) => !open)}
+      >
+        <SlidersHorizontal size={17} /> Фильтры
+      </button>
+      <div className="catalog-layout">
+        <aside className={`filter-panel ${mobileFiltersOpen ? 'filter-panel--open' : ''}`}>
+          <div className="filter-heading"><h2>Фильтры</h2><button className="icon-button filter-close" onClick={() => setMobileFiltersOpen(false)} aria-label="Закрыть фильтры"><X size={18} /></button></div>
+          <form onSubmit={submitFilters}>
+            <label className="field-label">Поиск<input value={filters.search} onChange={(e) => update('search', e.target.value)} placeholder="Марка или модель" /></label>
+            <label className="field-label">Марка<select value={filters.brand} onChange={(e) => update('brand', e.target.value)}><option value="">Любая марка</option>{lookups.brands.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+            <label className="field-label">Модель<select value={filters.model} onChange={(e) => update('model', e.target.value)}><option value="">Любая модель</option>{visibleModels.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+            <label className="field-label">Город<select value={filters.city} onChange={(e) => update('city', e.target.value)}><option value="">Любой город</option>{lookups.cities.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+            <div className="field-label">Цена, сом<div className="field-range"><input type="number" min="0" placeholder="От" value={filters.min_price} onChange={(e) => update('min_price', e.target.value)} /><input type="number" min="0" placeholder="До" value={filters.max_price} onChange={(e) => update('max_price', e.target.value)} /></div></div>
+            <div className="field-label">Год выпуска<div className="field-range"><input type="number" min="1886" max="2100" placeholder="От" value={filters.min_year} onChange={(e) => update('min_year', e.target.value)} /><input type="number" min="1886" max="2100" placeholder="До" value={filters.max_year} onChange={(e) => update('max_year', e.target.value)} /></div></div>
+            <div className="field-label">Пробег, км<div className="field-range"><input type="number" min="0" placeholder="От" value={filters.min_mileage} onChange={(e) => update('min_mileage', e.target.value)} /><input type="number" min="0" placeholder="До" value={filters.max_mileage} onChange={(e) => update('max_mileage', e.target.value)} /></div></div>
+            {Object.entries(filtersOptions).map(([field, options]) => (
+              <label className="field-label" key={field}>{{
+                engine_type: 'Двигатель',
+                transmission: 'Коробка передач',
+                drive_type: 'Привод',
+                body_type: 'Кузов',
+                condition: 'Состояние',
+              }[field]}<select value={filters[field]} onChange={(e) => update(field, e.target.value)}><option value="">Не важно</option>{options.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
+            ))}
+            <label className="field-label">Сортировка<select value={filters.ordering} onChange={(e) => update('ordering', e.target.value)}><option value="-published_at">Сначала новые</option><option value="price">Сначала дешевле</option><option value="-price">Сначала дороже</option><option value="-year">Сначала новее по году</option><option value="mileage">По пробегу</option></select></label>
+            <button type="submit" className="button button--primary filter-submit"><Search size={16} /> Показать автомобили</button>
+            <button type="button" className="filter-reset" onClick={clearFilters}>Сбросить фильтры</button>
+          </form>
+        </aside>
+
+        <div className="catalog-results">
+          <div className="catalog-results-top">
+            <span><strong>{count}</strong> объявлений</span>
+            <span className="catalog-sort-label">{orderingLabels[appliedFilters.ordering]}</span>
+          </div>
+          {loading ? <LoadingState label="Ищем подходящие автомобили…" /> : error ? <ErrorState message={error} onRetry={() => loadCars(page)} /> : cars.length ? (
+            <>
+              <CarGrid cars={cars} />
+              <div className="pagination">
+                <button className="button button--outline" type="button" disabled={!previous} onClick={() => changePage(Math.max(1, page - 1))}>Назад</button>
+                <span>Страница {page}</span>
+                <button className="button button--outline" type="button" disabled={!next} onClick={() => changePage(page + 1)}>Дальше</button>
+              </div>
+            </>
+          ) : (
+            <EmptyState title="Ничего не найдено" action={<button className="button button--outline" onClick={clearFilters}>Сбросить фильтры</button>}>
+              Попробуйте изменить критерии поиска.
+            </EmptyState>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
