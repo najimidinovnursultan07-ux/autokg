@@ -31,13 +31,14 @@ if EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend" or not EMAI
         "Configure an SMTP email backend and EMAIL_HOST in production."
     )
 
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = False  # Render handles HTTPS termination at the load balancer
 SECURE_HSTS_SECONDS = 31_536_000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_PATH = "/"
 SESSION_COOKIE_SAMESITE = "None"
 AUTH_COOKIE_SECURE = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
