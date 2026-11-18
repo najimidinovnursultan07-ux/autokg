@@ -11,6 +11,7 @@ import {
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useFavorites } from '../../context/FavoritesContext.jsx'
+import { resolveMediaUrl } from '../../api/client.js'
 import { getCompareList } from '../../utils/compare.js'
 
 const links = [
@@ -129,7 +130,10 @@ export default function Header() {
           {isAuthenticated ? (
             <Link className="user-chip" to="/dashboard" aria-label="Личный кабинет">
               <span className="user-avatar">
-                {(user?.first_name || user?.email || 'A').slice(0, 1).toUpperCase()}
+                {user?.profile_photo
+                  ? <img src={resolveMediaUrl(user.profile_photo)} alt={user?.first_name || 'Профиль'} />
+                  : (user?.first_name || user?.email || 'A').slice(0, 1).toUpperCase()
+                }
               </span>
               <span>{user?.first_name || 'Кабинет'}</span>
             </Link>
