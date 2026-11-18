@@ -43,7 +43,6 @@ export default function Header() {
     <header className="site-header">
       <div className="header-inner container">
         <Link className="brand" to="/" aria-label="AutoKG — на главную">
-          <span className="brand-mark">A</span>
           <span className="brand-name">Auto<span>KG</span></span>
         </Link>
 
