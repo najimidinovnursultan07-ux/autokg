@@ -148,7 +148,7 @@ export default function CarDetailPage() {
           <a className="button button--primary seller-call" href={`tel:${car.contact_phone}`}>Позвонить продавцу</a>
           <a className="seller-phone" href={`tel:${car.contact_phone}`}>{car.contact_phone}</a>
           <a
-            className="button button--secondary seller-whatsapp"
+            className="seller-whatsapp"
             href={`https://wa.me/${car.contact_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Интересует ваш ${getCarTitle(car)} на AutoKG`)}`}
             target="_blank"
             rel="noopener noreferrer"
