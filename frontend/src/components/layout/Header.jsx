@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
+  GitCompareArrows,
   Heart,
   LogOut,
   Menu,
@@ -10,6 +11,7 @@ import {
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useFavorites } from '../../context/FavoritesContext.jsx'
+import { getCompareList } from '../../utils/compare.js'
 
 const links = [
   { to: '/catalog', label: 'Каталог' },
@@ -21,7 +23,14 @@ export default function Header() {
   const { user, isAuthenticated, signOut } = useAuth()
   const { favorites } = useFavorites()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [compareCount, setCompareCount] = useState(() => getCompareList().length)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const update = () => setCompareCount(getCompareList().length)
+    window.addEventListener('autokg:compare-updated', update)
+    return () => window.removeEventListener('autokg:compare-updated', update)
+  }, [])
 
   const logout = async () => {
     await signOut()
@@ -104,6 +113,12 @@ export default function Header() {
             <Heart size={20} />
             {favorites.length > 0 && <span>{favorites.length}</span>}
           </Link>
+          {compareCount > 0 && (
+            <Link className="header-compare" to="/compare" aria-label="Сравнение">
+              <GitCompareArrows size={20} />
+              <span>{compareCount}</span>
+            </Link>
+          )}
           <Link
             className="button button--primary button--header"
             to={isAuthenticated ? '/cars/new' : '/login'}

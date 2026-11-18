@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, ChevronLeft, ChevronRight, Fuel, Gauge, MapPin, Phone, Settings2, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, Eye, Fuel, Gauge, GitCompareArrows, MapPin, Phone, Settings2, ShieldCheck, X } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { getCar } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
@@ -7,6 +7,7 @@ import FavoriteButton from '../components/cars/FavoriteButton.jsx'
 import { ErrorState, LoadingState } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
 import { formatMileage, formatPrice, getCarTitle } from '../utils/format.js'
+import { addToCompare, isInCompare, removeFromCompare } from '../utils/compare.js'
 
 const labels = {
   engine_type: { petrol: 'Бензин', diesel: 'Дизель', hybrid: 'Гибрид', electric: 'Электро', lpg: 'Газ', other: 'Другое' },
@@ -20,8 +21,25 @@ export default function CarDetailPage() {
   const { id } = useParams()
   const [car, setCar] = useState(null)
   const [activeImage, setActiveImage] = useState(0)
+  const [lightbox, setLightbox] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [inCompare, setInCompare] = useState(false)
+
+  useEffect(() => {
+    if (car) setInCompare(isInCompare(car.id))
+  }, [car])
+
+  const toggleCompare = () => {
+    if (inCompare) {
+      removeFromCompare(car.id)
+      setInCompare(false)
+    } else {
+      const result = addToCompare(car)
+      if (result.added) setInCompare(true)
+      else if (result.reason === 'full') alert('Максимум 3 автомобиля для сравнения. Удалите один из списка.')
+    }
+  }
 
   const loadCar = useCallback(async () => {
     setLoading(true)
@@ -40,6 +58,18 @@ export default function CarDetailPage() {
   useEffect(() => {
     loadCar()
   }, [loadCar])
+
+  // Lightbox keyboard navigation
+  useEffect(() => {
+    if (!lightbox) return
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setLightbox(false)
+      if (e.key === 'ArrowRight') setActiveImage((i) => (i + 1) % (car?.images?.length || 1))
+      if (e.key === 'ArrowLeft') setActiveImage((i) => (i - 1 + (car?.images?.length || 1)) % (car?.images?.length || 1))
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [lightbox, car])
 
   if (loading) return <div className="container page-section"><LoadingState label="Загружаем объявление…" /></div>
   if (error || !car) return <div className="container page-section"><ErrorState message={error || 'Объявление не найдено.'} onRetry={loadCar} /><Link className="text-link" to="/catalog"><ArrowLeft size={17} /> Вернуться в каталог</Link></div>
@@ -62,16 +92,28 @@ export default function CarDetailPage() {
       <Link className="back-link" to="/catalog"><ArrowLeft size={17} /> Каталог</Link>
       <div className="detail-heading">
         <div><span className="eyebrow">{car.city_name || 'Кыргызстан'} · объявление AutoKG</span><h1>{getCarTitle(car)}</h1></div>
-        <FavoriteButton car={car} className="detail-favorite" />
+        <div className="detail-heading-actions">
+          {car.views_count > 0 && <span className="detail-views"><Eye size={15} /> {car.views_count} просмотров</span>}
+          <button
+            type="button"
+            className={`button button--outline detail-compare-btn ${inCompare ? 'detail-compare-btn--active' : ''}`}
+            onClick={toggleCompare}
+            title={inCompare ? 'Убрать из сравнения' : 'Добавить к сравнению'}
+          >
+            <GitCompareArrows size={16} />
+            {inCompare ? 'В сравнении' : 'Сравнить'}
+          </button>
+          <FavoriteButton car={car} className="detail-favorite" />
+        </div>
       </div>
       <div className="detail-layout">
         <div className="detail-main">
           <div className="gallery">
-            <div className="gallery-main">
+            <div className="gallery-main" onClick={() => images.length > 0 && setLightbox(true)} style={{ cursor: images.length > 0 ? 'zoom-in' : 'default' }}>
               {currentImage ? <img src={resolveMediaUrl(currentImage)} alt={getCarTitle(car)} /> : <div className="image-placeholder"><span>AutoKG</span></div>}
               {images.length > 1 && <>
-                <button className="gallery-arrow gallery-arrow--left" onClick={() => setActiveImage((activeImage - 1 + images.length) % images.length)} aria-label="Предыдущее фото"><ChevronLeft /></button>
-                <button className="gallery-arrow gallery-arrow--right" onClick={() => setActiveImage((activeImage + 1) % images.length)} aria-label="Следующее фото"><ChevronRight /></button>
+                <button className="gallery-arrow gallery-arrow--left" onClick={(e) => { e.stopPropagation(); setActiveImage((activeImage - 1 + images.length) % images.length) }} aria-label="Предыдущее фото"><ChevronLeft /></button>
+                <button className="gallery-arrow gallery-arrow--right" onClick={(e) => { e.stopPropagation(); setActiveImage((activeImage + 1) % images.length) }} aria-label="Следующее фото"><ChevronRight /></button>
                 <span className="gallery-counter">{activeImage + 1} / {images.length}</span>
               </>}
             </div>
@@ -89,10 +131,31 @@ export default function CarDetailPage() {
           <div className="seller-summary"><span className="seller-avatar">{(car.contact_phone || 'A').slice(-2)}</span><div><strong>Частный продавец</strong><span><MapPin size={14} /> {car.city_name || 'Кыргызстан'}</span></div></div>
           <a className="button button--primary seller-call" href={`tel:${car.contact_phone}`}><Phone size={18} /> Позвонить продавцу</a>
           <a className="seller-phone" href={`tel:${car.contact_phone}`}>{car.contact_phone}</a>
+          <a
+            className="button button--secondary seller-whatsapp"
+            href={`https://wa.me/${car.contact_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Интересует ваш ${getCarTitle(car)} на AutoKG`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            💬 Написать в WhatsApp
+          </a>
           <div className="seller-notice"><ShieldCheck size={17} /><span>Не переводите предоплату до личного осмотра автомобиля.</span></div>
           <div className="seller-facts"><span><Gauge size={16} />{formatMileage(car.mileage)}</span><span><Fuel size={16} />{labels.engine_type[car.engine_type] || '—'}</span><span><Settings2 size={16} />{labels.transmission[car.transmission] || '—'}</span></div>
         </aside>
       </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div className="lightbox-backdrop" onClick={() => setLightbox(false)} role="dialog" aria-modal="true">
+          <button className="lightbox-close" onClick={() => setLightbox(false)} aria-label="Закрыть"><X size={24} /></button>
+          <button className="lightbox-arrow lightbox-arrow--left" onClick={(e) => { e.stopPropagation(); setActiveImage((activeImage - 1 + images.length) % images.length) }} aria-label="Предыдущее фото"><ChevronLeft size={36} /></button>
+          <div className="lightbox-img-wrap" onClick={(e) => e.stopPropagation()}>
+            <img src={resolveMediaUrl(images[activeImage]?.image)} alt={getCarTitle(car)} />
+            <span className="lightbox-counter">{activeImage + 1} / {images.length}</span>
+          </div>
+          <button className="lightbox-arrow lightbox-arrow--right" onClick={(e) => { e.stopPropagation(); setActiveImage((activeImage + 1) % images.length) }} aria-label="Следующее фото"><ChevronRight size={36} /></button>
+        </div>
+      )}
     </section>
   )
 }

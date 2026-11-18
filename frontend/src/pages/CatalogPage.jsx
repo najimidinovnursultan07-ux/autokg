@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { Clock, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { getLookups, listCars } from '../api/cars.js'
 import CarGrid from '../components/cars/CarGrid.jsx'
 import { EmptyState, ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
+import { addSearchHistory, getSearchHistory, removeSearchHistory } from '../utils/searchHistory.js'
 
 const emptyFilters = {
   search: '',
@@ -89,6 +90,8 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [searchHistory, setSearchHistory] = useState(() => getSearchHistory())
+  const [showHistory, setShowHistory] = useState(false)
 
   const visibleModels = useMemo(
     () => lookups.models.filter((model) => !filters.brand || String(model.brand) === filters.brand),
@@ -129,10 +132,15 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
 
   const submitFilters = (event) => {
     event.preventDefault()
+    if (filters.search?.trim()) {
+      addSearchHistory(filters.search.trim())
+      setSearchHistory(getSearchHistory())
+    }
     setPage(1)
     setAppliedFilters(filters)
     setSearchParams(createUrlParams(filters))
     setMobileFiltersOpen(false)
+    setShowHistory(false)
   }
 
   const clearFilters = () => {
@@ -174,7 +182,31 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
         <aside className={`filter-panel ${mobileFiltersOpen ? 'filter-panel--open' : ''}`}>
           <div className="filter-heading"><h2>Фильтры</h2><button className="icon-button filter-close" onClick={() => setMobileFiltersOpen(false)} aria-label="Закрыть фильтры"><X size={18} /></button></div>
           <form onSubmit={submitFilters}>
-            <label className="field-label">Поиск<input value={filters.search} onChange={(e) => update('search', e.target.value)} placeholder="Марка или модель" /></label>
+            <label className="field-label">Поиск
+              <div className="search-history-wrap">
+                <input
+                  value={filters.search}
+                  onChange={(e) => update('search', e.target.value)}
+                  onFocus={() => setShowHistory(true)}
+                  onBlur={() => setTimeout(() => setShowHistory(false), 150)}
+                  placeholder="Марка или модель"
+                />
+                {showHistory && searchHistory.length > 0 && (
+                  <div className="search-history-dropdown">
+                    <div className="search-history-header">
+                      <span><Clock size={13} /> История поиска</span>
+                      <button type="button" onClick={() => { removeSearchHistory('__all__'); setSearchHistory([]); localStorage.removeItem('autokg_search_history') }}>Очистить</button>
+                    </div>
+                    {searchHistory.map((item) => (
+                      <div key={item} className="search-history-item">
+                        <button type="button" onMouseDown={() => { update('search', item); setShowHistory(false) }}><Clock size={12} /> {item}</button>
+                        <button type="button" aria-label="Удалить" onMouseDown={() => { removeSearchHistory(item); setSearchHistory(getSearchHistory()) }}><X size={12} /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </label>
             <label className="field-label">Марка<select value={filters.brand} onChange={(e) => update('brand', e.target.value)}><option value="">Любая марка</option>{lookups.brands.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
             <label className="field-label">Модель<select value={filters.model} onChange={(e) => update('model', e.target.value)}><option value="">Любая модель</option>{visibleModels.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
             <label className="field-label">Город<select value={filters.city} onChange={(e) => update('city', e.target.value)}><option value="">Любой город</option>{lookups.cities.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>

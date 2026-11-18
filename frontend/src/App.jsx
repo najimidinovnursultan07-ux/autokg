@@ -7,6 +7,7 @@ import AdminRoute from './components/routing/AdminRoute.jsx'
 import GuestRoute from './components/routing/GuestRoute.jsx'
 import AdminLoginPage from './pages/AdminLoginPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
+import ComparePage from './pages/ComparePage.jsx'
 import AccountSettingsPage from './pages/AccountSettingsPage.jsx'
 import AdminCarsPage from './pages/AdminCarsPage.jsx'
 import AdminCatalogPage from './pages/AdminCatalogPage.jsx'
@@ -33,6 +34,7 @@ export default function App() {
         <Route index element={<HomePage />} />
         <Route path="catalog" element={<CatalogPage />} />
         <Route path="cars/:id" element={<CarDetailPage />} />
+        <Route path="compare" element={<ComparePage />} />
         <Route path="contacts" element={<ContactsPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route element={<GuestRoute />}>

@@ -180,6 +180,7 @@ class Car(models.Model):
         default=Status.DRAFT,
         db_index=True,
     )
+    views_count = models.PositiveIntegerField(default=0, db_index=True)
     published_at = models.DateTimeField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)

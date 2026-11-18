@@ -216,6 +216,17 @@ class CarViewSet(viewsets.ModelViewSet):
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Өз машинасын же adminдин карашы санга кирбесин
+        if instance.status == Car.Status.PUBLISHED and (
+            not request.user.is_authenticated or request.user.pk != instance.owner_id
+        ):
+            Car.objects.filter(pk=instance.pk).update(views_count=F("views_count") + 1)
+            instance.views_count = (instance.views_count or 0) + 1
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
     @action(detail=False, methods=("get",), url_path="my-cars")
     def my_cars(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
