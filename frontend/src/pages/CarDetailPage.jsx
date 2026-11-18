@@ -145,7 +145,7 @@ export default function CarDetailPage() {
               <span><MapPin size={14} /> {car.city_name || 'Кыргызстан'}</span>
             </div>
           </div>
-          <a className="button button--primary seller-call" href={`tel:${car.contact_phone}`}><Phone size={18} /> Позвонить продавцу</a>
+          <a className="button button--primary seller-call" href={`tel:${car.contact_phone}`}>Позвонить продавцу</a>
           <a className="seller-phone" href={`tel:${car.contact_phone}`}>{car.contact_phone}</a>
           <a
             className="button button--secondary seller-whatsapp"
