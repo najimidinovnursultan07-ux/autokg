@@ -5,6 +5,7 @@ from .base import *
 
 DEBUG = False
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+INSTALLED_APPS += ["cloudinary_storage", "cloudinary"]
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 

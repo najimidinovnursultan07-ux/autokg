@@ -21,8 +21,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "cloudinary_storage",
-    "cloudinary",
     "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
@@ -33,6 +31,7 @@ INSTALLED_APPS = [
     "apps.favorites.apps.FavoritesConfig",
     "apps.moderation.apps.ModerationConfig",
     "apps.admin_api.apps.AdminApiConfig",
+    "apps.payments.apps.PaymentsConfig",
 ]
 
 MIDDLEWARE = [
@@ -202,6 +201,13 @@ DEFAULT_FROM_EMAIL = env(
     default="no-reply@autokg.local",
 )
 PASSWORD_RESET_URL = env("PASSWORD_RESET_URL", default="")
+
+# Payments
+PAYMENT_PROVIDER = env("PAYMENT_PROVIDER", default="mock")
+FRONTEND_URL = env("FRONTEND_URL", default="https://autokg-ten.vercel.app")
+FINIK_MERCHANT_ID = env("FINIK_MERCHANT_ID", default="")
+FINIK_SECRET_KEY = env("FINIK_SECRET_KEY", default="")
+FINIK_API_URL = env("FINIK_API_URL", default="https://api.finik.kg/v1")
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024

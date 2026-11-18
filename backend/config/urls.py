@@ -12,6 +12,7 @@ urlpatterns = [
     path("api/health/ready/", ReadinessCheckView.as_view(), name="readiness"),
     path("api/auth/", include("apps.accounts.urls")),
     path("api/admin/", include("apps.admin_api.urls")),
+    path("api/payments/", include("apps.payments.urls")),
     path("api/", include("apps.favorites.urls")),
     path("api/", include("apps.cars.urls")),
 ]

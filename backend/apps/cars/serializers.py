@@ -10,6 +10,16 @@ from apps.common.serializers import (
 
 from .models import Brand, Car, CarImage, City, Model
 
+
+def get_active_promotions(car):
+    from django.utils import timezone
+    from apps.payments.models import Promotion
+    return Promotion.objects.filter(
+        car=car,
+        is_active=True,
+        expires_at__gt=timezone.now(),
+    ).values("promotion_type", "expires_at")
+
 MAX_IMAGE_BATCH_SIZE_BYTES = 30 * 1024 * 1024
 
 
@@ -117,6 +127,39 @@ class CarSerializer(serializers.ModelSerializer):
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
     owner_detail = CarOwnerSerializer(source="owner", read_only=True)
     images = CarImageSerializer(many=True, read_only=True)
+    is_top = serializers.SerializerMethodField()
+    is_highlighted = serializers.SerializerMethodField()
+    is_urgent = serializers.SerializerMethodField()
+    promotions = serializers.SerializerMethodField()
+
+    def get_is_top(self, obj):
+        from django.utils import timezone
+        from apps.payments.models import Promotion
+        return Promotion.objects.filter(
+            car=obj, promotion_type="top", is_active=True, expires_at__gt=timezone.now()
+        ).exists()
+
+    def get_is_highlighted(self, obj):
+        from django.utils import timezone
+        from apps.payments.models import Promotion
+        return Promotion.objects.filter(
+            car=obj, promotion_type="highlight", is_active=True, expires_at__gt=timezone.now()
+        ).exists()
+
+    def get_is_urgent(self, obj):
+        from django.utils import timezone
+        from apps.payments.models import Promotion
+        return Promotion.objects.filter(
+            car=obj, promotion_type="urgent", is_active=True, expires_at__gt=timezone.now()
+        ).exists()
+
+    def get_promotions(self, obj):
+        from django.utils import timezone
+        from apps.payments.models import Promotion
+        promos = Promotion.objects.filter(
+            car=obj, is_active=True, expires_at__gt=timezone.now()
+        ).values("promotion_type", "expires_at")
+        return list(promos)
 
     class Meta:
         model = Car
@@ -142,6 +185,10 @@ class CarSerializer(serializers.ModelSerializer):
             "contact_phone",
             "status",
             "views_count",
+            "is_top",
+            "is_highlighted",
+            "is_urgent",
+            "promotions",
             "published_at",
             "created_at",
             "updated_at",
@@ -156,6 +203,10 @@ class CarSerializer(serializers.ModelSerializer):
             "city_name",
             "status",
             "views_count",
+            "is_top",
+            "is_highlighted",
+            "is_urgent",
+            "promotions",
             "published_at",
             "created_at",
             "updated_at",

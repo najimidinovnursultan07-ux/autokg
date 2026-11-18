@@ -108,7 +108,18 @@ class CarViewSet(viewsets.ModelViewSet):
         if self.action in {"approve", "reject"} and is_admin:
             return queryset
         if self.action == "list":
-            return queryset.filter(status=Car.Status.PUBLISHED)
+            from django.utils import timezone
+            from apps.payments.models import Promotion
+            from django.db.models import BooleanField, ExpressionWrapper, Exists, OuterRef
+            active_top = Promotion.objects.filter(
+                car=OuterRef("pk"),
+                promotion_type="top",
+                is_active=True,
+                expires_at__gt=timezone.now(),
+            )
+            return queryset.filter(status=Car.Status.PUBLISHED).annotate(
+                has_top=ExpressionWrapper(Exists(active_top), output_field=BooleanField())
+            ).order_by("-has_top", "-published_at", "-created_at")
         if self.action == "retrieve" or (
             self.action == "upload_images" and self.request.method == "GET"
         ):
