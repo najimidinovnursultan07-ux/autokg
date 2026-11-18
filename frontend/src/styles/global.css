@@ -242,7 +242,7 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .seller-call { width: 100%; padding: 13px; font-size: 15px; border-radius: 10px; }
 .seller-phone { display: block; margin-top: 10px; color: var(--ink); font-size: 15px; font-weight: 700; text-align: center; letter-spacing: .02em; }
 .seller-whatsapp { width: 100%; margin-top: 10px; padding: 12px; font-size: 14px; border-radius: 10px; background: #22c55e; border-color: #22c55e; color: white; justify-content: center; }
-.seller-whatsapp:hover { background: #16a34a; border-color: #16a34a; color: white; }
+.seller-whatsapp:hover { background: #16a34a !important; border-color: #16a34a !important; color: white !important; }
 .seller-notice { display: flex; gap: 10px; margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; font-size: 11px; line-height: 1.6; }
 .seller-notice svg { flex: 0 0 auto; margin-top: 1px; color: #0ea5e9; }
 .seller-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
