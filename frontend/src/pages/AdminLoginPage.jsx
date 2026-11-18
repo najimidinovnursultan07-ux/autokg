@@ -29,7 +29,14 @@ export default function AdminLoginPage() {
       const from = location.state?.from?.pathname
       navigate(from && from.startsWith('/admin') ? from : '/admin', { replace: true })
     } catch (requestError) {
-      setError(getErrorMessage(requestError, 'Неверный email или пароль.'))
+      const status = requestError?.response?.status
+      if (status === 401) {
+        setError('Неверный email или пароль.')
+      } else if (status === 403) {
+        setError('Доступ запрещён. Обновите страницу и попробуйте снова.')
+      } else {
+        setError(getErrorMessage(requestError, 'Не удалось войти. Проверьте соединение с сервером.'))
+      }
     } finally {
       setLoading(false)
     }

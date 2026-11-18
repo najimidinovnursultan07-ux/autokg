@@ -2,13 +2,27 @@ export function getErrorMessage(
   error,
   fallback = 'Что-то пошло не так. Попробуйте ещё раз.',
 ) {
-  const responseData = error?.response?.data
-  const data = responseData?.error?.details || responseData
-  if (!data) {
+  // Network / connection error
+  if (!error?.response) {
     return error?.message === 'Network Error'
-      ? 'Не удалось подключиться к серверу. Проверьте, запущен ли backend.'
+      ? 'Не удалось подключиться к серверу. Проверьте соединение.'
       : fallback
   }
+
+  const status = error.response.status
+  const responseData = error.response.data
+
+  // Server returned HTML (e.g. 500 page, nginx error) instead of JSON
+  if (typeof responseData === 'string') {
+    if (status === 403) return 'Доступ запрещён. Возможно, истёк CSRF-токен — обновите страницу.'
+    if (status === 401) return 'Неверный email или пароль.'
+    if (status === 500) return 'Ошибка сервера. Попробуйте позже.'
+    return fallback
+  }
+
+  const data = responseData?.error?.details || responseData
+  if (!data) return fallback
+
   if (typeof data.detail === 'string') return data.detail
 
   const messages = Object.values(data)
