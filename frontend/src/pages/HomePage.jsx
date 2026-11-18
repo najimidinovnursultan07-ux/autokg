@@ -13,8 +13,9 @@ import CarGrid from '../components/cars/CarGrid.jsx'
 import { ErrorState, LoadingState } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
 
-const heroImage =
-  'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1500&q=85'
+import herofon from '../assets/herofon.png'
+
+const heroImage = herofon
 
 export default function HomePage() {
   const [cars, setCars] = useState([])
