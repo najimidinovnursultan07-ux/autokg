@@ -101,11 +101,21 @@ class RejectCarSerializer(serializers.Serializer):
     reason = serializers.CharField(max_length=1000, allow_blank=False)
 
 
+class CarOwnerSerializer(serializers.ModelSerializer):
+    profile_photo = serializers.ImageField(read_only=True)
+
+    class Meta:
+        from apps.accounts.models import User
+        model = User
+        fields = ("id", "first_name", "last_name", "profile_photo")
+
+
 class CarSerializer(serializers.ModelSerializer):
     brand = serializers.CharField(source="model.brand.name", read_only=True)
     model_name = serializers.CharField(source="model.name", read_only=True)
     city_name = serializers.CharField(source="city.name", read_only=True)
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
+    owner_detail = CarOwnerSerializer(source="owner", read_only=True)
     images = CarImageSerializer(many=True, read_only=True)
 
     class Meta:
@@ -113,6 +123,7 @@ class CarSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "owner",
+            "owner_detail",
             "brand",
             "model",
             "model_name",
@@ -139,6 +150,7 @@ class CarSerializer(serializers.ModelSerializer):
         read_only_fields = (
             "id",
             "owner",
+            "owner_detail",
             "brand",
             "model_name",
             "city_name",

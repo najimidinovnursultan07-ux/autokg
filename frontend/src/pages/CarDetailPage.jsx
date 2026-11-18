@@ -128,7 +128,23 @@ export default function CarDetailPage() {
         <aside className="seller-panel">
           <span className="eyebrow">Цена автомобиля</span>
           <strong className="detail-price">{formatPrice(car.price)}</strong>
-          <div className="seller-summary"><span className="seller-avatar">{(car.contact_phone || 'A').slice(-2)}</span><div><strong>Частный продавец</strong><span><MapPin size={14} /> {car.city_name || 'Кыргызстан'}</span></div></div>
+          <div className="seller-summary">
+            <span className="seller-avatar">
+              {car.owner_detail?.profile_photo
+                ? <img src={resolveMediaUrl(car.owner_detail.profile_photo)} alt={car.owner_detail.first_name || 'Продавец'} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%'}} />
+                : <span>{(car.owner_detail?.first_name || car.contact_phone || 'A').slice(0, 1).toUpperCase()}</span>
+              }
+            </span>
+            <div>
+              <strong>
+                {car.owner_detail?.first_name || car.owner_detail?.last_name
+                  ? [car.owner_detail.first_name, car.owner_detail.last_name].filter(Boolean).join(' ')
+                  : 'Частный продавец'
+                }
+              </strong>
+              <span><MapPin size={14} /> {car.city_name || 'Кыргызстан'}</span>
+            </div>
+          </div>
           <a className="button button--primary seller-call" href={`tel:${car.contact_phone}`}><Phone size={18} /> Позвонить продавцу</a>
           <a className="seller-phone" href={`tel:${car.contact_phone}`}>{car.contact_phone}</a>
           <a
