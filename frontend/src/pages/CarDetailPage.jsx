@@ -145,8 +145,6 @@ export default function CarDetailPage() {
               <span><MapPin size={14} /> {car.city_name || 'Кыргызстан'}</span>
             </div>
           </div>
-          <a className="button button--primary seller-call" href={`tel:${car.contact_phone}`}>Позвонить продавцу</a>
-          <a className="seller-phone" href={`tel:${car.contact_phone}`}>{car.contact_phone}</a>
           <a
             className="seller-whatsapp"
             href={`https://wa.me/${car.contact_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Интересует ваш ${getCarTitle(car)} на AutoKG`)}`}
@@ -155,6 +153,7 @@ export default function CarDetailPage() {
           >
             Написать в WhatsApp
           </a>
+          <a className="seller-phone" href={`tel:${car.contact_phone}`}>{car.contact_phone}</a>
           <div className="seller-notice"><ShieldCheck size={17} /><span>Не переводите предоплату до личного осмотра автомобиля.</span></div>
           <div className="seller-facts"><span><Gauge size={16} />{formatMileage(car.mileage)}</span><span><Fuel size={16} />{labels.engine_type[car.engine_type] || '—'}</span><span><Settings2 size={16} />{labels.transmission[car.transmission] || '—'}</span></div>
         </aside>
