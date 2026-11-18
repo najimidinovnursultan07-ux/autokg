@@ -231,19 +231,21 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .spec-item span { color: var(--muted); }
 .spec-item strong { text-align: right; }
 .description-card p { margin: 15px 0 0; color: #68746d; font-size: 12px; line-height: 1.8; white-space: pre-line; }
-.seller-panel { position: sticky; top: 96px; padding: 21px; }
-.detail-price { display: block; margin: 6px 0 21px; color: var(--green); font-family: Manrope, sans-serif; font-size: 29px; letter-spacing: -.05em; }
-.seller-summary { display: flex; align-items: center; gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
-.seller-avatar { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; background: var(--green-soft); color: var(--green); font-size: 12px; font-weight: 700; }
-.seller-summary > div { display: flex; flex-direction: column; gap: 5px; }
-.seller-summary strong { font-size: 12px; }
-.seller-summary span:not(.seller-avatar) { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 10px; }
-.seller-call { width: 100%; }
-.seller-phone { display: block; margin-top: 11px; color: var(--green); font-size: 13px; font-weight: 700; text-align: center; }
-.seller-notice { display: flex; gap: 8px; margin-top: 17px; padding: 11px; border-radius: 7px; background: #eef4fc; color: #526984; font-size: 10px; line-height: 1.55; }
-.seller-notice svg { flex: 0 0 auto; }
-.seller-facts { display: flex; flex-direction: column; gap: 11px; margin-top: 17px; padding-top: 16px; border-top: 1px solid var(--line); }
-.seller-facts span { display: inline-flex; align-items: center; gap: 8px; color: #6d7871; font-size: 11px; }
+.seller-panel { position: sticky; top: 96px; padding: 24px; }
+.detail-price { display: block; margin: 4px 0 20px; color: var(--green); font-family: Manrope, sans-serif; font-size: 32px; letter-spacing: -.05em; font-weight: 800; }
+.seller-summary { display: flex; align-items: center; gap: 12px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.seller-avatar { display: grid; width: 44px; height: 44px; flex-shrink: 0; place-items: center; border-radius: 50%; background: var(--green-soft); color: var(--green); font-size: 13px; font-weight: 700; }
+.seller-summary > div { display: flex; flex-direction: column; gap: 4px; }
+.seller-summary strong { font-size: 13px; color: var(--ink); }
+.seller-summary span:not(.seller-avatar) { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; }
+.seller-call { width: 100%; padding: 13px; font-size: 15px; border-radius: 10px; }
+.seller-phone { display: block; margin-top: 10px; color: var(--ink); font-size: 15px; font-weight: 700; text-align: center; letter-spacing: .02em; }
+.seller-whatsapp { width: 100%; margin-top: 10px; padding: 12px; font-size: 14px; border-radius: 10px; background: #22c55e; border-color: #22c55e; color: white; justify-content: center; }
+.seller-whatsapp:hover { background: #16a34a; border-color: #16a34a; color: white; }
+.seller-notice { display: flex; gap: 10px; margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; font-size: 11px; line-height: 1.6; }
+.seller-notice svg { flex: 0 0 auto; margin-top: 1px; color: #0ea5e9; }
+.seller-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.seller-facts span { display: inline-flex; align-items: center; gap: 7px; padding: 8px 10px; border-radius: 8px; background: #f8fafc; border: 1px solid var(--line); color: var(--ink); font-size: 11px; font-weight: 500; }
 
 /* Dashboard and profile */
 .dashboard-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 17px; }
@@ -422,7 +424,6 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
   .gallery-main { height: 63vw; min-height: 250px; }
   .seller-panel { position: static; grid-row: 1; }
   .seller-facts { display: grid; grid-template-columns: repeat(3, 1fr); }
-  .seller-facts span { font-size: 9px; }
   .dashboard-grid { gap: 11px; }
   .dashboard-tile { min-height: 135px; padding: 16px; }
   .dashboard-tile strong { font-size: 13px; }
