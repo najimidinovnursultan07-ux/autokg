@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import generics, status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -39,10 +39,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
 
-    @method_decorator(csrf_protect)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == status.HTTP_200_OK:
@@ -55,10 +51,6 @@ class CookieTokenRefreshView(TokenRefreshView):
     permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth_refresh"
-
-    @method_decorator(csrf_protect)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         data = request.data.copy()
@@ -90,10 +82,6 @@ class RegistrationView(generics.CreateAPIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
 
-    @method_decorator(csrf_protect)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -111,10 +99,6 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
-
-    @method_decorator(csrf_protect)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request):
         raw_refresh = request.COOKIES.get(settings.AUTH_COOKIE_NAME)
@@ -167,10 +151,6 @@ class PasswordResetRequestView(generics.GenericAPIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
 
-    @method_decorator(csrf_protect)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -213,10 +193,6 @@ class PasswordResetConfirmView(generics.GenericAPIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
 
-    @method_decorator(csrf_protect)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
-
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -241,10 +217,6 @@ class PasswordChangeView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
-
-    @method_decorator(csrf_protect)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
