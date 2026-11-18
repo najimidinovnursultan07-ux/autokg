@@ -5,6 +5,7 @@ import AdminLayout from './components/layout/AdminLayout.jsx'
 import ProtectedRoute from './components/routing/ProtectedRoute.jsx'
 import AdminRoute from './components/routing/AdminRoute.jsx'
 import GuestRoute from './components/routing/GuestRoute.jsx'
+import AdminLoginPage from './pages/AdminLoginPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import AccountSettingsPage from './pages/AccountSettingsPage.jsx'
 import AdminCarsPage from './pages/AdminCarsPage.jsx'
@@ -58,6 +59,7 @@ export default function App() {
             <Route path="admin/catalog" element={<AdminCatalogPage />} />
           </Route>
         </Route>
+        <Route path="admin/login" element={<AdminLoginPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

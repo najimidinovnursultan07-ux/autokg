@@ -7,11 +7,10 @@ export default function AdminRoute() {
   const location = useLocation()
 
   if (loading) return <LoadingState label="Проверяем права администратора…" />
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location }} />
+
+  if (!isAuthenticated || user?.role !== 'admin' || user?.is_staff !== true) {
+    return <Navigate to="/admin/login" replace state={{ from: location }} />
   }
-  if (user?.role !== 'admin' || user?.is_staff !== true) {
-    return <Navigate to="/dashboard" replace />
-  }
+
   return <Outlet />
 }
