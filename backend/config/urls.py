@@ -3,9 +3,10 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from apps.common.views import HealthCheckView, ReadinessCheckView
+from apps.common.views import ApiRootView, HealthCheckView, ReadinessCheckView
 
 urlpatterns = [
+    path("", ApiRootView.as_view(), name="api-root"),
     path("django-admin/", admin.site.urls),
     path("api/health/", HealthCheckView.as_view(), name="health"),
     path("api/health/ready/", ReadinessCheckView.as_view(), name="readiness"),

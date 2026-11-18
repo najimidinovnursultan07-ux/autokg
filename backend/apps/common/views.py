@@ -10,6 +10,25 @@ from rest_framework.views import APIView
 logger = logging.getLogger(__name__)
 
 
+class ApiRootView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({
+            "message": "AutoKG API",
+            "version": "1.0",
+            "status": "ok",
+            "docs": {
+                "health": "/api/health/",
+                "auth": "/api/auth/",
+                "cars": "/api/cars/",
+                "favorites": "/api/favorites/",
+                "admin": "/api/admin/",
+            },
+        })
+
+
 class HealthCheckView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
