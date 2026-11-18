@@ -10,7 +10,6 @@ export default function Footer() {
       <div className="container footer-main">
         <div className="footer-brand-column">
           <Link className="brand brand--footer" to="/">
-            <span className="brand-mark">A</span>
             <span className="brand-name">Auto<span>KG</span></span>
           </Link>
           <p>Платформа, которая соединяет людей и автомобили по всему Кыргызстану.</p>
