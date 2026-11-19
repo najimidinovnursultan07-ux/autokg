@@ -33,10 +33,16 @@ class ServicePricesView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        data = [
-            ServicePriceSerializer(st).data
-            for st in ServiceType.values
-        ]
+        from .models import SERVICE_PRICES, SERVICE_DURATIONS
+        data = []
+        for st in ServiceType.values:
+            data.append({
+                "service_type": st,
+                "label": dict(ServiceType.choices).get(st, st),
+                "amount": str(SERVICE_PRICES.get(st, "0.00")),
+                "duration_days": SERVICE_DURATIONS.get(st, 7),
+                "currency": "KGS",
+            })
         return Response(data)
 
 
