@@ -15,7 +15,7 @@ const transmissionLabels = {
 export default function CarCard({ car, featured = false }) {
   const image = getCarCover(car)
   return (
-    <article className={`car-card ${featured ? 'car-card--featured' : ''} ${car.is_top ? 'car-card--top' : ''} ${car.is_highlighted ? 'car-card--highlighted' : ''}`}>
+    <article className={`car-card ${featured ? 'car-card--featured' : ''} ${car.is_top ? 'car-card--top' : ''} ${car.is_highlighted ? 'car-card--highlighted' : ''} ${car.is_urgent ? 'car-card--urgent' : ''}`}>
       <Link to={`/cars/${car.id}`} className="car-card-image">
         {image ? (
           <img src={resolveMediaUrl(image)} alt={getCarTitle(car)} loading="lazy" />
