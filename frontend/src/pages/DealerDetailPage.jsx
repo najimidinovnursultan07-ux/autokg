@@ -110,56 +110,61 @@ export default function DealerDetailPage() {
 
       <div className="container dealer-body">
         <div className="dealer-card-main">
-          <div className="dealer-avatar" style={dealer.logo_url ? undefined : { background: color }}>
-            {dealer.logo_url
-              ? <img src={resolveMediaUrl(dealer.logo_url)} alt={dealer.name} />
-              : <span>{initials(dealer.name)}</span>}
-          </div>
-
-          <div className="dealer-title">
-            <h1>{dealer.name}</h1>
-            <span className="dealer-verified"><BadgeCheck size={16} /> Партнёр AutoKG</span>
-          </div>
-
-          {(dealer.city_name || dealer.address) && (
-            <p className="dealer-location">
-              <MapPin size={16} />
-              <span>{[dealer.city_name, dealer.address].filter(Boolean).join(', ')}</span>
-            </p>
-          )}
-
-          <div className="dealer-stats">
-            <div><strong>{total}</strong><span>{pluralCars(total)} в наличии</span></div>
-            <div><strong>{brands.length || '—'}</strong><span>марок</span></div>
-            <div><strong>{newCount}</strong><span>новых авто</span></div>
-          </div>
-
-          <div className="dealer-actions">
-            {dealer.phone && (
-              <a className="dealer-action dealer-action--call" href={`tel:${dealer.phone}`}>
-                <Phone size={18} /> Позвонить
-              </a>
-            )}
-            {whatsappHref && (
-              <a className="dealer-action dealer-action--wa" href={whatsappHref} target="_blank" rel="noopener noreferrer">
-                <MessageCircle size={18} /> WhatsApp
-              </a>
-            )}
-            {mapHref && (
-              <a className="dealer-action dealer-action--ghost" href={mapHref} target="_blank" rel="noopener noreferrer">
-                <Navigation size={18} /> Маршрут
-              </a>
-            )}
-          </div>
-          {dealer.phone && <a className="dealer-phone-text" href={`tel:${dealer.phone}`}>{dealer.phone}</a>}
-
-          {dealer.description && (
-            <div className="dealer-about">
-              <h2>О салоне</h2>
-              <p>{dealer.description}</p>
+          <div className="dealer-profile-top">
+            <div className="dealer-avatar" style={dealer.logo_url ? undefined : { background: color }}>
+              {dealer.logo_url
+                ? <img src={resolveMediaUrl(dealer.logo_url)} alt={dealer.name} />
+                : <span>{initials(dealer.name)}</span>}
             </div>
-          )}
 
+            <div className="dealer-identity">
+              <div className="dealer-title">
+                <h1>{dealer.name}</h1>
+                <span className="dealer-verified"><BadgeCheck size={16} /> Партнёр AutoKG</span>
+              </div>
+              {(dealer.city_name || dealer.address) && (
+                <p className="dealer-location">
+                  <MapPin size={16} />
+                  <span>{[dealer.city_name, dealer.address].filter(Boolean).join(', ')}</span>
+                </p>
+              )}
+            </div>
+
+            <div className="dealer-cta">
+              <div className="dealer-actions">
+                {dealer.phone && (
+                  <a className="dealer-action dealer-action--call" href={`tel:${dealer.phone}`}>
+                    <Phone size={18} /> Позвонить
+                  </a>
+                )}
+                {whatsappHref && (
+                  <a className="dealer-action dealer-action--wa" href={whatsappHref} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle size={18} /> WhatsApp
+                  </a>
+                )}
+                {mapHref && (
+                  <a className="dealer-action dealer-action--ghost" href={mapHref} target="_blank" rel="noopener noreferrer">
+                    <Navigation size={18} /> Маршрут
+                  </a>
+                )}
+              </div>
+              {dealer.phone && <a className="dealer-phone-text" href={`tel:${dealer.phone}`}>{dealer.phone}</a>}
+            </div>
+          </div>
+
+          <div className="dealer-profile-bottom">
+            <div className="dealer-stats">
+              <div><strong>{total}</strong><span>{pluralCars(total)} в наличии</span></div>
+              <div><strong>{brands.length || '—'}</strong><span>марок</span></div>
+              <div><strong>{newCount}</strong><span>новых авто</span></div>
+            </div>
+            {dealer.description && (
+              <div className="dealer-about">
+                <h2>О салоне</h2>
+                <p>{dealer.description}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         <section className="dealer-cars">

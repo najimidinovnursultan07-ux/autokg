@@ -1129,11 +1129,17 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .dealer-share { width: 38px; justify-content: center; padding: 0; }
 .dealer-back:hover, .dealer-share:hover { background: rgba(255,255,255,.3); color: white; }
 
-.dealer-body { position: relative; z-index: 2; display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 28px; align-items: start; margin-top: -90px; }
-.dealer-card-main { position: sticky; top: 90px; display: flex; flex-direction: column; gap: 14px; padding: 0 22px 22px; background: white; border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
-.dealer-avatar { display: grid; place-items: center; width: 96px; height: 96px; margin-top: -48px; overflow: hidden; border: 4px solid white; border-radius: 24px; background: #f1f5f9; box-shadow: 0 10px 24px rgba(15,23,42,.16); color: white; font-family: Manrope, sans-serif; font-size: 32px; font-weight: 800; }
+.dealer-body { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 32px; margin-top: -70px; }
+.dealer-card-main { display: flex; flex-direction: column; gap: 22px; padding: 26px 28px; background: white; border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
+.dealer-profile-top { display: grid; grid-template-columns: auto minmax(0, 1fr) 360px; gap: 24px; align-items: center; }
+.dealer-identity { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dealer-cta { display: flex; flex-direction: column; gap: 8px; }
+.dealer-profile-bottom { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 24px; align-items: center; padding-top: 22px; border-top: 1px solid var(--line); }
+.dealer-profile-bottom > .dealer-stats:only-child { max-width: 420px; }
+.dealer-avatar { display: grid; place-items: center; width: 112px; height: 112px; overflow: hidden; border: 4px solid white; border-radius: 26px; background: #f1f5f9; box-shadow: 0 10px 24px rgba(15,23,42,.14); color: white; font-family: Manrope, sans-serif; font-size: 36px; font-weight: 800; }
 .dealer-avatar img { width: 100%; height: 100%; padding: 8px; object-fit: contain; background: white; }
-.dealer-title h1 { margin: 0 0 6px; font-size: 26px; line-height: 1.15; word-break: break-word; }
+.dealer-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.dealer-title h1 { margin: 0; font-size: 30px; line-height: 1.15; word-break: break-word; }
 .dealer-verified { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: #eaf2ff; color: var(--accent); font-size: 12px; font-weight: 700; }
 .dealer-location { display: flex; align-items: flex-start; gap: 7px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
 .dealer-location svg { flex-shrink: 0; margin-top: 1px; color: var(--accent); }
@@ -1154,13 +1160,12 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .dealer-action--ghost { grid-column: 1 / -1; border: 1px solid var(--line); background: white; color: var(--ink); }
 .dealer-action--ghost:hover { background: var(--soft); }
 .dealer-actions > .dealer-action:only-child { grid-column: 1 / -1; }
-.dealer-phone-text { margin-top: -4px; color: var(--muted); font-size: 13px; font-weight: 600; text-align: center; }
+.dealer-phone-text { margin-top: 0; color: var(--muted); font-size: 13px; font-weight: 600; text-align: center; }
 
-.dealer-about { padding-top: 14px; border-top: 1px solid var(--line); }
+.dealer-about { min-width: 0; }
 .dealer-about h2 { margin: 0 0 6px; font-size: 15px; }
 .dealer-about p { margin: 0; color: var(--ink); font-size: 14px; line-height: 1.55; white-space: pre-line; }
 
-.dealer-cars { padding-top: 104px; }
 .dealer-cars-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .dealer-cars-head h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 22px; }
 .dealer-cars-head h2 span { padding: 2px 10px; border-radius: 999px; background: #eaf2ff; color: var(--accent); font-size: 14px; }
@@ -1171,25 +1176,30 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .dealer-chips button small { color: var(--muted); font-size: 11px; }
 .dealer-chips button.is-active { border-color: var(--ink); background: var(--ink); color: white; }
 .dealer-chips button.is-active small { color: rgba(255,255,255,.7); }
-.dealer-cars .car-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dealer-cars .car-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .dealer-cars .car-card-dealer { display: none; }
 .dealer-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 40px 20px; border: 1px dashed var(--line); border-radius: 18px; background: white; color: var(--muted); text-align: center; }
 .dealer-empty strong { color: var(--ink); }
 .dealer-sticky { display: none; }
 
 @media (min-width: 1200px) {
-  .dealer-cars .car-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dealer-cars .car-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-@media (max-width: 900px) {
-  .dealer-hero { height: 150px; }
-  .dealer-body { grid-template-columns: 1fr; gap: 22px; margin-top: -70px; }
-  .dealer-card-main { position: static; padding: 0 18px 18px; }
-  .dealer-cars { padding-top: 0; }
+@media (max-width: 1050px) {
+  .dealer-profile-top { grid-template-columns: auto minmax(0, 1fr); }
+  .dealer-cta { grid-column: 1 / -1; }
+  .dealer-profile-bottom { grid-template-columns: 1fr; }
+  .dealer-cars .car-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
   .dealer-page { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
-  .dealer-avatar { width: 84px; height: 84px; margin-top: -42px; border-radius: 22px; font-size: 28px; }
-  .dealer-title h1 { font-size: 23px; }
+  .dealer-hero { height: 130px; }
+  .dealer-body { margin-top: -60px; gap: 24px; }
+  .dealer-card-main { gap: 18px; padding: 0 18px 18px; }
+  .dealer-profile-top { grid-template-columns: 1fr; gap: 14px; }
+  .dealer-avatar { width: 88px; height: 88px; margin-top: -40px; border-radius: 22px; font-size: 30px; }
+  .dealer-title h1 { font-size: 24px; }
+  .dealer-profile-bottom { padding-top: 18px; }
   .dealer-cars-head h2 { font-size: 19px; }
   .dealer-cars .car-grid { gap: 11px; }
   body:has(.dealer-sticky) .scroll-top-fab { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
