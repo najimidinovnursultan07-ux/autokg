@@ -188,14 +188,14 @@ export default function HomePage() {
       <section className="container value-strip">
         <div className="section-heading value-heading"><div><span className="eyebrow">Почему AutoKG</span><h2>Всё для комфортной покупки</h2></div></div>
         <div className="value-item"><span className="value-icon"><Search size={20} /></span><div><strong>Поиск без лишних шагов</strong><p>Фильтры по марке, городу и характеристикам помогают найти нужное быстрее.</p></div></div>
-        <div className="value-item"><span className="value-icon"><ShieldCheck size={20} /></span><div><strong>Внимание к объявлениям</strong><p>Новые публикации проходят модерацию перед появлением в каталоге.</p></div></div>
-        <div className="value-item"><span className="value-icon"><BadgeCheck size={20} /></span><div><strong>Удобно продавать</strong><p>Добавляйте фотографии и управляйте объявлениями в личном кабинете.</p></div></div>
+        <div className="value-item"><span className="value-icon"><ShieldCheck size={20} /></span><div><strong>Только проверенные салоны</strong><p>Объявления публикуют только автосалоны-партнёры, подключённые администрацией AutoKG.</p></div></div>
+        <div className="value-item"><span className="value-icon"><BadgeCheck size={20} /></span><div><strong>Прямой контакт с салоном</strong><p>Звоните или пишите в WhatsApp салону прямо со страницы автомобиля.</p></div></div>
       </section>
 
       <section className="seller-cta">
         <div className="container seller-cta-inner">
-          <div><span className="eyebrow eyebrow--light">Просто начать</span><h2>Продайте автомобиль на AutoKG</h2><p>Добавьте описание и фотографии — покупатели найдут ваше объявление в каталоге.</p></div>
-          <Link to="/cars/new" className="button button--white"><CarFront size={17} /> Продать автомобиль</Link>
+          <div><span className="eyebrow eyebrow--light">Автосалонам</span><h2>Разместите автосалон на AutoKG</h2><p>Свяжитесь с нами — мы подключим салон и выдадим доступ в кабинет для управления объявлениями.</p></div>
+          <Link to="/login" className="button button--white"><CarFront size={17} /> Для автосалонов</Link>
         </div>
       </section>
     </>

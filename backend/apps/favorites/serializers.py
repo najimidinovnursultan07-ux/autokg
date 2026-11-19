@@ -10,7 +10,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     car_details = CarSerializer(source="car", read_only=True)
     car = serializers.PrimaryKeyRelatedField(
-        queryset=Car.objects.filter(status=Car.Status.PUBLISHED)
+        queryset=Car.objects.filter(status=Car.Status.ACTIVE, dealer__is_active=True)
     )
 
     class Meta:

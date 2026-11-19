@@ -41,7 +41,8 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     class Role(models.TextChoices):
-        USER = "user", "Пользователь"
+        USER = "user", "Пользователь (устаревшая роль)"
+        DEALER = "dealer", "Менеджер автосалона"
         ADMIN = "admin", "Администратор"
 
     username = None

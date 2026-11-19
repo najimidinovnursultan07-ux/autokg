@@ -39,8 +39,8 @@ export default function DealerDetailPage() {
 
       <div className="dealer-detail-header">
         <div className="dealer-detail-logo">
-          {dealer.logo
-            ? <img src={resolveMediaUrl(dealer.logo)} alt={dealer.name} />
+          {dealer.logo_url
+            ? <img src={resolveMediaUrl(dealer.logo_url)} alt={dealer.name} />
             : <Building2 size={48} />
           }
         </div>
@@ -58,7 +58,7 @@ export default function DealerDetailPage() {
             {dealer.whatsapp && (
               <a
                 className="seller-whatsapp"
-                href={`https://wa.me/${dealer.whatsapp.replace(/\D/g, '')}?text=Здравствуйте!`}
+                href={`https://wa.me/${dealer.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent('Здравствуйте! Пишу с AutoKG.')}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -70,8 +70,11 @@ export default function DealerDetailPage() {
       </div>
 
       <div className="dealer-detail-cars">
-        <h2>Автомобили салона ({cars.length})</h2>
-        {cars.length ? <CarGrid cars={cars} /> : <p className="empty-inline">Объявлений пока нет.</p>}
+        <h2>Автомобили салона ({dealer.car_count ?? cars.length})</h2>
+        {cars.length ? <CarGrid cars={cars} /> : <p className="empty-inline">Сейчас у салона нет активных объявлений.</p>}
+        {dealer.car_count > cars.length && (
+          <Link className="button button--outline dealer-all-cars" to={`/catalog?dealer=${encodeURIComponent(dealer.slug)}`}>Все автомобили салона ({dealer.car_count})</Link>
+        )}
       </div>
     </section>
   )

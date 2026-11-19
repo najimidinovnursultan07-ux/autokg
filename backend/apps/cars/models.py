@@ -10,13 +10,14 @@ from django.db.models import Q
 
 
 class CarStatus(models.TextChoices):
-    DRAFT = "draft", "Черновик"
-    PENDING = "pending", "На модерации"
-    PUBLISHED = "published", "Опубликовано"
-    REJECTED = "rejected", "Отклонено"
-    INACTIVE = "inactive", "Снято с публикации"
+    ACTIVE = "active", "Активно"
+    HIDDEN = "hidden", "Скрыто"
     SOLD = "sold", "Продано"
-    REMOVED = "removed", "Удалено"
+
+
+class CarCurrency(models.TextChoices):
+    KGS = "KGS", "сом"
+    USD = "USD", "$"
 
 
 class CarEngineType(models.TextChoices):
@@ -126,6 +127,7 @@ class Car(models.Model):
     DriveType = CarDriveType
     BodyType = CarBodyType
     Condition = CarCondition
+    Currency = CarCurrency
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey(
@@ -136,11 +138,8 @@ class Car(models.Model):
     dealer = models.ForeignKey(
         "dealers.Dealer",
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="cars",
         verbose_name="Автосалон",
-        db_index=True,
     )
     model = models.ForeignKey(
         Model,
@@ -160,6 +159,11 @@ class Car(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)],
     )
+    currency = models.CharField(
+        max_length=3,
+        choices=CarCurrency.choices,
+        default=CarCurrency.KGS,
+    )
     mileage = models.PositiveIntegerField(default=0)
     engine_volume = models.DecimalField(
         max_digits=4,
@@ -173,6 +177,7 @@ class Car(models.Model):
     drive_type = models.CharField(max_length=8, choices=CarDriveType.choices)
     body_type = models.CharField(max_length=16, choices=CarBodyType.choices)
     condition = models.CharField(max_length=16, choices=CarCondition.choices)
+    color = models.CharField(max_length=50, blank=True)
     description = models.TextField(max_length=10_000)
     contact_phone = models.CharField(
         max_length=16,
@@ -186,7 +191,7 @@ class Car(models.Model):
     status = models.CharField(
         max_length=16,
         choices=Status.choices,
-        default=Status.DRAFT,
+        default=Status.ACTIVE,
         db_index=True,
     )
     views_count = models.PositiveIntegerField(default=0, db_index=True)
@@ -197,6 +202,8 @@ class Car(models.Model):
     class Meta:
         ordering = ("-published_at", "-created_at")
         indexes = [
+            models.Index(fields=("price",), name="car_price_idx"),
+            models.Index(fields=("year",), name="car_year_idx"),
             models.Index(fields=("status", "price")),
             models.Index(fields=("status", "year")),
             models.Index(fields=("model", "status")),
@@ -258,10 +265,11 @@ class Car(models.Model):
 
 
 def car_image_upload_to(instance, filename):
+    """Новые фото кладутся в cars/{dealer_slug}/. Старые файлы не переносятся."""
     extension = Path(filename).suffix.lower()
     if extension not in {".jpg", ".jpeg", ".png", ".webp"}:
         extension = ".jpg"
-    return f"cars/{instance.car_id}/{uuid.uuid4().hex}{extension}"
+    return f"cars/{instance.car.dealer.storage_folder}/{uuid.uuid4().hex}{extension}"
 
 
 class CarImage(models.Model):
@@ -278,6 +286,8 @@ class CarImage(models.Model):
 
     class Meta:
         ordering = ("position", "id")
+        verbose_name = "Фото автомобиля"
+        verbose_name_plural = "Фото автомобилей"
         constraints = [
             models.UniqueConstraint(
                 fields=("car", "position"),

@@ -42,9 +42,12 @@ class Payment(models.Model):
         on_delete=models.PROTECT,
         related_name="payments",
     )
+    # SET_NULL: при удалении машины история платежей сохраняется
     car = models.ForeignKey(
         "cars.Car",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="payments",
     )
     service_type = models.CharField(max_length=16, choices=ServiceType.choices)
@@ -73,7 +76,7 @@ class Payment(models.Model):
 class Promotion(models.Model):
     car = models.ForeignKey(
         "cars.Car",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="promotions",
     )
     promotion_type = models.CharField(max_length=16, choices=ServiceType.choices)

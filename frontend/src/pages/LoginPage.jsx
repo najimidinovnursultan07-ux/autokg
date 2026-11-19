@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { ArrowRight, Eye, EyeOff, LockKeyhole } from 'lucide-react'
+import { ArrowRight, Building2, Eye, EyeOff } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
+import { hasPanelAccess, homeForRole } from '../utils/roles.js'
 
 export default function LoginPage() {
-  const { signIn } = useAuth()
+  const { signIn, signOut } = useAuth()
   const { notify } = useToast()
   const location = useLocation()
   const navigate = useNavigate()
@@ -20,11 +21,25 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      await signIn(form)
+      const user = await signIn(form)
+      if (!hasPanelAccess(user)) {
+        await signOut()
+        setError('Вход доступен только менеджерам автосалонов и администратору.')
+        return
+      }
       notify('Вы вошли в AutoKG.', 'success')
-      navigate(location.state?.from?.pathname || '/dashboard', { replace: true })
+      const from = location.state?.from?.pathname
+      const home = homeForRole(user)
+      navigate(from && from.startsWith(home) ? from : home, { replace: true })
     } catch (requestError) {
-      setError(getErrorMessage(requestError, 'Не удалось войти. Проверьте данные.'))
+      const status = requestError.response?.status
+      setError(
+        status === 429
+          ? 'Слишком много попыток входа. Подождите минуту и попробуйте снова.'
+          : status === 401
+            ? 'Неверный email или пароль, либо аккаунт отключён.'
+            : getErrorMessage(requestError, 'Не удалось войти. Проверьте данные.'),
+      )
     } finally {
       setLoading(false)
     }
@@ -33,18 +48,21 @@ export default function LoginPage() {
   return (
     <section className="auth-page">
       <div className="auth-card">
-        <div className="auth-icon"><LockKeyhole size={22} /></div>
-        <span className="eyebrow">С возвращением</span>
-        <h1>Войдите в аккаунт</h1>
-        <p className="auth-intro">Управляйте объявлениями и сохраняйте автомобили.</p>
+        <div className="auth-icon"><Building2 size={22} /></div>
+        <span className="eyebrow">Для автосалонов</span>
+        <h1>Вход в кабинет</h1>
+        <p className="auth-intro">
+          Размещать объявления на AutoKG могут только автосалоны-партнёры.
+          Аккаунт выдаёт администратор платформы.
+        </p>
         {error && <div className="form-alert" role="alert">{error}</div>}
         <form className="form-stack" onSubmit={submit}>
-          <label className="field-label">Электронная почта<input type="email" autoComplete="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@example.com" /></label>
+          <label className="field-label">Электронная почта<input type="email" autoComplete="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="manager@salon.kg" /></label>
           <label className="field-label">Пароль<span className="password-field"><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Введите пароль" /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
           <div className="form-inline-link"><Link to="/password-reset">Забыли пароль?</Link></div>
           <button className="button button--primary button--wide" type="submit" disabled={loading}>{loading ? 'Входим…' : 'Войти'} <ArrowRight size={17} /></button>
         </form>
-        <p className="auth-bottom">Нет аккаунта? <Link to="/register">Зарегистрироваться</Link></p>
+        <p className="auth-bottom">Хотите разместить свой автосалон? <Link to="/contacts">Свяжитесь с нами</Link></p>
       </div>
     </section>
   )

@@ -11,8 +11,8 @@ export default function ContactsPage() {
         <p>Поможем разобраться с размещением объявления или работой платформы.</p>
       </div>
       <div className="contact-grid">
-        <Link className="contact-card" to="/catalog"><span className="contact-icon"><Search size={20} /></span><span className="eyebrow">Покупателям</span><strong>Найти автомобиль</strong><small>Свяжитесь с продавцом по телефону в объявлении.</small></Link>
-        <Link className="contact-card" to="/cars/new"><span className="contact-icon"><CarFront size={20} /></span><span className="eyebrow">Продавцам</span><strong>Разместить объявление</strong><small>Создайте объявление и управляйте им в кабинете.</small></Link>
+        <Link className="contact-card" to="/catalog"><span className="contact-icon"><Search size={20} /></span><span className="eyebrow">Покупателям</span><strong>Найти автомобиль</strong><small>Свяжитесь с салоном по телефону или WhatsApp.</small></Link>
+        <Link className="contact-card" to="/login"><span className="contact-icon"><CarFront size={20} /></span><span className="eyebrow">Автосалонам</span><strong>Вход для автосалонов</strong><small>Доступ в кабинет выдаёт администратор AutoKG — напишите нам, чтобы подключить салон.</small></Link>
         {supportEmail ? (
           <a className="contact-card" href={`mailto:${supportEmail}`}><span className="contact-icon"><Mail size={20} /></span><span className="eyebrow">Поддержка</span><strong>{supportEmail}</strong><small>Напишите нам по вопросам работы площадки.</small></a>
         ) : (

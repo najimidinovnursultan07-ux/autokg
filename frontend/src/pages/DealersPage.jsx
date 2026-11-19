@@ -26,14 +26,14 @@ export default function DealersPage() {
         description="Официальные партнёры платформы AutoKG в Кыргызстане."
       />
       {loading ? <LoadingState label="Загружаем салоны…" /> : error ? (
-        <ErrorState message={error} />
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
       ) : (
         <div className="dealer-grid">
           {dealers.map((dealer) => (
             <Link key={dealer.id} to={`/dealers/${dealer.slug}`} className="dealer-card">
               <div className="dealer-card-logo">
-                {dealer.logo
-                  ? <img src={resolveMediaUrl(dealer.logo)} alt={dealer.name} />
+                {dealer.logo_url
+                  ? <img src={resolveMediaUrl(dealer.logo_url)} alt={dealer.name} />
                   : <Building2 size={32} />
                 }
               </div>

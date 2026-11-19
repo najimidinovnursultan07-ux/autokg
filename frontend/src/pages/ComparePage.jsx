@@ -16,7 +16,7 @@ const labels = {
 }
 
 const rows = [
-  { key: 'price', label: 'Цена', format: (v) => formatPrice(v) },
+  { key: 'price', label: 'Цена', format: (v, car) => formatPrice(v, car.currency) },
   { key: 'year', label: 'Год выпуска' },
   { key: 'mileage', label: 'Пробег', format: (v) => formatMileage(v) },
   { key: 'engine_type', label: 'Двигатель', format: (v) => labels.engine_type[v] || v },
@@ -100,7 +100,7 @@ export default function ComparePage() {
                       <button type="button" className="compare-remove" onClick={() => remove(car.id)} aria-label="Удалить"><X size={15} /></button>
                       <Link to={`/cars/${car.id}`}>
                         {car.images?.[0]?.image
-                          ? <img src={resolveMediaUrl(car.images[0].image)} alt={getCarTitle(car)} className="compare-car-img" />
+                          ? <img src={resolveMediaUrl(car.images[0].thumb || car.images[0].image)} alt={getCarTitle(car)} className="compare-car-img" />
                           : <div className="compare-car-img compare-car-img--placeholder">AutoKG</div>
                         }
                         <strong>{getCarTitle(car)}</strong>
@@ -112,7 +112,7 @@ export default function ComparePage() {
             </thead>
             <tbody>
               {rows.map(({ key, label, format }) => {
-                const values = cars.map((car) => (format ? format(car[key]) : car[key]) ?? '—')
+                const values = cars.map((car) => (format ? format(car[key], car) : car[key]) ?? '—')
                 const allSame = values.every((v) => v === values[0])
                 return (
                   <tr key={key} className="compare-row">

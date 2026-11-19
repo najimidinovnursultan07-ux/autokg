@@ -6,12 +6,6 @@ export async function login(credentials) {
   return data
 }
 
-export async function register(details) {
-  await ensureCsrfCookie()
-  const { data } = await api.post('/auth/register/', details)
-  return data
-}
-
 export async function logout() {
   await api.post('/auth/logout/')
 }

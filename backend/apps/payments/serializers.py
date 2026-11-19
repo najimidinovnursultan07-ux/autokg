@@ -67,6 +67,8 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     def get_car_title(self, obj):
         car = obj.car
+        if car is None:
+            return "Объявление удалено"
         try:
             return f"{car.model.brand.name} {car.model.name} {car.year}"
         except Exception:

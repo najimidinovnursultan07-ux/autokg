@@ -1,27 +1,31 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowDown, ArrowLeft, ArrowUp, Check, ImagePlus, LoaderCircle, Star, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, EyeOff, ImagePlus, LoaderCircle, Star, Trash2 } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
-  deleteCarImage,
-  getCar,
+  deleteCarPhoto,
+  getDashboardCar,
   getLookups,
-  reorderCarImages,
-  saveCar,
-  setCarCover,
-  submitCar,
-  uploadCarImages,
+  saveDashboardCar,
+  setMainCarPhoto,
+  uploadCarPhotos,
 } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
-import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
-import { getErrorMessage } from '../utils/errors.js'
+import { getErrorMessage, getFieldErrors } from '../utils/errors.js'
+
+const MAX_YEAR = new Date().getFullYear() + 1
+const MIN_YEAR = 1980
+const MAX_PHOTOS = 15
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 const initialForm = {
   model: '',
   city: '',
   year: '',
   price: '',
+  currency: 'KGS',
   mileage: '',
   engine_volume: '',
   engine_type: 'petrol',
@@ -29,6 +33,7 @@ const initialForm = {
   drive_type: 'fwd',
   body_type: 'sedan',
   condition: 'used',
+  color: '',
   description: '',
   contact_phone: '',
 }
@@ -40,39 +45,31 @@ const choiceLabels = {
   body_type: [['sedan', 'Седан'], ['hatchback', 'Хэтчбек'], ['suv', 'Внедорожник'], ['wagon', 'Универсал'], ['coupe', 'Купе'], ['minivan', 'Минивэн'], ['pickup', 'Пикап'], ['other', 'Другое']],
   condition: [['new', 'Новый'], ['used', 'С пробегом'], ['damaged', 'Требует ремонта']],
 }
-const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp']
-const maxPhotos = 20
-const maxFileSize = 10 * 1024 * 1024
 
 export default function CarFormPage() {
   const { id } = useParams()
   const isEditing = Boolean(id)
   const navigate = useNavigate()
-  const { user } = useAuth()
   const { notify } = useToast()
-  const [form, setForm] = useState({ ...initialForm, contact_phone: user?.phone || '' })
+  const [form, setForm] = useState(initialForm)
+  const [carStatus, setCarStatus] = useState('active')
   const [lookups, setLookups] = useState({ brands: [], models: [], cities: [] })
   const [selectedBrandId, setSelectedBrandId] = useState('')
   const [existingImages, setExistingImages] = useState([])
   const [newImages, setNewImages] = useState([])
   const [newCoverFile, setNewCoverFile] = useState(null)
-  const [loading, setLoading] = useState(isEditing)
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
   const [loadError, setLoadError] = useState('')
   const [carId, setCarId] = useState(id || null)
-  const [previewUrls, setPreviewUrls] = useState([])
 
   const previews = useMemo(
-    () => newImages.map((file) => ({ file, url: previewUrls[newImages.indexOf(file)] })),
-    [newImages, previewUrls],
+    () => newImages.map((file) => ({ file, url: URL.createObjectURL(file) })),
+    [newImages],
   )
-
-  useEffect(() => {
-    const urls = newImages.map((file) => URL.createObjectURL(file))
-    setPreviewUrls(urls)
-    return () => urls.forEach((url) => URL.revokeObjectURL(url))
-  }, [newImages])
+  useEffect(() => () => previews.forEach(({ url }) => URL.revokeObjectURL(url)), [previews])
 
   useEffect(() => {
     let active = true
@@ -80,20 +77,20 @@ export default function CarFormPage() {
       try {
         const [catalog, car] = await Promise.all([
           getLookups(),
-          isEditing ? getCar(id) : Promise.resolve(null),
+          isEditing ? getDashboardCar(id) : Promise.resolve(null),
         ])
         if (!active) return
         setLookups(catalog)
         if (car) {
           setCarId(car.id)
-          setSelectedBrandId(
-            String(catalog.models.find((model) => model.id === car.model)?.brand || ''),
-          )
+          setCarStatus(car.status)
+          setSelectedBrandId(String(catalog.models.find((m) => m.id === car.model)?.brand || ''))
           setForm({
             model: String(car.model),
             city: String(car.city),
             year: String(car.year),
-            price: String(car.price),
+            price: String(Math.round(Number(car.price))),
+            currency: car.currency || 'KGS',
             mileage: String(car.mileage),
             engine_volume: car.engine_volume || '',
             engine_type: car.engine_type,
@@ -101,25 +98,20 @@ export default function CarFormPage() {
             drive_type: car.drive_type,
             body_type: car.body_type,
             condition: car.condition,
+            color: car.color || '',
             description: car.description,
             contact_phone: car.contact_phone,
           })
           setExistingImages(car.images || [])
         }
       } catch (requestError) {
-        if (active) {
-          const message = getErrorMessage(requestError, 'Не удалось загрузить форму объявления.')
-          setError(message)
-          setLoadError(message)
-        }
+        if (active) setLoadError(getErrorMessage(requestError, 'Не удалось загрузить объявление.'))
       } finally {
         if (active) setLoading(false)
       }
     }
     loadForm()
-    return () => {
-      active = false
-    }
+    return () => { active = false }
   }, [id, isEditing])
 
   const update = (key) => (event) => setForm((value) => ({ ...value, [key]: event.target.value }))
@@ -129,62 +121,40 @@ export default function CarFormPage() {
     event.target.value = ''
     const valid = []
     for (const file of files) {
-      const extension = `.${file.name.split('.').pop()}`.toLowerCase()
-      if (!imageExtensions.includes(extension)) {
-        notify(`${file.name}: разрешены JPG, JPEG, PNG и WEBP.`, 'error')
-      } else if (file.size > maxFileSize) {
-        notify(`${file.name}: размер не должен превышать 10 МБ.`, 'error')
-      } else {
-        valid.push(file)
-      }
+      if (!IMAGE_TYPES.includes(file.type)) notify(`${file.name}: разрешены только JPG, PNG и WEBP.`, 'error')
+      else if (file.size > MAX_FILE_SIZE) notify(`${file.name}: размер не должен превышать 5 МБ.`, 'error')
+      else valid.push(file)
     }
-    const available = maxPhotos - existingImages.length - newImages.length
-    if (valid.length > available) {
-      notify(`Можно добавить не более ${Math.max(available, 0)} фотографий.`, 'error')
-    }
+    const available = MAX_PHOTOS - existingImages.length - newImages.length
+    if (valid.length > available) notify(`Можно добавить ещё не более ${Math.max(available, 0)} фото (максимум ${MAX_PHOTOS}).`, 'error')
     setNewImages((current) => [...current, ...valid.slice(0, Math.max(available, 0))])
   }
 
-  const removeNewImage = (index) => {
-    const removed = newImages[index]
-    setNewImages((items) => items.filter((_, itemIndex) => itemIndex !== index))
-    if (removed === newCoverFile) setNewCoverFile(null)
-  }
-
-  const moveImage = async (index, direction) => {
-    const target = index + direction
-    if (target < 0 || target >= existingImages.length) return
-    const reordered = [...existingImages]
-    ;[reordered[index], reordered[target]] = [reordered[target], reordered[index]]
-    setExistingImages(reordered)
-    try {
-      await reorderCarImages(carId, reordered.map((image) => image.id))
-    } catch (requestError) {
-      setExistingImages(existingImages)
-      notify(getErrorMessage(requestError, 'Не удалось изменить порядок фотографий.'), 'error')
-    }
+  const removeNewImage = (file) => {
+    setNewImages((items) => items.filter((item) => item !== file))
+    if (file === newCoverFile) setNewCoverFile(null)
   }
 
   const chooseCover = async (image) => {
     try {
-      await setCarCover(carId, image.id)
+      await setMainCarPhoto(carId, image.id)
       setNewCoverFile(null)
       setExistingImages((items) => items.map((item) => ({ ...item, is_cover: item.id === image.id })))
-      notify('Главная фотография изменена.', 'success')
+      notify('Главное фото изменено.', 'success')
     } catch (requestError) {
-      notify(getErrorMessage(requestError, 'Не удалось изменить обложку.'), 'error')
+      notify(getErrorMessage(requestError, 'Не удалось изменить главное фото.'), 'error')
     }
   }
 
   const removeImage = async (image) => {
+    if (!window.confirm('Удалить эту фотографию?')) return
     try {
-      await deleteCarImage(carId, image.id)
+      await deleteCarPhoto(carId, image.id)
       setExistingImages((items) => {
         const remaining = items.filter((item) => item.id !== image.id)
-        if (image.is_cover && remaining.length) {
-          return remaining.map((item, index) => ({ ...item, is_cover: index === 0 }))
-        }
-        return remaining
+        return image.is_cover && remaining.length
+          ? remaining.map((item, index) => ({ ...item, is_cover: index === 0 }))
+          : remaining
       })
       notify('Фотография удалена.', 'success')
     } catch (requestError) {
@@ -192,10 +162,13 @@ export default function CarFormPage() {
     }
   }
 
-  const submit = async (event, sendForReview = false) => {
+  const submit = async (event) => {
     event.preventDefault()
+    const status = event.nativeEvent.submitter?.value === 'hidden' ? 'hidden' : (isEditing && carStatus === 'sold' ? 'sold' : 'active')
     setSaving(true)
     setError('')
+    setFieldErrors({})
+    let savedId = carId
     try {
       const payload = {
         ...form,
@@ -204,137 +177,107 @@ export default function CarFormPage() {
         year: Number(form.year),
         mileage: Number(form.mileage || 0),
         engine_volume: form.engine_volume || null,
+        status,
       }
-      const car = await saveCar(payload, carId)
+      const car = await saveDashboardCar(payload, carId)
+      savedId = car.id
       setCarId(car.id)
       if (newImages.length) {
-        await uploadCarImages(car.id, newImages, async (batchImages, batchFiles) => {
-          const coverIndex = batchFiles.indexOf(newCoverFile)
-          const selectedCoverId = coverIndex >= 0 ? batchImages[coverIndex].id : null
-          setExistingImages((current) => [
-            ...current,
-            ...batchImages.map((image) => ({
-              ...image,
-              is_cover: selectedCoverId
-                ? image.id === selectedCoverId
-                : image.is_cover,
-            })),
-          ])
-          setNewImages((current) => current.filter((file) => !batchFiles.includes(file)))
-          if (selectedCoverId) {
-            await setCarCover(car.id, selectedCoverId)
-            setExistingImages((current) =>
-              current.map((image) => ({
-                ...image,
-                is_cover: image.id === selectedCoverId,
-              })),
-            )
-            setNewCoverFile(null)
-          }
-        })
-        setNewImages([])
-        setNewCoverFile(null)
+        const uploaded = await uploadCarPhotos(car.id, newImages)
+        const coverIndex = newImages.indexOf(newCoverFile)
+        if (coverIndex >= 0 && uploaded[coverIndex]) await setMainCarPhoto(car.id, uploaded[coverIndex].id)
       }
-      if (sendForReview && car.status !== 'pending') {
-        await submitCar(car.id)
-      }
-      notify(
-        sendForReview ? 'Объявление отправлено на модерацию.' : 'Объявление сохранено.',
-        'success',
-      )
-      navigate('/my-cars')
+      notify(status === 'hidden' ? 'Объявление сохранено (скрыто с сайта).' : 'Объявление сохранено и опубликовано.', 'success')
+      navigate('/dashboard')
     } catch (requestError) {
+      setFieldErrors(getFieldErrors(requestError))
       setError(getErrorMessage(requestError, 'Не удалось сохранить объявление.'))
+      // Машина уже создана, но фото не загрузились — переходим в режим редактирования
+      if (!isEditing && savedId) navigate(`/dashboard/cars/${savedId}/edit`, { replace: true })
     } finally {
       setSaving(false)
     }
   }
 
-  const availableModels = lookups.models.filter(
-    (model) => !selectedBrandId || String(model.brand) === selectedBrandId,
-  )
+  const availableModels = lookups.models.filter((m) => !selectedBrandId || String(m.brand) === selectedBrandId)
+  const fieldError = (key) => fieldErrors[key]?.[0] && <small className="field-error">{fieldErrors[key][0]}</small>
 
-  if (loading) return <section className="container page-section"><LoadingState label="Загружаем объявление…" /></section>
-  if (loadError && isEditing) return <section className="container page-section"><ErrorState message={loadError} onRetry={() => window.location.reload()} /></section>
+  if (loading) return <LoadingState label="Загружаем форму…" />
+  if (loadError) return <ErrorState message={loadError} onRetry={() => window.location.reload()} />
 
   return (
-    <section className="container page-section car-form-page">
-      <Link to="/my-cars" className="back-link"><ArrowLeft size={17} /> Мои объявления</Link>
-      <PageTitle eyebrow="Личный кабинет" title={isEditing ? 'Редактировать объявление' : 'Добавить автомобиль'} description="Заполните характеристики и добавьте фотографии автомобиля." />
+    <section className="account-page car-form-page">
+      <Link to="/dashboard" className="back-link"><ArrowLeft size={17} /> К объявлениям</Link>
+      <PageTitle eyebrow="Кабинет салона" title={isEditing ? 'Редактировать объявление' : 'Добавить автомобиль'} description="Заполните характеристики и добавьте фотографии автомобиля." />
       {error && <div className="form-alert" role="alert">{error}</div>}
-      <form
-        className="listing-form"
-        onSubmit={(event) =>
-          submit(event, event.nativeEvent.submitter?.value === 'publish')
-        }
-      >
+      <form className="listing-form" onSubmit={submit}>
         <section className="form-section">
           <div className="form-section-heading"><span>01</span><div><h2>Основная информация</h2><p>Марка, модель и расположение автомобиля.</p></div></div>
           <div className="form-grid">
-            <label className="field-label">Марка<select value={selectedBrandId} onChange={(event) => { setSelectedBrandId(event.target.value); setForm((current) => ({ ...current, model: '' })) }} required><option value="">Выберите марку</option>{lookups.brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label>
-            <label className="field-label">Модель<select value={form.model} onChange={update('model')} required><option value="">Выберите модель</option>{availableModels.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}</select></label>
-            <label className="field-label">Город<select value={form.city} onChange={update('city')} required><option value="">Выберите город</option>{lookups.cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}</select></label>
-            <label className="field-label">Год выпуска<input type="number" min="1886" max="2100" required value={form.year} onChange={update('year')} placeholder="Например, 2020" /></label>
+            <label className="field-label">Марка<select value={selectedBrandId} onChange={(e) => { setSelectedBrandId(e.target.value); setForm((c) => ({ ...c, model: '' })) }} required><option value="">Выберите марку</option>{lookups.brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
+            <label className="field-label">Модель<select value={form.model} onChange={update('model')} required><option value="">Выберите модель</option>{availableModels.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>{fieldError('model')}</label>
+            <label className="field-label">Город<select value={form.city} onChange={update('city')} required><option value="">Выберите город</option>{lookups.cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+            <label className="field-label">Год выпуска<input type="number" min={MIN_YEAR} max={MAX_YEAR} required value={form.year} onChange={update('year')} placeholder="Например, 2020" />{fieldError('year')}</label>
           </div>
         </section>
 
         <section className="form-section">
-          <div className="form-section-heading"><span>02</span><div><h2>Характеристики</h2><p>Помогите покупателю понять, подходит ли ему автомобиль.</p></div></div>
+          <div className="form-section-heading"><span>02</span><div><h2>Цена и характеристики</h2><p>Помогите покупателю понять, подходит ли ему автомобиль.</p></div></div>
           <div className="form-grid">
-            <label className="field-label">Цена, сом<input type="number" min="0" step="1" required value={form.price} onChange={update('price')} placeholder="Например, 1 250 000" /></label>
-            <label className="field-label">Пробег, км<input type="number" min="0" required value={form.mileage} onChange={update('mileage')} placeholder="Например, 85 000" /></label>
-            <label className="field-label">Тип двигателя<select value={form.engine_type} onChange={update('engine_type')}>{choiceLabels.engine_type.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-            <label className="field-label">Объём двигателя, л<input type="number" min="0.1" max="99.9" step="0.1" value={form.engine_volume} onChange={update('engine_volume')} placeholder="Например, 2.0" /></label>
-            <label className="field-label">Коробка передач<select value={form.transmission} onChange={update('transmission')}>{choiceLabels.transmission.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-            <label className="field-label">Привод<select value={form.drive_type} onChange={update('drive_type')}>{choiceLabels.drive_type.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-            <label className="field-label">Тип кузова<select value={form.body_type} onChange={update('body_type')}>{choiceLabels.body_type.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-            <label className="field-label">Состояние<select value={form.condition} onChange={update('condition')}>{choiceLabels.condition.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+            <label className="field-label">Цена<span className="field-range"><input type="number" min="1" step="1" required value={form.price} onChange={update('price')} placeholder="1 250 000" /><select value={form.currency} onChange={update('currency')} aria-label="Валюта"><option value="KGS">сом</option><option value="USD">$</option></select></span>{fieldError('price')}</label>
+            <label className="field-label">Пробег, км<input type="number" min="0" required value={form.mileage} onChange={update('mileage')} placeholder="85 000" /></label>
+            <label className="field-label">Топливо<select value={form.engine_type} onChange={update('engine_type')}>{choiceLabels.engine_type.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+            <label className="field-label">Объём двигателя, л<input type="number" min="0.1" max="99.9" step="0.1" value={form.engine_volume} onChange={update('engine_volume')} placeholder="2.0" /></label>
+            <label className="field-label">Коробка передач<select value={form.transmission} onChange={update('transmission')}>{choiceLabels.transmission.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+            <label className="field-label">Привод<select value={form.drive_type} onChange={update('drive_type')}>{choiceLabels.drive_type.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+            <label className="field-label">Тип кузова<select value={form.body_type} onChange={update('body_type')}>{choiceLabels.body_type.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+            <label className="field-label">Состояние<select value={form.condition} onChange={update('condition')}>{choiceLabels.condition.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+            <label className="field-label">Цвет<input maxLength="50" value={form.color} onChange={update('color')} placeholder="Белый" /></label>
+            <label className="field-label">Телефон для связи<input type="tel" value={form.contact_phone} onChange={update('contact_phone')} placeholder="По умолчанию — телефон салона" />{fieldError('contact_phone')}</label>
           </div>
-          <label className="field-label">Описание<textarea rows="5" maxLength="10000" required value={form.description} onChange={update('description')} placeholder="Расскажите о состоянии автомобиля, комплектации и особенностях…" /><small>{form.description.length} / 10 000</small></label>
+          <label className="field-label">Описание<textarea rows="5" maxLength="10000" required value={form.description} onChange={update('description')} placeholder="Состояние, комплектация, история обслуживания…" /><small>{form.description.length} / 10 000</small></label>
         </section>
 
         <section className="form-section">
-          <div className="form-section-heading"><span>03</span><div><h2>Фотографии и контакт</h2><p>Добавьте до 20 фото в формате JPG, PNG или WEBP. До 10 МБ на файл.</p></div></div>
-          <label className="field-label">Телефон продавца<input type="tel" required value={form.contact_phone} onChange={update('contact_phone')} placeholder="+996700123456" /></label>
+          <div className="form-section-heading"><span>03</span><div><h2>Фотографии</h2><p>До {MAX_PHOTOS} фото: JPG, PNG или WEBP, до 5 МБ каждое.</p></div></div>
           <label className="upload-zone">
             <ImagePlus size={25} />
-            <strong>Выберите фотографии автомобиля</strong>
-            <span>JPG, JPEG, PNG или WEBP · не более 10 МБ каждое</span>
-            <input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple onChange={addFiles} />
+            <strong>Выберите фотографии</strong>
+            <span>Можно выбрать несколько файлов сразу</span>
+            <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={addFiles} />
           </label>
           {(existingImages.length > 0 || previews.length > 0) && (
             <div className="form-photo-grid">
               {existingImages.map((image, index) => (
                 <div className="form-photo" key={image.id}>
-                  <img src={resolveMediaUrl(image.image)} alt={`Фото объявления ${index + 1}`} />
-                  {image.is_cover && <span className="cover-tag"><Star size={12} fill="currentColor" /> Обложка</span>}
+                  <img src={resolveMediaUrl(image.thumb || image.image)} alt={`Фото ${index + 1}`} />
+                  {image.is_cover && <span className="cover-tag"><Star size={12} fill="currentColor" /> Главное</span>}
                   <div className="photo-controls">
-                    <button type="button" onClick={() => moveImage(index, -1)} disabled={index === 0} aria-label="Переместить вверх"><ArrowUp size={15} /></button>
-                    <button type="button" onClick={() => moveImage(index, 1)} disabled={index === existingImages.length - 1} aria-label="Переместить вниз"><ArrowDown size={15} /></button>
-                    {!image.is_cover && <button type="button" onClick={() => chooseCover(image)} aria-label="Сделать обложкой"><Star size={15} /></button>}
-                    <button type="button" onClick={() => removeImage(image)} aria-label="Удалить фотографию"><Trash2 size={15} /></button>
+                    {!image.is_cover && <button type="button" onClick={() => chooseCover(image)} aria-label="Сделать главным" title="Сделать главным"><Star size={15} /></button>}
+                    <button type="button" onClick={() => removeImage(image)} aria-label="Удалить фото" title="Удалить"><Trash2 size={15} /></button>
                   </div>
                 </div>
               ))}
-              {previews.map(({ file, url }, index) => (
-                <div className="form-photo" key={`${file.name}-${file.lastModified}`}>
+              {previews.map(({ file, url }) => (
+                <div className="form-photo form-photo--new" key={`${file.name}-${file.lastModified}-${file.size}`}>
                   <img src={url} alt={file.name} />
-                  {newCoverFile === file && <span className="cover-tag"><Star size={12} fill="currentColor" /> Обложка</span>}
+                  {newCoverFile === file && <span className="cover-tag"><Star size={12} fill="currentColor" /> Главное</span>}
+                  <span className="new-photo-tag">Новое</span>
                   <div className="photo-controls">
-                    <button type="button" onClick={() => removeNewImage(index)} aria-label="Удалить фотографию"><Trash2 size={15} /></button>
-                    <button type="button" onClick={() => setNewCoverFile(file)} aria-label="Выбрать обложкой"><Star size={15} /></button>
+                    <button type="button" onClick={() => setNewCoverFile(file)} aria-label="Сделать главным" title="Сделать главным"><Star size={15} /></button>
+                    <button type="button" onClick={() => removeNewImage(file)} aria-label="Убрать фото" title="Убрать"><Trash2 size={15} /></button>
                   </div>
                 </div>
               ))}
             </div>
           )}
-          <p className="field-hint">Добавлено: {existingImages.length + newImages.length} / {maxPhotos}. Первая фотография станет обложкой, если вы не выберете её вручную.</p>
+          <p className="field-hint">Фото: {existingImages.length + newImages.length} / {MAX_PHOTOS}. Если главное фото не выбрано, им станет первое.</p>
         </section>
 
         <div className="form-actions">
-          <Link className="button button--outline" to="/my-cars">Отмена</Link>
-          <button className="button button--outline" type="submit" value="draft" disabled={saving}>{saving ? <LoaderCircle className="spin" size={16} /> : null} Сохранить черновик</button>
-          <button className="button button--primary" type="submit" value="publish" disabled={saving}>{saving ? <LoaderCircle className="spin" size={16} /> : <Check size={17} />} Сохранить и отправить</button>
+          <Link className="button button--outline" to="/dashboard">Отмена</Link>
+          <button className="button button--outline" type="submit" value="hidden" disabled={saving}>{saving ? <LoaderCircle className="spin" size={16} /> : <EyeOff size={16} />} Сохранить скрытым</button>
+          <button className="button button--primary" type="submit" value="active" disabled={saving}>{saving ? <LoaderCircle className="spin" size={16} /> : <Check size={17} />} {carStatus === 'sold' && isEditing ? 'Сохранить' : 'Опубликовать'}</button>
         </div>
       </form>
     </section>

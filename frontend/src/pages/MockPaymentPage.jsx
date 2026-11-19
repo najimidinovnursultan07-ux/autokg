@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { mockPay } from '../api/payments.js'
@@ -19,7 +19,7 @@ export default function MockPaymentPage() {
       setResult({ success: action === 'pay', message: data.detail })
       if (action === 'pay') {
         notify('Оплата прошла успешно!', 'success')
-        setTimeout(() => navigate('/my-cars'), 2000)
+        setTimeout(() => navigate('/dashboard'), 2000)
       }
     } catch (err) {
       setResult({ success: false, message: err?.response?.data?.detail || 'Ошибка оплаты.' })
@@ -35,7 +35,7 @@ export default function MockPaymentPage() {
           <XCircle size={48} color="#ef4444" />
           <h2>Неверная ссылка</h2>
           <p>Идентификатор платежа не найден.</p>
-          <button className="button button--primary" onClick={() => navigate('/my-cars')}>
+          <button className="button button--primary" onClick={() => navigate('/dashboard')}>
             Мои объявления
           </button>
         </div>
@@ -54,7 +54,7 @@ export default function MockPaymentPage() {
             }
             <h2>{result.success ? 'Оплата прошла!' : 'Оплата не прошла'}</h2>
             <p>{result.message}</p>
-            <button className="button button--primary" onClick={() => navigate('/my-cars')}>
+            <button className="button button--primary" onClick={() => navigate('/dashboard')}>
               Мои объявления
             </button>
           </>

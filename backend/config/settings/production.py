@@ -13,7 +13,7 @@ if not SECRET_KEY:
     raise ImproperlyConfigured("SECRET_KEY must be configured in production.")
 if not ALLOWED_HOSTS:
     raise ImproperlyConfigured("ALLOWED_HOSTS must be configured in production.")
-if DB_ENGINE != "django.db.backends.postgresql":
+if "postgresql" not in DATABASES["default"]["ENGINE"]:
     raise ImproperlyConfigured("Production must use PostgreSQL.")
 if not PASSWORD_RESET_URL.startswith("https://"):
     raise ImproperlyConfigured(
@@ -32,7 +32,9 @@ if EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend" or not EMAI
         "Configure an SMTP email backend and EMAIL_HOST in production."
     )
 
-SECURE_SSL_REDIRECT = False  # Render handles HTTPS termination at the load balancer
+# Render терминирует TLS на балансировщике и передаёт X-Forwarded-Proto
+SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
+SECURE_REDIRECT_EXEMPT = [r"^api/health/"]
 SECURE_HSTS_SECONDS = 31_536_000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True

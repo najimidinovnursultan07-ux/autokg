@@ -17,14 +17,14 @@ export default function Footer() {
         <div className="footer-column">
           <h3>Покупателям</h3>
           <Link to="/catalog">Каталог автомобилей</Link>
-          <Link to="/favorites">Избранное</Link>
+          <Link to="/dealers">Автосалоны</Link>
           <Link to="/about">Как это работает</Link>
         </div>
         <div className="footer-column">
           <h3>AutoKG</h3>
           <Link to="/about">О проекте</Link>
           <Link to="/contacts">Контакты</Link>
-          <Link to="/login">Личный кабинет</Link>
+          <Link to="/login">Вход для автосалонов</Link>
         </div>
         <div className="footer-column footer-contact">
           <h3>Связаться с нами</h3>

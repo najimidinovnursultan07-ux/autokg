@@ -7,7 +7,9 @@ from .models import User
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
     ordering = ("email",)
-    list_display = ("email", "first_name", "last_name", "role", "is_active")
+    list_display = ("email", "first_name", "last_name", "role", "dealer", "is_active")
+    list_filter = ("role", "is_active", "dealer")
+    autocomplete_fields = ("dealer",)
     search_fields = ("email", "first_name", "last_name", "phone")
     fieldsets = (
         (None, {"fields": ("email", "password")}),
@@ -17,6 +19,7 @@ class UserAdmin(DjangoUserAdmin):
             {
                 "fields": (
                     "role",
+                    "dealer",
                     "is_active",
                     "is_staff",
                     "is_superuser",
@@ -37,6 +40,7 @@ class UserAdmin(DjangoUserAdmin):
                     "password1",
                     "password2",
                     "role",
+                    "dealer",
                     "is_staff",
                     "is_superuser",
                 ),

@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<form method="post">{% csrf_token %}
+  <p>Выбрано объявлений: {{ cars|length }}</p>
+  {{ form.as_p }}
+  {% for car in cars %}<input type="hidden" name="_selected_action" value="{{ car.pk }}">{% endfor %}
+  <input type="hidden" name="action" value="move_to_dealer">
+  <input type="hidden" name="apply" value="1">
+  <input type="submit" value="Перенести" class="default">
+</form>
+{% endblock %}

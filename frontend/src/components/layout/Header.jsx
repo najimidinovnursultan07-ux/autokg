@@ -1,18 +1,9 @@
 import { useEffect, useState } from 'react'
-import {
-  GitCompareArrows,
-  Heart,
-  LogOut,
-  Menu,
-  Plus,
-  UserRound,
-  X,
-} from 'lucide-react'
+import { Building2, GitCompareArrows, LogOut, Menu, Plus, X } from 'lucide-react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { useFavorites } from '../../context/FavoritesContext.jsx'
-import { resolveMediaUrl } from '../../api/client.js'
 import { getCompareList } from '../../utils/compare.js'
+import { homeForRole } from '../../utils/roles.js'
 
 const links = [
   { to: '/catalog', label: 'Каталог' },
@@ -21,12 +12,16 @@ const links = [
   { to: '/contacts', label: 'Контакты' },
 ]
 
+const navClass = (extra = '') => ({ isActive }) => `nav-link ${isActive ? 'nav-link--active' : ''} ${extra}`
+
 export default function Header() {
   const { user, isAuthenticated, signOut } = useAuth()
-  const { favorites } = useFavorites()
   const [menuOpen, setMenuOpen] = useState(false)
   const [compareCount, setCompareCount] = useState(() => getCompareList().length)
   const navigate = useNavigate()
+  const isDealer = isAuthenticated && user?.role === 'dealer'
+  const isAdmin = isAuthenticated && user?.role === 'admin' && user?.is_staff
+  const panelLabel = isAdmin ? 'Админ-панель' : 'Кабинет салона'
 
   useEffect(() => {
     const update = () => setCompareCount(getCompareList().length)
@@ -34,9 +29,10 @@ export default function Header() {
     return () => window.removeEventListener('autokg:compare-updated', update)
   }, [])
 
+  const close = () => setMenuOpen(false)
   const logout = async () => {
     await signOut()
-    setMenuOpen(false)
+    close()
     navigate('/')
   }
 
@@ -58,94 +54,43 @@ export default function Header() {
 
         <nav className={`main-nav ${menuOpen ? 'main-nav--open' : ''}`}>
           {links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              onClick={() => setMenuOpen(false)}
-              className={({ isActive }) => (isActive ? 'nav-link nav-link--active' : 'nav-link')}
-            >
-              {link.label}
-            </NavLink>
+            <NavLink key={link.to} to={link.to} onClick={close} className={navClass()}>{link.label}</NavLink>
           ))}
-          {isAuthenticated && user?.role === 'admin' && user?.is_staff && (
-            <NavLink
-              to="/admin"
-              onClick={() => setMenuOpen(false)}
-              className={({ isActive }) => (isActive ? 'nav-link nav-link--active' : 'nav-link')}
-            >
-              Админ-панель
-            </NavLink>
+          {(isDealer || isAdmin) && (
+            <NavLink to={homeForRole(user)} end onClick={close} className={navClass('mobile-only')}>{panelLabel}</NavLink>
           )}
-          <NavLink
-            to="/favorites"
-            className={({ isActive }) => (isActive ? 'nav-link nav-link--active mobile-only' : 'nav-link mobile-only')}
-            onClick={() => setMenuOpen(false)}
-          >
-            Избранное {favorites.length > 0 && <span className="nav-count">{favorites.length}</span>}
-          </NavLink>
-          {isAuthenticated && (
-            <NavLink
-              to="/dashboard"
-              onClick={() => setMenuOpen(false)}
-              className="nav-link mobile-only"
-            >
-              Личный кабинет
-            </NavLink>
+          {isDealer && (
+            <NavLink to="/dashboard/cars/new" onClick={close} className={navClass('mobile-only')}><Plus size={16} /> Добавить авто</NavLink>
           )}
           {!isAuthenticated && (
-            <>
-              <NavLink to="/login" onClick={() => setMenuOpen(false)} className="nav-link mobile-only">
-                Войти
-              </NavLink>
-              <NavLink to="/register" onClick={() => setMenuOpen(false)} className="nav-link mobile-only">
-                Регистрация
-              </NavLink>
-            </>
+            <NavLink to="/login" onClick={close} className={navClass('mobile-only')}><Building2 size={16} /> Для автосалонов</NavLink>
           )}
           {isAuthenticated && (
-            <button type="button" className="nav-link nav-logout mobile-only" onClick={logout}>
-              <LogOut size={16} /> Выйти
-            </button>
+            <button type="button" className="nav-link nav-logout mobile-only" onClick={logout}><LogOut size={16} /> Выйти</button>
           )}
         </nav>
 
         <div className="header-actions">
-          <Link className="header-favorite" to="/favorites" aria-label="Избранное">
-            <Heart size={20} />
-            {favorites.length > 0 && <span>{favorites.length}</span>}
-          </Link>
           {compareCount > 0 && (
             <Link className="header-compare" to="/compare" aria-label="Сравнение">
               <GitCompareArrows size={20} />
               <span>{compareCount}</span>
             </Link>
           )}
-          <Link
-            className="button button--primary button--header"
-            to={isAuthenticated ? '/cars/new' : '/login'}
-          >
-            <Plus size={17} />
-            <span>Продать автомобиль</span>
-          </Link>
+          {isDealer && (
+            <Link className="button button--primary button--header" to="/dashboard/cars/new">
+              <Plus size={17} /><span>Добавить авто</span>
+            </Link>
+          )}
           {isAuthenticated ? (
-            <Link className="user-chip" to="/dashboard" aria-label="Личный кабинет">
-              <span className="user-avatar">
-                {user?.profile_photo
-                  ? <img src={resolveMediaUrl(user.profile_photo)} alt={user?.first_name || 'Профиль'} />
-                  : (user?.first_name || user?.email || 'A').slice(0, 1).toUpperCase()
-                }
-              </span>
-              <span>{user?.first_name || 'Кабинет'}</span>
+            <Link className="user-chip" to={homeForRole(user)} aria-label={panelLabel}>
+              <span className="user-avatar"><Building2 size={15} /></span>
+              <span>{isAdmin ? 'Админ' : (user?.dealer_name || 'Кабинет')}</span>
             </Link>
           ) : (
-            <>
-              <Link className="button button--outline button--header header-login" to="/login">
-                <UserRound size={16} /><span>Войти</span>
-              </Link>
-              <Link className="button button--outline button--header header-register" to="/register">
-                Регистрация
-              </Link>
-            </>
+            <Link className="button button--outline button--header header-login" to="/login">
+              <Building2 size={16} /><span>Для автосалонов</span>
+            </Link>
           )}
         </div>
       </div>

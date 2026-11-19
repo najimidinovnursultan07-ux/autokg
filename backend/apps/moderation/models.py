@@ -12,7 +12,7 @@ class ModerationEvent(models.Model):
 
     car = models.ForeignKey(
         "cars.Car",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="moderation_events",
     )
     actor = models.ForeignKey(

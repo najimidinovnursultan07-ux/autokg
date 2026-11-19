@@ -50,7 +50,7 @@ export default function PaymentHistoryPage() {
           <Clock3 size={40} />
           <h3>История пуста</h3>
           <p>Здесь появятся платежи после первой оплаты продвижения.</p>
-          <Link to="/my-cars" className="button button--primary">Мои объявления</Link>
+          <Link to="/dashboard" className="button button--primary">К объявлениям</Link>
         </div>
       ) : (
         <div className="payment-list">

@@ -70,7 +70,13 @@ DB_ENGINE = env(
     "DB_ENGINE",
     default="django.db.backends.postgresql",
 )
-if DB_ENGINE == "django.db.backends.sqlite3":
+if env("DATABASE_URL", default=""):
+    # Render: DATABASE_URL=postgres://user:pass@host:5432/db
+    DATABASES = {"default": env.db_url("DATABASE_URL")}
+    DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
+    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+    DB_ENGINE = DATABASES["default"]["ENGINE"]
+elif DB_ENGINE == "django.db.backends.sqlite3":
     DATABASES = {
         "default": {
             "ENGINE": DB_ENGINE,

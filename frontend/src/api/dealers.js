@@ -1,35 +1,31 @@
 import { api } from './client.js'
 
-// Публичные
+// ── Публичные ──
 export async function getDealers() {
   const { data } = await api.get('/dealers/')
   return data
 }
 
 export async function getDealerBySlug(slug) {
-  const { data } = await api.get(`/dealers/${slug}/`)
+  const { data } = await api.get(`/dealers/${encodeURIComponent(slug)}/`)
   return data
 }
 
-// Дилер — кабинет
+// ── Кабинет салона ──
 export async function getDealerProfile() {
   const { data } = await api.get('/dashboard/dealer/')
   return data
 }
 
+// payload: объект или FormData (если меняется логотип)
 export async function updateDealerProfile(payload) {
   const { data } = await api.patch('/dashboard/dealer/', payload)
   return data
 }
 
-export async function getDealerCars() {
-  const { data } = await api.get('/dashboard/cars/')
-  return data
-}
-
-// Админ
-export async function getAdminDealers() {
-  const { data } = await api.get('/admin/dealers/')
+// ── Админ: салоны ──
+export async function getAdminDealers(params = {}) {
+  const { data } = await api.get('/admin/dealers/', { params })
   return data
 }
 
@@ -52,8 +48,9 @@ export async function toggleDealerActive(id) {
   return data
 }
 
-export async function getAdminManagers() {
-  const { data } = await api.get('/admin/managers/')
+// ── Админ: менеджеры ──
+export async function getAdminManagers(params = {}) {
+  const { data } = await api.get('/admin/managers/', { params })
   return data
 }
 
@@ -67,7 +64,11 @@ export async function updateAdminManager(id, payload) {
   return data
 }
 
-export async function getDealerStats() {
-  const { data } = await api.get('/admin/dealer-stats/')
+export async function resetManagerPassword(id, password) {
+  const { data } = await api.post(`/admin/managers/${id}/reset-password/`, { password })
   return data
+}
+
+export async function deleteAdminManager(id) {
+  await api.delete(`/admin/managers/${id}/`)
 }

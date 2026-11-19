@@ -10,7 +10,6 @@ from .views import (
     PasswordChangeView,
     PasswordResetConfirmView,
     PasswordResetRequestView,
-    RegistrationView,
 )
 
 
@@ -18,7 +17,6 @@ app_name = "accounts"
 
 urlpatterns = [
     path("csrf/", CsrfCookieView.as_view(), name="csrf"),
-    path("register/", csrf_exempt(RegistrationView.as_view()), name="register"),
     path("login/", csrf_exempt(CookieTokenObtainPairView.as_view()), name="login"),
     path("refresh/", csrf_exempt(CookieTokenRefreshView.as_view()), name="refresh"),
     path("logout/", csrf_exempt(LogoutView.as_view()), name="logout"),

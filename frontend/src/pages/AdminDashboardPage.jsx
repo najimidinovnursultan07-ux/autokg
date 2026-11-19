@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowRight, CarFront, CheckCircle2, Clock3, Users, UserX } from 'lucide-react'
+import { ArrowRight, Building2, CarFront, EyeOff, UserCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getAdminStats } from '../api/admin.js'
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
@@ -15,61 +15,58 @@ export default function AdminDashboardPage() {
     setError('')
     try {
       setStats(await getAdminStats())
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, 'Не удалось загрузить статистику.'))
+    } catch (err) {
+      setError(getErrorMessage(err, 'Не удалось загрузить статистику.'))
     } finally {
       setLoading(false)
     }
   }, [])
 
-  useEffect(() => {
-    load()
-  }, [load])
+  useEffect(() => { load() }, [load])
 
   return (
     <section className="admin-page">
-      <PageTitle
-        eyebrow="Администрирование"
-        title="Обзор платформы"
-        description="Ключевые показатели AutoKG и быстрый доступ к рабочим разделам."
-      />
-      {loading ? <LoadingState label="Загружаем статистику…" /> : error ? (
-        <ErrorState message={error} onRetry={load} />
-      ) : (
+      <PageTitle eyebrow="Администрирование" title="Обзор платформы" description="Автосалоны, менеджеры и объявления AutoKG." />
+      {loading ? <LoadingState label="Загружаем статистику…" /> : error ? <ErrorState message={error} onRetry={load} /> : (
         <>
           <div className="admin-stat-grid">
-            <Link to="/admin/users" className="admin-stat-card">
-              <span className="admin-stat-icon"><Users size={20} /></span>
-              <span className="admin-stat-copy"><small>Пользователи</small><strong>{stats.users.total}</strong><em>{stats.users.active} активных</em></span>
-              <ArrowRight size={17} />
-            </Link>
-            <Link to="/admin/users?is_active=false" className="admin-stat-card">
-              <span className="admin-stat-icon admin-stat-icon--red"><UserX size={20} /></span>
-              <span className="admin-stat-copy"><small>Заблокированы</small><strong>{stats.users.blocked}</strong><em>Аккаунты отключены</em></span>
-              <ArrowRight size={17} />
+            <Link to="/admin/dealers" className="admin-stat-card">
+              <span className="admin-stat-icon admin-stat-icon--blue"><Building2 size={19} /></span>
+              <span className="admin-stat-copy"><small>Автосалоны</small><strong>{stats.dealers.total}</strong><em>активных: {stats.dealers.active}</em></span>
             </Link>
             <Link to="/admin/cars" className="admin-stat-card">
-              <span className="admin-stat-icon admin-stat-icon--blue"><CarFront size={20} /></span>
-              <span className="admin-stat-copy"><small>Объявления</small><strong>{stats.cars.total}</strong><em>{stats.cars.published} опубликовано</em></span>
-              <ArrowRight size={17} />
+              <span className="admin-stat-icon admin-stat-icon--green"><CarFront size={19} /></span>
+              <span className="admin-stat-copy"><small>Объявления</small><strong>{stats.cars.total}</strong><em>активных: {stats.cars.active}</em></span>
             </Link>
-            <Link to="/admin/cars?status=pending" className="admin-stat-card">
-              <span className="admin-stat-icon admin-stat-icon--amber"><Clock3 size={20} /></span>
-              <span className="admin-stat-copy"><small>Ожидают проверки</small><strong>{stats.cars.pending}</strong><em>Очередь модерации</em></span>
-              <ArrowRight size={17} />
+            <Link to="/admin/cars?status=hidden" className="admin-stat-card">
+              <span className="admin-stat-icon admin-stat-icon--amber"><EyeOff size={19} /></span>
+              <span className="admin-stat-copy"><small>Скрыто / продано</small><strong>{stats.cars.hidden} / {stats.cars.sold}</strong><em>не видны на сайте</em></span>
+            </Link>
+            <Link to="/admin/managers" className="admin-stat-card">
+              <span className="admin-stat-icon"><UserCheck size={19} /></span>
+              <span className="admin-stat-copy"><small>Менеджеры</small><strong>{stats.managers.total}</strong><em>активных: {stats.managers.active}</em></span>
             </Link>
           </div>
-          <div className="admin-overview-card">
-            <div className="admin-overview-heading">
-              <span className="admin-stat-icon admin-stat-icon--green"><CheckCircle2 size={20} /></span>
-              <div><h2>Рабочие разделы</h2><p>Управление пользователями, контентом и справочниками</p></div>
+
+          <h2 className="admin-section-title">Объявления по салонам</h2>
+          {stats.cars_by_dealer.length ? (
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead><tr><th>Салон</th><th>Всего</th><th>Активных</th><th>Статус салона</th><th /></tr></thead>
+                <tbody>
+                  {stats.cars_by_dealer.map((d) => (
+                    <tr key={d.id}>
+                      <td><strong>{d.name}</strong><br /><small>{d.slug}</small></td>
+                      <td>{d.total}</td>
+                      <td>{d.active}</td>
+                      <td><span className={`admin-status ${d.is_active ? 'admin-status--active' : 'admin-status--blocked'}`}>{d.is_active ? 'Активен' : 'Отключён'}</span></td>
+                      <td><Link className="text-link" to={`/admin/cars?dealer=${encodeURIComponent(d.slug)}`}>Объявления <ArrowRight size={14} /></Link></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div className="admin-overview-links">
-              <Link to="/admin/users">Пользователи <ArrowRight size={16} /></Link>
-              <Link to="/admin/cars">Все объявления <ArrowRight size={16} /></Link>
-              <Link to="/admin/catalog">Марки, модели и города <ArrowRight size={16} /></Link>
-            </div>
-          </div>
+          ) : <div className="admin-empty">Салонов пока нет. <Link to="/admin/dealers">Добавьте первый</Link>.</div>}
         </>
       )}
     </section>

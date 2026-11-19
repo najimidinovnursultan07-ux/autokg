@@ -1,46 +1,33 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Check, ChevronLeft, ChevronRight, Search, Trash2, X } from 'lucide-react'
-import { useSearchParams } from 'react-router-dom'
-import { approveAdminCar, deleteAdminCar, getAdminCars, rejectAdminCar } from '../api/admin.js'
+import { ChevronLeft, ChevronRight, ExternalLink, Search, Trash2 } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { deleteAdminCar, getAdminCars, updateAdminCar } from '../api/admin.js'
+import { resolveMediaUrl } from '../api/client.js'
+import { getAdminDealers } from '../api/dealers.js'
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
-import { formatPrice } from '../utils/format.js'
+import { CAR_STATUS_LABELS, formatPrice } from '../utils/format.js'
 
-const PAGE_SIZE = 10
-const statusNames = {
-  draft: 'Черновик',
-  pending: 'На модерации',
-  published: 'Опубликовано',
-  rejected: 'Отклонено',
-  inactive: 'Снято',
-  sold: 'Продано',
-  removed: 'Удалено',
-}
-const statusOptions = [
-  ['','Все статусы'],
-  ['pending','На модерации'],
-  ['published','Опубликовано'],
-  ['draft','Черновик'],
-  ['rejected','Отклонено'],
-  ['inactive','Снято с публикации'],
-  ['sold','Продано'],
-  ['removed','Удалено'],
-]
+const PAGE_SIZE = 20
 
 export default function AdminCarsPage() {
   const { notify } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
   const search = searchParams.get('search') || ''
   const status = searchParams.get('status') || ''
+  const dealer = searchParams.get('dealer') || ''
   const page = Math.max(1, Number(searchParams.get('page')) || 1)
   const [searchInput, setSearchInput] = useState(search)
   const [cars, setCars] = useState([])
+  const [dealers, setDealers] = useState([])
   const [count, setCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [workingId, setWorkingId] = useState(null)
-  const [rejecting, setRejecting] = useState(null)
+  const [confirmDelete, setConfirmDelete] = useState(null)
+
+  useEffect(() => { getAdminDealers().then(setDealers).catch(() => {}) }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -49,83 +36,52 @@ export default function AdminCarsPage() {
       const response = await getAdminCars({
         search: search || undefined,
         status: status || undefined,
+        dealer: dealer || undefined,
         page,
         page_size: PAGE_SIZE,
-        ordering: '-created_at',
       })
       setCars(response.results || [])
       setCount(response.count || 0)
-    } catch (requestError) {
-      setError(getErrorMessage(requestError, 'Не удалось загрузить объявления.'))
+    } catch (err) {
+      setError(getErrorMessage(err, 'Не удалось загрузить объявления.'))
     } finally {
       setLoading(false)
     }
-  }, [page, search, status])
+  }, [page, search, status, dealer])
 
-  useEffect(() => {
-    load()
-  }, [load])
+  useEffect(() => { load() }, [load])
+  useEffect(() => { setSearchInput(search) }, [search])
 
-  useEffect(() => {
-    setSearchInput(search)
-  }, [search])
-
-  const updateQuery = (key, value) => {
+  const setQuery = (changes) => {
     const next = new URLSearchParams(searchParams)
-    if (value) next.set(key, value)
-    else next.delete(key)
-    next.delete('page')
+    Object.entries(changes).forEach(([key, value]) => (value ? next.set(key, value) : next.delete(key)))
+    if (!('page' in changes)) next.delete('page')
     setSearchParams(next)
   }
 
-  const changePage = (nextPage) => {
-    const next = new URLSearchParams(searchParams)
-    if (nextPage > 1) next.set('page', String(nextPage))
-    else next.delete('page')
-    setSearchParams(next)
-  }
-
-  const approve = async (car) => {
-    const title = `${car.brand} ${car.model_name} ${car.year}`
-    if (!window.confirm(`Одобрить объявление «${title}» и опубликовать его?`)) return
+  const patch = async (car, payload, message) => {
     setWorkingId(car.id)
     try {
-      await approveAdminCar(car.id)
-      notify('Объявление опубликовано.', 'success')
-      await load()
-    } catch (requestError) {
-      notify(getErrorMessage(requestError, 'Не удалось одобрить объявление.'), 'error')
+      const updated = await updateAdminCar(car.id, payload)
+      setCars((items) => items.map((item) => (item.id === car.id ? updated : item)))
+      notify(message, 'success')
+    } catch (err) {
+      notify(getErrorMessage(err, 'Не удалось изменить объявление.'), 'error')
     } finally {
       setWorkingId(null)
     }
   }
 
-  const reject = async (event) => {
-    event.preventDefault()
-    if (!rejecting?.reason.trim()) return
-    setWorkingId(rejecting.id)
-    try {
-      await rejectAdminCar(rejecting.id, rejecting.reason.trim())
-      notify('Объявление отклонено.', 'success')
-      setRejecting(null)
-      await load()
-    } catch (requestError) {
-      notify(getErrorMessage(requestError, 'Не удалось отклонить объявление.'), 'error')
-    } finally {
-      setWorkingId(null)
-    }
-  }
-
-  const remove = async (car) => {
-    const title = `${car.brand} ${car.model_name} ${car.year}`
-    if (!window.confirm(`Удалить объявление «${title}»? Оно будет снято с публикации, а действие сохранится в журнале модерации.`)) return
+  const remove = async () => {
+    const car = confirmDelete
     setWorkingId(car.id)
     try {
       await deleteAdminCar(car.id)
-      notify('Объявление удалено.', 'success')
+      notify('Объявление удалено вместе с фотографиями.', 'success')
+      setConfirmDelete(null)
       await load()
-    } catch (requestError) {
-      notify(getErrorMessage(requestError, 'Не удалось удалить объявление.'), 'error')
+    } catch (err) {
+      notify(getErrorMessage(err, 'Не удалось удалить объявление.'), 'error')
     } finally {
       setWorkingId(null)
     }
@@ -135,83 +91,90 @@ export default function AdminCarsPage() {
 
   return (
     <section className="admin-page">
-      <PageTitle eyebrow="Администрирование" title="Объявления" description="Проверяйте публикации, управляйте статусами и удаляйте нарушающие правила объявления." />
+      <PageTitle eyebrow="Администрирование" title="Все объявления" description="Модерация: скрывайте, удаляйте и переносите объявления между салонами." />
       <div className="admin-toolbar">
-        <form className="admin-search-form" onSubmit={(event) => {
-          event.preventDefault()
-          updateQuery('search', searchInput.trim())
-        }}>
+        <form className="admin-search-form" onSubmit={(e) => { e.preventDefault(); setQuery({ search: searchInput.trim() }) }}>
           <Search size={18} />
-          <input
-            type="search"
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Марка, модель или email владельца"
-            aria-label="Поиск объявлений"
-          />
+          <input type="search" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Марка, модель, салон, телефон" aria-label="Поиск объявлений" />
           <button type="submit" className="button button--primary">Найти</button>
         </form>
-        <select value={status} onChange={(event) => updateQuery('status', event.target.value)} aria-label="Фильтр по статусу объявления">
-          {statusOptions.map(([value, label]) => <option key={value || 'all'} value={value}>{label}</option>)}
+        <select value={status} onChange={(e) => setQuery({ status: e.target.value })} aria-label="Статус">
+          <option value="">Все статусы</option>
+          {Object.entries(CAR_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+        <select value={dealer} onChange={(e) => setQuery({ dealer: e.target.value })} aria-label="Салон">
+          <option value="">Все салоны</option>
+          {dealers.map((d) => <option key={d.id} value={d.slug}>{d.name}</option>)}
         </select>
       </div>
 
-      {loading ? <LoadingState label="Загружаем объявления…" /> : error ? (
-        <ErrorState message={error} onRetry={load} />
-      ) : cars.length ? (
+      {loading ? <LoadingState label="Загружаем объявления…" /> : error ? <ErrorState message={error} onRetry={load} /> : cars.length ? (
         <>
-          <div className="admin-listing-list">
-            {cars.map((car) => (
-              <article className="admin-listing-row" key={car.id}>
-                <div className="admin-listing-main">
-                  <span className={`admin-status admin-status--${car.status}`}>{statusNames[car.status] || car.status}</span>
-                  <strong>{car.brand} {car.model_name} · {car.year}</strong>
-                  <span>{car.owner_email} · {car.city_name}</span>
-                </div>
-                <strong className="admin-listing-price">{formatPrice(car.price)}</strong>
-                <div className="admin-listing-actions">
-                  {car.status === 'pending' && (
-                    <>
-                      <button type="button" className="admin-action-button admin-action-button--success" disabled={workingId === car.id} onClick={() => approve(car)}>
-                        <Check size={15} /> Одобрить
-                      </button>
-                      <button type="button" className="admin-action-button admin-action-button--danger" disabled={workingId === car.id} onClick={() => setRejecting({ id: car.id, title: `${car.brand} ${car.model_name} ${car.year}`, reason: '' })}>
-                        <X size={15} /> Отклонить
-                      </button>
-                    </>
-                  )}
-                  {car.status !== 'removed' && (
-                    <button type="button" className="icon-action icon-action--danger" disabled={workingId === car.id} onClick={() => remove(car)} aria-label="Удалить объявление">
-                      <Trash2 size={17} />
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))}
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead><tr><th>Автомобиль</th><th>Салон</th><th>Цена</th><th>Статус</th><th>Действия</th></tr></thead>
+              <tbody>
+                {cars.map((car) => {
+                  const busy = workingId === car.id
+                  return (
+                    <tr key={car.id}>
+                      <td>
+                        <div className="dealer-car-cell">
+                          <span className="dealer-car-thumb">{car.thumb ? <img src={resolveMediaUrl(car.thumb)} alt="" loading="lazy" /> : <span>Нет фото</span>}</span>
+                          <span><strong>{car.brand} {car.model_name} · {car.year}</strong><small>{car.city_name} · {new Date(car.created_at).toLocaleDateString('ru-RU')}</small></span>
+                        </div>
+                      </td>
+                      <td>
+                        <select value={car.dealer} disabled={busy} aria-label="Перенести в салон"
+                          onChange={(e) => patch(car, { dealer: Number(e.target.value) }, 'Объявление перенесено в другой салон.')}>
+                          {!dealers.some((d) => d.id === car.dealer) && <option value={car.dealer}>{car.dealer_name}</option>}
+                          {dealers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                        </select>
+                        {car.dealer_is_active === false && <small className="text-danger">салон отключён</small>}
+                      </td>
+                      <td>{formatPrice(car.price, car.currency)}</td>
+                      <td>
+                        <select value={car.status} disabled={busy} aria-label="Статус"
+                          onChange={(e) => patch(car, { status: e.target.value }, 'Статус изменён.')}>
+                          {Object.entries(CAR_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </select>
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          {car.status === 'active' && car.dealer_is_active && (
+                            <Link className="icon-action" to={`/cars/${car.id}`} target="_blank" title="Открыть на сайте" aria-label="Открыть на сайте"><ExternalLink size={16} /></Link>
+                          )}
+                          <button className="icon-action icon-action--danger" type="button" disabled={busy} onClick={() => setConfirmDelete(car)} title="Удалить" aria-label="Удалить"><Trash2 size={16} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
           {pageCount > 1 && (
             <div className="admin-pagination">
               <span>{count} объявлений · страница {page} из {pageCount}</span>
               <div>
-                <button type="button" className="button button--secondary" disabled={page <= 1} onClick={() => changePage(page - 1)}><ChevronLeft size={16} /> Назад</button>
-                <button type="button" className="button button--secondary" disabled={page >= pageCount} onClick={() => changePage(page + 1)}>Далее <ChevronRight size={16} /></button>
+                <button type="button" className="button button--secondary" disabled={page <= 1} onClick={() => setQuery({ page: page - 1 > 1 ? String(page - 1) : '' })}><ChevronLeft size={16} /> Назад</button>
+                <button type="button" className="button button--secondary" disabled={page >= pageCount} onClick={() => setQuery({ page: String(page + 1) })}>Далее <ChevronRight size={16} /></button>
               </div>
             </div>
           )}
         </>
       ) : <div className="admin-empty">Объявления не найдены.</div>}
 
-      {rejecting && (
+      {confirmDelete && (
         <div className="admin-modal-backdrop" role="presentation">
-          <form className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="reject-title" onSubmit={reject}>
-            <h2 id="reject-title">Отклонить объявление</h2>
-            <p>{rejecting.title}</p>
-            <label className="field-label">Причина<textarea required maxLength={1000} rows={4} value={rejecting.reason} onChange={(event) => setRejecting({ ...rejecting, reason: event.target.value })} /></label>
+          <div className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="admin-delete-title">
+            <h2 id="admin-delete-title">Удалить объявление?</h2>
+            <p>«{confirmDelete.brand} {confirmDelete.model_name} {confirmDelete.year}» ({confirmDelete.dealer_name}) и все его фото будут удалены безвозвратно. Чтобы просто убрать с сайта, выберите статус «Скрыто».</p>
             <div className="admin-modal-actions">
-              <button type="button" className="button button--secondary" onClick={() => setRejecting(null)}>Отмена</button>
-              <button type="submit" className="button button--primary" disabled={workingId === rejecting.id || !rejecting.reason.trim()}>{workingId === rejecting.id ? 'Отправляем…' : 'Подтвердить отказ'}</button>
+              <button type="button" className="button button--secondary" onClick={() => setConfirmDelete(null)}>Отмена</button>
+              <button type="button" className="button button--danger" disabled={workingId === confirmDelete.id} onClick={remove}>Удалить</button>
             </div>
-          </form>
+          </div>
         </div>
       )}
     </section>

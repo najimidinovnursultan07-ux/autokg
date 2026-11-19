@@ -29,13 +29,9 @@ export async function deleteAdminCar(id) {
   await api.delete(`/admin/cars/${id}/`)
 }
 
-export async function approveAdminCar(id) {
-  const { data } = await api.post(`/cars/${id}/approve/`)
-  return data
-}
-
-export async function rejectAdminCar(id, reason) {
-  const { data } = await api.post(`/cars/${id}/reject/`, { reason })
+// Модерация: { status: 'active'|'hidden'|'sold' } и/или { dealer: id } (перенос в салон)
+export async function updateAdminCar(id, payload) {
+  const { data } = await api.patch(`/admin/cars/${id}/`, payload)
   return data
 }
 

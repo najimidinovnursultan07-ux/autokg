@@ -13,7 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.accounts.models import User
 from apps.cars.models import Brand, Car, CarImage, City, Model
-from apps.moderation.models import ModerationEvent
+from apps.dealers.models import Dealer
 
 
 class AdminApiTests(TestCase):
@@ -44,10 +44,12 @@ class AdminApiTests(TestCase):
             defaults={"name": "Camry"},
         )
         self.city = City.objects.get(slug="bishkek")
+        self.dealer = Dealer.objects.create(name="Салон", slug="salon")
 
-    def create_car(self, *, status=Car.Status.PENDING, owner=None):
+    def create_car(self, *, status=Car.Status.ACTIVE, owner=None):
         return Car.objects.create(
             owner=owner or self.user,
+            dealer=self.dealer,
             model=self.model,
             city=self.city,
             year=2020,
@@ -102,11 +104,7 @@ class AdminApiTests(TestCase):
                 self.assertEqual(self.client.get(path).status_code, 403)
 
         self.assertEqual(
-            self.client.get("/api/cars/moderation-queue/").status_code,
-            403,
-        )
-        self.assertEqual(
-            self.client.post(f"/api/cars/{car.pk}/approve/").status_code,
+            self.client.delete(f"/api/admin/cars/{car.pk}/").status_code,
             403,
         )
         self.client.force_authenticate(user=staff_user)
@@ -164,53 +162,26 @@ class AdminApiTests(TestCase):
             400,
         )
 
-    def test_admin_stats_and_car_list_filtering(self):
-        pending = self.create_car()
-        self.create_car(status=Car.Status.PUBLISHED)
-        removed = self.create_car(status=Car.Status.REMOVED)
+    def test_admin_car_list_filtering_and_hard_delete(self):
+        hidden = self.create_car(status=Car.Status.HIDDEN)
+        self.create_car()
         self.login_as_admin()
-
-        stats = self.client.get("/api/admin/stats/")
-        self.assertEqual(stats.status_code, 200)
-        self.assertEqual(stats.data["users"]["total"], 2)
-        self.assertEqual(stats.data["cars"]["total"], 3)
-        self.assertEqual(stats.data["cars"]["pending"], 1)
-        self.assertEqual(stats.data["cars"]["published"], 1)
-        self.assertEqual(stats.data["cars"]["removed"], 1)
 
         filtered = self.client.get(
             "/api/admin/cars/",
-            {"status": Car.Status.PENDING, "search": "buyer@example.com"},
+            {"status": Car.Status.HIDDEN, "search": "buyer@example.com"},
         )
         self.assertEqual(filtered.status_code, 200)
         self.assertEqual(filtered.data["count"], 1)
-        self.assertEqual(filtered.data["results"][0]["id"], str(pending.pk))
+        self.assertEqual(filtered.data["results"][0]["id"], str(hidden.pk))
 
-        deleted = self.client.delete(f"/api/admin/cars/{pending.pk}/")
+        deleted = self.client.delete(f"/api/admin/cars/{hidden.pk}/")
         self.assertEqual(deleted.status_code, 204)
-        pending.refresh_from_db()
-        self.assertEqual(pending.status, Car.Status.REMOVED)
-        self.assertTrue(
-            ModerationEvent.objects.filter(
-                car=pending,
-                actor=self.admin,
-                action=ModerationEvent.Action.REMOVED,
-            ).exists()
-        )
+        self.assertFalse(Car.objects.filter(pk=hidden.pk).exists())
 
-    def test_admin_can_moderate_and_manage_catalog(self):
-        car = self.create_car()
-        CarImage.objects.create(
-            car=car,
-            image=self.make_image(),
-            position=0,
-            is_cover=True,
-        )
+    def test_admin_can_manage_catalog(self):
+        self.create_car()
         self.login_as_admin()
-
-        approved = self.client.post(f"/api/cars/{car.pk}/approve/")
-        self.assertEqual(approved.status_code, 200)
-        self.assertEqual(approved.data["status"], Car.Status.PUBLISHED)
 
         brand = self.client.post(
             "/api/admin/brands/",
@@ -246,12 +217,3 @@ class AdminApiTests(TestCase):
             self.client.delete(f"/api/admin/brands/{self.brand.pk}/").status_code,
             409,
         )
-
-        rejected_car = self.create_car()
-        rejected = self.client.post(
-            f"/api/cars/{rejected_car.pk}/reject/",
-            {"reason": "Недостаточно информации в объявлении."},
-            format="json",
-        )
-        self.assertEqual(rejected.status_code, 200)
-        self.assertEqual(rejected.data["status"], Car.Status.REJECTED)

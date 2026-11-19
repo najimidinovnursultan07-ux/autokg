@@ -14,9 +14,4 @@ router.register("cars", CarViewSet, basename="car")
 
 urlpatterns = [
     path("", include(router.urls)),
-    path(
-        "my-cars/",
-        CarViewSet.as_view({"get": "my_cars"}),
-        name="my-cars",
-    ),
 ]

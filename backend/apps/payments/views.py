@@ -59,8 +59,8 @@ class CreatePaymentView(APIView):
 
         car = get_object_or_404(Car, pk=car_id)
 
-        # Только владелец может продвигать своё объявление
-        if car.owner_id != request.user.pk:
+        # Продвигать объявление может только менеджер его салона
+        if not request.user.dealer_id or car.dealer_id != request.user.dealer_id:
             return Response(
                 {"detail": "Вы не являетесь владельцем этого объявления."},
                 status=status.HTTP_403_FORBIDDEN,

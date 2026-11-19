@@ -4,6 +4,7 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase
 
 from apps.accounts.models import User
+from apps.dealers.models import Dealer
 from apps.favorites.models import Favorite
 from apps.favorites.serializers import FavoriteSerializer
 
@@ -35,6 +36,7 @@ class CarModelTests(TestCase):
     def create_car(self, **overrides):
         fields = {
             "owner": self.user,
+            "dealer": Dealer.objects.get_or_create(slug="salon", defaults={"name": "Салон"})[0],
             "model": self.model,
             "city": self.city,
             "year": 2020,
@@ -77,7 +79,7 @@ class CarModelTests(TestCase):
         self.assertIn("price", serializer.errors)
 
     def test_favorite_many_to_many_uses_unique_through_record(self):
-        car = self.create_car(status=Car.Status.PUBLISHED)
+        car = self.create_car(status=Car.Status.ACTIVE)
         Favorite.objects.create(user=self.user, car=car)
 
         self.assertEqual(list(self.user.favorite_cars.all()), [car])

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, ChevronLeft, ChevronRight, Eye, Fuel, Gauge, GitCompareArrows, MapPin, Phone, Settings2, ShieldCheck, X } from 'lucide-react'
+import { ArrowLeft, Building2, ChevronLeft, ChevronRight, Eye, Fuel, Gauge, GitCompareArrows, MapPin, Phone, Settings2, ShieldCheck, X } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { getCar } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
@@ -75,7 +75,7 @@ export default function CarDetailPage() {
   if (error || !car) return <div className="container page-section"><ErrorState message={error || 'Объявление не найдено.'} onRetry={loadCar} /><Link className="text-link" to="/catalog"><ArrowLeft size={17} /> Вернуться в каталог</Link></div>
 
   const images = car.images || []
-  const currentImage = images[activeImage]?.image
+  const currentImage = images[activeImage]?.url || images[activeImage]?.image
   const features = [
     ['Год выпуска', car.year],
     ['Пробег', formatMileage(car.mileage)],
@@ -85,6 +85,7 @@ export default function CarDetailPage() {
     ['Привод', labels.drive_type[car.drive_type] || car.drive_type],
     ['Кузов', labels.body_type[car.body_type] || car.body_type],
     ['Состояние', labels.condition[car.condition] || car.condition],
+    ...(car.color ? [['Цвет', car.color]] : []),
   ]
 
   return (
@@ -117,7 +118,7 @@ export default function CarDetailPage() {
                 <span className="gallery-counter">{activeImage + 1} / {images.length}</span>
               </>}
             </div>
-            {images.length > 1 && <div className="gallery-thumbs">{images.map((image, index) => <button key={image.id} className={index === activeImage ? 'gallery-thumb gallery-thumb--active' : 'gallery-thumb'} onClick={() => setActiveImage(index)} aria-label={`Фото ${index + 1}`}><img src={resolveMediaUrl(image.image)} alt="" /></button>)}</div>}
+            {images.length > 1 && <div className="gallery-thumbs">{images.map((image, index) => <button key={image.id} className={index === activeImage ? 'gallery-thumb gallery-thumb--active' : 'gallery-thumb'} onClick={() => setActiveImage(index)} aria-label={`Фото ${index + 1}`}><img src={resolveMediaUrl(image.thumb || image.image)} alt="" loading="lazy" /></button>)}</div>}
           </div>
           <div className="detail-card">
             <div className="detail-card-heading"><h2>Характеристики</h2><span><ShieldCheck size={16} /> Проверенное объявление</span></div>
@@ -127,35 +128,72 @@ export default function CarDetailPage() {
         </div>
         <aside className="seller-panel">
           <span className="eyebrow">Цена автомобиля</span>
-          <strong className="detail-price">{formatPrice(car.price)}</strong>
-          <div className="seller-summary">
-            <span className="seller-avatar">
-              {car.owner_detail?.profile_photo
-                ? <img src={resolveMediaUrl(car.owner_detail.profile_photo)} alt={car.owner_detail.first_name || 'Продавец'} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%'}} />
-                : <span>{(car.owner_detail?.first_name || car.contact_phone || 'A').slice(0, 1).toUpperCase()}</span>
-              }
-            </span>
-            <div>
-              <strong>
-                {car.owner_detail?.first_name || car.owner_detail?.last_name
-                  ? [car.owner_detail.first_name, car.owner_detail.last_name].filter(Boolean).join(' ')
-                  : 'Частный продавец'
-                }
-              </strong>
-              <span><MapPin size={14} /> {car.city_name || 'Кыргызстан'}</span>
+          <strong className="detail-price">{formatPrice(car.price, car.currency)}</strong>
+
+          {/* Dealer блок */}
+          {car.dealer_detail ? (
+            <div className="dealer-panel">
+              <Link to={`/dealers/${car.dealer_detail.slug}`} className="dealer-panel-header">
+                <span className="dealer-panel-logo">
+                  {car.dealer_detail.logo
+                    ? <img src={resolveMediaUrl(car.dealer_detail.logo)} alt={car.dealer_detail.name} />
+                    : <Building2 size={22} />
+                  }
+                </span>
+                <div>
+                  <strong>{car.dealer_detail.name}</strong>
+                  {car.dealer_detail.city_name && (
+                    <span><MapPin size={12} /> {car.dealer_detail.city_name}</span>
+                  )}
+                </div>
+              </Link>
+              {car.dealer_detail.address && (
+                <p className="dealer-panel-address">{car.dealer_detail.address}</p>
+              )}
             </div>
-          </div>
-          <a
-            className="seller-whatsapp"
-            href={`https://wa.me/${car.contact_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Интересует ваш ${getCarTitle(car)} на AutoKG`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Написать в WhatsApp
-          </a>
-          <a className="seller-phone" href={`tel:${car.contact_phone}`}>{car.contact_phone}</a>
+          ) : (
+            <div className="seller-summary">
+              <span className="seller-avatar">
+                {car.owner_detail?.profile_photo
+                  ? <img src={resolveMediaUrl(car.owner_detail.profile_photo)} alt={car.owner_detail.first_name || 'Продавец'} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%'}} />
+                  : <span>{(car.owner_detail?.first_name || car.contact_phone || 'A').slice(0, 1).toUpperCase()}</span>
+                }
+              </span>
+              <div>
+                <strong>
+                  {car.owner_detail?.first_name || car.owner_detail?.last_name
+                    ? [car.owner_detail.first_name, car.owner_detail.last_name].filter(Boolean).join(' ')
+                    : 'Частный продавец'
+                  }
+                </strong>
+                <span><MapPin size={14} /> {car.city_name || 'Кыргызстан'}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Контакты */}
+          {(car.dealer_detail?.whatsapp || car.contact_phone) && (
+            <a
+              className="seller-whatsapp"
+              href={`https://wa.me/${(car.dealer_detail?.whatsapp || car.contact_phone)?.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Интересует ${getCarTitle(car)} на AutoKG`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Написать в WhatsApp
+            </a>
+          )}
+          {(car.dealer_detail?.phone || car.contact_phone) && (
+            <a className="seller-phone" href={`tel:${car.dealer_detail?.phone || car.contact_phone}`}>
+              <Phone size={14} /> {car.dealer_detail?.phone || car.contact_phone}
+            </a>
+          )}
+
           <div className="seller-notice"><ShieldCheck size={17} /><span>Не переводите предоплату до личного осмотра автомобиля.</span></div>
-          <div className="seller-facts"><span><Gauge size={16} />{formatMileage(car.mileage)}</span><span><Fuel size={16} />{labels.engine_type[car.engine_type] || '—'}</span><span><Settings2 size={16} />{labels.transmission[car.transmission] || '—'}</span></div>
+          <div className="seller-facts">
+            <span><Gauge size={16} />{formatMileage(car.mileage)}</span>
+            <span><Fuel size={16} />{labels.engine_type[car.engine_type] || '—'}</span>
+            <span><Settings2 size={16} />{labels.transmission[car.transmission] || '—'}</span>
+          </div>
         </aside>
       </div>
 
@@ -165,7 +203,7 @@ export default function CarDetailPage() {
           <button className="lightbox-close" onClick={() => setLightbox(false)} aria-label="Закрыть"><X size={24} /></button>
           <button className="lightbox-arrow lightbox-arrow--left" onClick={(e) => { e.stopPropagation(); setActiveImage((activeImage - 1 + images.length) % images.length) }} aria-label="Предыдущее фото"><ChevronLeft size={36} /></button>
           <div className="lightbox-img-wrap" onClick={(e) => e.stopPropagation()}>
-            <img src={resolveMediaUrl(images[activeImage]?.image)} alt={getCarTitle(car)} />
+            <img src={resolveMediaUrl(images[activeImage]?.url || images[activeImage]?.image)} alt={getCarTitle(car)} />
             <span className="lightbox-counter">{activeImage + 1} / {images.length}</span>
           </div>
           <button className="lightbox-arrow lightbox-arrow--right" onClick={(e) => { e.stopPropagation(); setActiveImage((activeImage + 1) % images.length) }} aria-label="Следующее фото"><ChevronRight size={36} /></button>

@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 
 MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
+MAX_UPLOAD_PHOTO_BYTES = 5 * 1024 * 1024  # фото машин и логотипы салонов
 MAX_IMAGE_PIXELS = 40_000_000
 ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP"}
 ALLOWED_IMAGE_EXTENSIONS = {
@@ -14,10 +15,16 @@ ALLOWED_IMAGE_EXTENSIONS = {
 
 
 class ValidatedImageField(serializers.ImageField):
+    """Проверяет формат по содержимому (Pillow), размер и разрешение."""
+
+    def __init__(self, *args, max_size=MAX_IMAGE_SIZE_BYTES, **kwargs):
+        self.max_size = max_size
+        super().__init__(*args, **kwargs)
+
     def to_internal_value(self, data):
-        if data.size > MAX_IMAGE_SIZE_BYTES:
+        if getattr(data, "size", 0) > self.max_size:
             raise serializers.ValidationError(
-                "Размер изображения не должен превышать 10 МБ."
+                f"Размер изображения не должен превышать {self.max_size // (1024 * 1024)} МБ."
             )
 
         image = super().to_internal_value(data)

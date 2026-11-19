@@ -1130,3 +1130,63 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 @media (max-width: 600px) {
   .dealer-detail-header { flex-direction: column; }
 }
+
+/* ── Dealer panel (CarDetail sidebar) ── */
+.dealer-panel { margin: 14px 0; }
+.dealer-panel-header { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; text-decoration: none; color: var(--ink); transition: background .15s; }
+.dealer-panel-header:hover { background: #f8fafc; }
+.dealer-panel-logo { width: 48px; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #f1f5f9; overflow: hidden; }
+.dealer-panel-logo img { width: 100%; height: 100%; object-fit: contain; }
+.dealer-panel-header > div { display: flex; flex-direction: column; gap: 4px; }
+.dealer-panel-header strong { font-size: 14px; font-weight: 700; }
+.dealer-panel-header span { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.dealer-panel-address { font-size: 12px; color: var(--muted); margin: 8px 0 0 0; padding: 0 4px; }
+.seller-phone { display: flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--ink); font-size: 15px; font-weight: 700; text-align: center; justify-content: center; text-decoration: none; }
+.seller-phone:hover { color: var(--accent); }
+
+/* ── Закрытая модель: салоны, кабинет, админка ── */
+.car-card-dealer { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; font-weight: 600; text-decoration: none; min-width: 0; }
+.car-card-dealer:hover { color: var(--accent); }
+.car-card-dealer > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.car-card-dealer-logo { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; overflow: hidden; border-radius: 6px; background: #f1f5f9; }
+.car-card-dealer-logo img { width: 100%; height: 100%; object-fit: contain; }
+
+.admin-status--hidden { background: #fff5e2; color: #a47826; }
+.status-pill--active { background: #e6f4e9; color: #34704a; }
+.status-pill--hidden { background: #fdf2d9; color: #98722b; }
+.status-pill--sold { background: #edf0f3; color: #657280; }
+
+.dealer-status-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.dealer-status-tab { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+.dealer-status-tab--active { border-color: var(--accent); background: #eaf2ff; color: var(--accent); }
+
+.dealer-car-cell { display: flex; align-items: center; gap: 10px; min-width: 220px; }
+.dealer-car-cell > span:last-child { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.dealer-car-cell a { color: var(--ink); text-decoration: none; }
+.dealer-car-cell small { color: var(--muted); }
+.dealer-car-thumb { display: grid; width: 72px; height: 54px; flex: 0 0 auto; place-items: center; overflow: hidden; border-radius: 8px; background: #f1f5f9; color: var(--muted); font-size: 10px; }
+.dealer-car-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.table-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-table select { max-width: 190px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: white; font: inherit; font-size: 13px; }
+
+.button--danger { border: 1px solid #c2414f; background: #c2414f; color: white; }
+.button--danger:hover:not(:disabled) { background: #a83341; }
+.admin-modal--wide { width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+.credentials-box { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 10px; background: var(--soft); font-size: 14px; word-break: break-all; }
+.checkbox-label { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 14px; }
+.field-error { color: #c2414f; font-size: 12px; }
+.text-danger { display: block; color: #c2414f; font-size: 11px; }
+.admin-section-title { margin: 8px 0 12px; font-size: 18px; }
+
+.dealer-profile-logo-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 16px; }
+.dealer-panel-logo--lg { width: 84px; height: 84px; border: 1px solid var(--line); }
+.dealer-blocked-alert { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px; }
+.form-photo--new { outline: 2px dashed #9cc1f3; outline-offset: -2px; }
+.new-photo-tag { position: absolute; right: 8px; top: 8px; padding: 2px 6px; border-radius: 4px; background: #2878e5; color: white; font-size: 10px; font-weight: 700; }
+.dealer-all-cars { margin-top: 18px; }
+
+@media (max-width: 720px) {
+  .admin-toolbar { flex-direction: column; align-items: stretch; }
+  .dealer-car-cell { min-width: 180px; }
+  .dealer-car-thumb { width: 56px; height: 42px; }
+}

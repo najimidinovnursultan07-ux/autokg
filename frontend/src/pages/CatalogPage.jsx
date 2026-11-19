@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Clock, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { getLookups, listCars } from '../api/cars.js'
+import { getDealers } from '../api/dealers.js'
 import CarGrid from '../components/cars/CarGrid.jsx'
 import { EmptyState, ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
@@ -12,12 +13,13 @@ const emptyFilters = {
   brand: '',
   model: '',
   city: '',
-  min_price: '',
-  max_price: '',
-  min_year: '',
-  max_year: '',
-  min_mileage: '',
-  max_mileage: '',
+  dealer: '',
+  price_min: '',
+  price_max: '',
+  year_min: '',
+  year_max: '',
+  mileage_min: '',
+  mileage_max: '',
   engine_type: '',
   transmission: '',
   drive_type: '',
@@ -59,12 +61,12 @@ const filtersOptions = {
 
 export default function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [lookups, setLookups] = useState({ brands: [], models: [], cities: [] })
+  const [lookups, setLookups] = useState({ brands: [], models: [], cities: [], dealers: [] })
   const [lookupsError, setLookupsError] = useState('')
 
   useEffect(() => {
-    getLookups()
-      .then(setLookups)
+    Promise.all([getLookups(), getDealers().catch(() => [])])
+      .then(([catalog, dealers]) => setLookups({ ...catalog, dealers }))
       .catch((requestError) => setLookupsError(getErrorMessage(requestError)))
   }, [])
 
@@ -210,9 +212,10 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
             <label className="field-label">Марка<select value={filters.brand} onChange={(e) => update('brand', e.target.value)}><option value="">Любая марка</option>{lookups.brands.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
             <label className="field-label">Модель<select value={filters.model} onChange={(e) => update('model', e.target.value)}><option value="">Любая модель</option>{visibleModels.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
             <label className="field-label">Город<select value={filters.city} onChange={(e) => update('city', e.target.value)}><option value="">Любой город</option>{lookups.cities.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
-            <div className="field-label">Цена, сом<div className="field-range"><input type="number" min="0" placeholder="От" value={filters.min_price} onChange={(e) => update('min_price', e.target.value)} /><input type="number" min="0" placeholder="До" value={filters.max_price} onChange={(e) => update('max_price', e.target.value)} /></div></div>
-            <div className="field-label">Год выпуска<div className="field-range"><input type="number" min="1886" max="2100" placeholder="От" value={filters.min_year} onChange={(e) => update('min_year', e.target.value)} /><input type="number" min="1886" max="2100" placeholder="До" value={filters.max_year} onChange={(e) => update('max_year', e.target.value)} /></div></div>
-            <div className="field-label">Пробег, км<div className="field-range"><input type="number" min="0" placeholder="От" value={filters.min_mileage} onChange={(e) => update('min_mileage', e.target.value)} /><input type="number" min="0" placeholder="До" value={filters.max_mileage} onChange={(e) => update('max_mileage', e.target.value)} /></div></div>
+            <label className="field-label">Автосалон<select value={filters.dealer} onChange={(e) => update('dealer', e.target.value)}><option value="">Все салоны</option>{(lookups.dealers || []).map((item) => <option value={item.slug} key={item.id}>{item.name}</option>)}</select></label>
+            <div className="field-label">Цена, сом<div className="field-range"><input type="number" min="0" placeholder="От" value={filters.price_min} onChange={(e) => update('price_min', e.target.value)} /><input type="number" min="0" placeholder="До" value={filters.price_max} onChange={(e) => update('price_max', e.target.value)} /></div></div>
+            <div className="field-label">Год выпуска<div className="field-range"><input type="number" min="1980" max="2100" placeholder="От" value={filters.year_min} onChange={(e) => update('year_min', e.target.value)} /><input type="number" min="1980" max="2100" placeholder="До" value={filters.year_max} onChange={(e) => update('year_max', e.target.value)} /></div></div>
+            <div className="field-label">Пробег, км<div className="field-range"><input type="number" min="0" placeholder="От" value={filters.mileage_min} onChange={(e) => update('mileage_min', e.target.value)} /><input type="number" min="0" placeholder="До" value={filters.mileage_max} onChange={(e) => update('mileage_max', e.target.value)} /></div></div>
             {Object.entries(filtersOptions).map(([field, options]) => (
               <label className="field-label" key={field}>{{
                 engine_type: 'Двигатель',

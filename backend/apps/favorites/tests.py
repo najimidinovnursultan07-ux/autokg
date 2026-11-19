@@ -3,6 +3,7 @@ from rest_framework.test import APIClient
 
 from apps.accounts.models import User
 from apps.cars.models import Brand, Car, City, Model
+from apps.dealers.models import Dealer
 from apps.favorites.models import Favorite
 
 
@@ -31,6 +32,7 @@ class FavoriteApiTests(TestCase):
         city = City.objects.get(slug="bishkek")
         self.car = Car.objects.create(
             owner=self.user,
+            dealer=Dealer.objects.create(name="Салон", slug="salon"),
             model=model,
             city=city,
             year=2020,
@@ -44,7 +46,7 @@ class FavoriteApiTests(TestCase):
             condition=Car.Condition.USED,
             description="Автомобиль в хорошем состоянии.",
             contact_phone="+996700123456",
-            status=Car.Status.PUBLISHED,
+            status=Car.Status.ACTIVE,
         )
 
     def test_favorites_require_authentication_and_return_car_data(self):

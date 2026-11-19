@@ -87,15 +87,6 @@ export function AuthProvider({ children }) {
     [acceptSession],
   )
 
-  const signUp = useCallback(
-    async (details) => {
-      const data = await authApi.register(details)
-      acceptSession(data)
-      return data.user
-    },
-    [acceptSession],
-  )
-
   const signOut = useCallback(async () => {
     try {
       if (user) await authApi.logout()
@@ -122,12 +113,11 @@ export function AuthProvider({ children }) {
       loading,
       isAuthenticated: Boolean(user),
       signIn,
-      signUp,
       signOut,
       refreshUser,
       setUser,
     }),
-    [user, loading, signIn, signUp, signOut, refreshUser],
+    [user, loading, signIn, signOut, refreshUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -38,30 +38,6 @@ class AuthenticationApiTests(TestCase):
             "password_confirmation": self.password,
         }
 
-    def test_registration_sets_httponly_refresh_cookie(self):
-        response = self.client.post(
-            "/api/auth/register/",
-            self.register_payload(),
-            format="json",
-            **self.csrf_headers,
-        )
-
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("access", response.data)
-        self.assertNotIn("refresh", response.data)
-        self.assertTrue(response.cookies["autokg_refresh"]["httponly"])
-        self.assertTrue(User.objects.filter(email="buyer@example.com").exists())
-
-    def test_registration_requires_csrf_token(self):
-        response = self.client.post(
-            "/api/auth/register/",
-            self.register_payload(),
-            format="json",
-        )
-
-        self.assertEqual(response.status_code, 403)
-        self.assertFalse(User.objects.exists())
-
     def test_local_frontend_origin_supports_credentialed_csrf_requests(self):
         frontend_origin = "http://127.0.0.1:5173"
         csrf = self.client.get(
@@ -76,55 +52,15 @@ class AuthenticationApiTests(TestCase):
         )
         self.assertEqual(csrf["Access-Control-Allow-Credentials"], "true")
 
+        User.objects.create_user(email="buyer@example.com", password=self.password)
         response = self.client.post(
-            "/api/auth/register/",
-            self.register_payload(),
+            "/api/auth/login/",
+            {"email": "buyer@example.com", "password": self.password},
             format="json",
             HTTP_ORIGIN=frontend_origin,
             **self.csrf_headers,
         )
-        self.assertEqual(response.status_code, 201)
-
-    def test_registration_rejects_duplicate_email_and_invalid_phone(self):
-        User.objects.create_user(
-            email="buyer@example.com",
-            password=self.password,
-            phone="+996700123456",
-        )
-        duplicate = self.client.post(
-            "/api/auth/register/",
-            self.register_payload(),
-            format="json",
-            **self.csrf_headers,
-        )
-        self.assertEqual(duplicate.status_code, 400)
-
-        payload = self.register_payload()
-        payload["email"] = "another@example.com"
-        payload["phone"] = "not-a-phone"
-        invalid_phone = self.client.post(
-            "/api/auth/register/",
-            payload,
-            format="json",
-            **self.csrf_headers,
-        )
-        self.assertEqual(invalid_phone.status_code, 400)
-        self.assertEqual(User.objects.count(), 1)
-
-    def test_registration_requires_name_and_password_confirmation(self):
-        payload = self.register_payload()
-        payload.pop("first_name")
-        payload["password_confirmation"] = "does-not-match"
-
-        response = self.client.post(
-            "/api/auth/register/",
-            payload,
-            format="json",
-            **self.csrf_headers,
-        )
-
-        self.assertEqual(response.status_code, 400)
-        self.assertFalse(User.objects.exists())
+        self.assertEqual(response.status_code, 200)
 
     def test_login_refresh_and_logout(self):
         user = User.objects.create_user(

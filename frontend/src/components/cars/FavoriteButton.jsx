@@ -35,6 +35,9 @@ export default function FavoriteButton({ car, className = '' }) {
     }
   }
 
+  // Публичной регистрации нет — гостям кнопка избранного не показывается
+  if (!isAuthenticated) return null
+
   return (
     <button
       type="button"

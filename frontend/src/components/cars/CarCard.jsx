@@ -1,4 +1,4 @@
-import { ArrowUpRight, Gauge, MapPin, Settings2 } from 'lucide-react'
+import { ArrowUpRight, Building2, Gauge, MapPin, Settings2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { resolveMediaUrl } from '../../api/client.js'
 import { formatMileage, formatPrice, getCarCover, getCarTitle } from '../../utils/format.js'
@@ -36,12 +36,22 @@ export default function CarCard({ car, featured = false }) {
             <ArrowUpRight size={17} />
           </Link>
         </div>
-        <strong className="car-card-price">{formatPrice(car.price)}</strong>
+        <strong className="car-card-price">{formatPrice(car.price, car.currency)}</strong>
         <div className="car-card-meta">
           <span><Gauge size={15} />{formatMileage(car.mileage)}</span>
           <span><Settings2 size={15} />{transmissionLabels[car.transmission] || '—'}</span>
           <span><MapPin size={15} />{car.city_name || 'Кыргызстан'}</span>
         </div>
+        {car.dealer_detail && (
+          <Link to={`/dealers/${car.dealer_detail.slug}`} className="car-card-dealer">
+            <span className="car-card-dealer-logo">
+              {car.dealer_detail.logo
+                ? <img src={resolveMediaUrl(car.dealer_detail.logo)} alt="" loading="lazy" />
+                : <Building2 size={14} />}
+            </span>
+            <span>{car.dealer_detail.name}</span>
+          </Link>
+        )}
       </div>
     </article>
   )

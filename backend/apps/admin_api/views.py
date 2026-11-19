@@ -1,8 +1,8 @@
-from django.db import transaction
+from django.utils import timezone
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
-from rest_framework import mixins, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -18,7 +18,7 @@ from apps.cars.models import Brand, Car, City, Model
 from apps.cars.pagination import CarPagination
 from apps.cars.serializers import BrandSerializer, CitySerializer, ModelSerializer
 from apps.common.permissions import IsAutoKGAdmin
-from apps.moderation.models import ModerationEvent
+from apps.dealers.models import Dealer
 
 from .serializers import AdminCarSerializer, AdminUserSerializer
 
@@ -30,22 +30,39 @@ class AdminPagination(PageNumberPagination):
 
 
 class AdminStatsView(APIView):
+    """Число салонов, объявлений и объявлений по салонам."""
+
     permission_classes = (IsAutoKGAdmin,)
 
     def get(self, request):
-        user_counts = User.objects.aggregate(
+        dealers = Dealer.objects.aggregate(
             total=Count("id"),
             active=Count("id", filter=Q(is_active=True)),
-            blocked=Count("id", filter=Q(is_active=False)),
         )
-        car_counts = Car.objects.aggregate(
+        cars = Car.objects.aggregate(
             total=Count("id"),
-            pending=Count("id", filter=Q(status=Car.Status.PENDING)),
-            published=Count("id", filter=Q(status=Car.Status.PUBLISHED)),
-            inactive=Count("id", filter=Q(status=Car.Status.INACTIVE)),
-            removed=Count("id", filter=Q(status=Car.Status.REMOVED)),
+            active=Count("id", filter=Q(status=Car.Status.ACTIVE)),
+            hidden=Count("id", filter=Q(status=Car.Status.HIDDEN)),
+            sold=Count("id", filter=Q(status=Car.Status.SOLD)),
         )
-        return Response({"users": user_counts, "cars": car_counts})
+        managers = User.objects.filter(role=User.Role.DEALER).aggregate(
+            total=Count("id"),
+            active=Count("id", filter=Q(is_active=True)),
+        )
+        by_dealer = list(
+            Dealer.objects.annotate(
+                total=Count("cars"),
+                active=Count("cars", filter=Q(cars__status=Car.Status.ACTIVE)),
+            )
+            .values("id", "name", "slug", "is_active", "total", "active")
+            .order_by("-total", "name")
+        )
+        return Response({
+            "dealers": dealers,
+            "cars": cars,
+            "managers": managers,
+            "cars_by_dealer": by_dealer,
+        })
 
 
 class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -83,12 +100,9 @@ class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
         return self._set_active(request, pk, active=True)
 
 
-class AdminCarViewSet(
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class AdminCarViewSet(viewsets.ModelViewSet):
+    """Модерация всех объявлений: просмотр, смена статуса / салона, удаление."""
+
     serializer_class = AdminCarSerializer
     permission_classes = (IsAutoKGAdmin,)
     pagination_class = CarPagination
@@ -98,31 +112,28 @@ class AdminCarViewSet(
         "model__brand__name",
         "model__name",
         "owner__email",
+        "dealer__name",
         "contact_phone",
     )
-    ordering_fields = ("created_at", "published_at", "price", "year")
+    ordering_fields = ("created_at", "published_at", "price", "year", "views_count")
     ordering = ("-created_at",)
     lookup_value_regex = "[0-9a-f-]{36}"
+    http_method_names = ("get", "patch", "delete", "head", "options")
 
     def get_queryset(self):
         return Car.objects.select_related(
-            "owner",
-            "model",
-            "model__brand",
-            "city",
-        )
+            "owner", "dealer", "model", "model__brand", "city"
+        ).prefetch_related("images")
+
+    def perform_update(self, serializer):
+        car = serializer.save()
+        if car.status == Car.Status.ACTIVE and car.published_at is None:
+            car.published_at = timezone.now()
+            car.save(update_fields=("published_at", "updated_at"))
 
     def perform_destroy(self, instance):
-        with transaction.atomic():
-            car = Car.objects.select_for_update().get(pk=instance.pk)
-            if car.status != Car.Status.REMOVED:
-                car.status = Car.Status.REMOVED
-                car.save(update_fields=("status", "updated_at"))
-                ModerationEvent.objects.create(
-                    car=car,
-                    actor=self.request.user,
-                    action=ModerationEvent.Action.REMOVED,
-                )
+        # Файлы фото удаляются из Cloudinary сигналом post_delete
+        instance.delete()
 
 
 class ProtectedCatalogViewSet(viewsets.ModelViewSet):

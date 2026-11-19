@@ -23,14 +23,16 @@ from .serializers import (
     PasswordChangeSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
-    RegistrationSerializer,
     UserSerializer,
 )
 from .tokens import (
-    issue_token_pair,
     revoke_user_refresh_tokens,
     set_refresh_cookie,
 )
+
+
+# Публичной регистрации нет: аккаунты менеджеров создаёт администратор
+# через /api/admin/managers/.
 
 
 class CookieTokenObtainPairView(TokenObtainPairView):
@@ -73,25 +75,6 @@ class CookieTokenRefreshView(TokenRefreshView):
         response = Response(response_data, status=status.HTTP_200_OK)
         if new_refresh:
             set_refresh_cookie(response, new_refresh)
-        return response
-
-
-class RegistrationView(generics.CreateAPIView):
-    serializer_class = RegistrationSerializer
-    permission_classes = [AllowAny]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth"
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        access, refresh = issue_token_pair(user)
-        response = Response(
-            {"user": UserSerializer(user).data, "access": access},
-            status=status.HTTP_201_CREATED,
-        )
-        set_refresh_cookie(response, refresh)
         return response
 
 

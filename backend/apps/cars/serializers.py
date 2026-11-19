@@ -1,3 +1,6 @@
+import re
+
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.common.serializers import (
@@ -8,7 +11,13 @@ from apps.common.serializers import (
     ValidatedImageField,
 )
 
+from apps.common.media import FULL_TRANSFORM, THUMB_TRANSFORM, cloudinary_variant, file_url
+from apps.common.serializers import MAX_UPLOAD_PHOTO_BYTES
+
 from .models import Brand, Car, CarImage, City, Model
+
+MAX_IMAGES_PER_CAR = 15
+MIN_CAR_YEAR = 1980
 
 
 def get_active_promotions(car):
@@ -20,6 +29,7 @@ def get_active_promotions(car):
         expires_at__gt=timezone.now(),
     ).values("promotion_type", "expires_at")
 
+PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
 MAX_IMAGE_BATCH_SIZE_BYTES = 30 * 1024 * 1024
 
 
@@ -53,17 +63,29 @@ class CitySerializer(serializers.ModelSerializer):
 
 
 class CarImageSerializer(serializers.ModelSerializer):
+    """Фото машины. image — оригинал, url — w_1600 (f_auto,q_auto), thumb — w_400."""
+    url = serializers.SerializerMethodField()
+    thumb = serializers.SerializerMethodField()
+
     class Meta:
         model = CarImage
         fields = (
             "id",
             "image",
+            "url",
+            "thumb",
             "position",
             "is_cover",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "created_at", "updated_at")
+        read_only_fields = fields
+
+    def get_url(self, obj):
+        return cloudinary_variant(file_url(obj.image, self.context.get("request")), FULL_TRANSFORM)
+
+    def get_thumb(self, obj):
+        return cloudinary_variant(file_url(obj.image, self.context.get("request")), THUMB_TRANSFORM)
 
 
 class CarImageUpdateSerializer(serializers.Serializer):
@@ -81,7 +103,7 @@ class CarImageReorderSerializer(serializers.Serializer):
     image_ids = serializers.ListField(
         child=serializers.IntegerField(min_value=1),
         allow_empty=False,
-        max_length=20,
+        max_length=MAX_IMAGES_PER_CAR,
     )
 
     def validate_image_ids(self, image_ids):
@@ -94,9 +116,9 @@ class CarImageReorderSerializer(serializers.Serializer):
 
 class CarImagesUploadSerializer(serializers.Serializer):
     images = serializers.ListField(
-        child=ValidatedImageField(),
+        child=ValidatedImageField(max_size=MAX_UPLOAD_PHOTO_BYTES),
         allow_empty=False,
-        max_length=10,
+        max_length=MAX_IMAGES_PER_CAR,
     )
 
     def validate_images(self, images):
@@ -105,10 +127,6 @@ class CarImagesUploadSerializer(serializers.Serializer):
                 "Общий размер фотографий в запросе не должен превышать 30 МБ."
             )
         return images
-
-
-class RejectCarSerializer(serializers.Serializer):
-    reason = serializers.CharField(max_length=1000, allow_blank=False)
 
 
 class CarOwnerSerializer(serializers.ModelSerializer):
@@ -120,12 +138,36 @@ class CarOwnerSerializer(serializers.ModelSerializer):
         fields = ("id", "first_name", "last_name", "profile_photo")
 
 
+class CarDealerSerializer(serializers.Serializer):
+    """Вложенный блок салона в карточке машины."""
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    slug = serializers.CharField(read_only=True)
+    logo = serializers.SerializerMethodField()
+    phone = serializers.CharField(read_only=True)
+    whatsapp = serializers.CharField(read_only=True)
+    address = serializers.CharField(read_only=True)
+    city_name = serializers.SerializerMethodField()
+
+    def get_city_name(self, obj):
+        return obj.city.name if obj.city else None
+
+    def get_logo(self, obj):
+        return cloudinary_variant(
+            file_url(obj.logo, self.context.get("request")), "f_auto,q_auto,c_limit,w_200"
+        )
+
+
 class CarSerializer(serializers.ModelSerializer):
     brand = serializers.CharField(source="model.brand.name", read_only=True)
     model_name = serializers.CharField(source="model.name", read_only=True)
     city_name = serializers.CharField(source="city.name", read_only=True)
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
     owner_detail = CarOwnerSerializer(source="owner", read_only=True)
+    # dealer ВСЕГДА выставляется на сервере (perform_create), из тела запроса игнорируется
+    dealer = serializers.PrimaryKeyRelatedField(read_only=True)
+    contact_phone = serializers.CharField(max_length=16, required=False, allow_blank=True)
+    dealer_detail = CarDealerSerializer(source="dealer", read_only=True)
     images = CarImageSerializer(many=True, read_only=True)
     is_top = serializers.SerializerMethodField()
     is_highlighted = serializers.SerializerMethodField()
@@ -167,6 +209,8 @@ class CarSerializer(serializers.ModelSerializer):
             "id",
             "owner",
             "owner_detail",
+            "dealer",
+            "dealer_detail",
             "brand",
             "model",
             "model_name",
@@ -174,6 +218,7 @@ class CarSerializer(serializers.ModelSerializer):
             "city_name",
             "year",
             "price",
+            "currency",
             "mileage",
             "engine_volume",
             "engine_type",
@@ -181,6 +226,7 @@ class CarSerializer(serializers.ModelSerializer):
             "drive_type",
             "body_type",
             "condition",
+            "color",
             "description",
             "contact_phone",
             "status",
@@ -198,10 +244,11 @@ class CarSerializer(serializers.ModelSerializer):
             "id",
             "owner",
             "owner_detail",
+            "dealer",
+            "dealer_detail",
             "brand",
             "model_name",
             "city_name",
-            "status",
             "views_count",
             "is_top",
             "is_highlighted",
@@ -223,6 +270,37 @@ class CarSerializer(serializers.ModelSerializer):
                 "Нельзя создать объявление для неактивной марки."
             )
         return value
+
+    def validate_price(self, value):
+        if value is None or value <= 0:
+            raise serializers.ValidationError("Цена должна быть больше нуля.")
+        return value
+
+    def validate_year(self, value):
+        max_year = timezone.now().year + 1
+        if not MIN_CAR_YEAR <= value <= max_year:
+            raise serializers.ValidationError(
+                f"Год выпуска должен быть от {MIN_CAR_YEAR} до {max_year}."
+            )
+        return value
+
+    def validate_contact_phone(self, value):
+        value = (value or "").replace(" ", "").replace("-", "")
+        if value and not PHONE_RE.match(value):
+            raise serializers.ValidationError("Введите телефон в международном формате.")
+        return value
+
+    def create(self, validated_data):
+        # Телефон по умолчанию — телефон салона
+        if not validated_data.get("contact_phone"):
+            dealer = validated_data.get("dealer")
+            fallback = re.sub(r"[^\d+]", "", (dealer.phone or dealer.whatsapp) if dealer else "")
+            if not PHONE_RE.match(fallback):
+                raise serializers.ValidationError(
+                    {"contact_phone": "Укажите телефон или заполните телефон в профиле салона."}
+                )
+            validated_data["contact_phone"] = fallback
+        return super().create(validated_data)
 
     def validate_city(self, value):
         if not value.is_active:
