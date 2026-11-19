@@ -1283,3 +1283,7 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 @media (max-width: 420px) {
   .shelf-track { --gutter: 12px; }
 }
+
+.dealer-admin-fieldset { margin: 14px 0 6px; padding: 12px 14px 4px; border: 1px solid #cfe0f7; border-radius: 12px; background: #f5f9ff; }
+.dealer-admin-fieldset legend { display: inline-flex; align-items: center; gap: 6px; padding: 0 6px; color: var(--accent); font-weight: 700; }
+.dealer-admin-fieldset .field-hint { margin: 0 0 10px; }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Building2, Edit3, ImagePlus, Plus, Power, Search, Trash2 } from 'lucide-react'
+import { Building2, Edit3, ImagePlus, Plus, Power, Search, Trash2, UserCog, Wand2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getLookups } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
@@ -10,6 +10,7 @@ import {
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
+import { generatePassword } from '../utils/password.js'
 
 const emptyForm = { name: '', slug: '', phone: '', whatsapp: '', address: '', city: '', description: '', is_active: true }
 const MAX_LOGO = 5 * 1024 * 1024
@@ -26,6 +27,8 @@ export default function AdminDealersPage() {
   const [logoFile, setLogoFile] = useState(null)
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [admin, setAdmin] = useState({ email: '', password: '', first_name: '' })
+  const [issued, setIssued] = useState(null)
 
   const logoPreview = useMemo(() => (logoFile ? URL.createObjectURL(logoFile) : ''), [logoFile])
   useEffect(() => () => logoPreview && URL.revokeObjectURL(logoPreview), [logoPreview])
@@ -49,6 +52,7 @@ export default function AdminDealersPage() {
   const open = (dealer) => {
     setEditing(dealer || {})
     setLogoFile(null)
+    setAdmin({ email: '', password: generatePassword(), first_name: '' })
     setForm(dealer
       ? Object.fromEntries(Object.keys(emptyForm).map((k) => [k, dealer[k] ?? emptyForm[k]]))
       : emptyForm)
@@ -74,8 +78,11 @@ export default function AdminDealersPage() {
         await updateAdminDealer(editing.id, payload)
         notify('Салон обновлён.', 'success')
       } else {
-        await createAdminDealer(payload)
-        notify('Салон создан. Теперь добавьте ему менеджера.', 'success')
+        payload.append('admin_email', admin.email.trim())
+        payload.append('admin_password', admin.password)
+        payload.append('admin_first_name', admin.first_name.trim())
+        const created = await createAdminDealer(payload)
+        setIssued({ dealer: created.name, email: created.admin?.email || admin.email.trim(), password: admin.password })
       }
       setEditing(null)
       await load()
@@ -175,12 +182,48 @@ export default function AdminDealersPage() {
               <label className="field-label">Адрес<input maxLength="300" value={form.address} onChange={set('address')} /></label>
             </div>
             <label className="field-label">Описание<textarea rows={3} value={form.description} onChange={set('description')} /></label>
+            {!editing.id && (
+              <fieldset className="dealer-admin-fieldset">
+                <legend><UserCog size={16} /> Администратор салона</legend>
+                <p className="field-hint">Аккаунт для входа в панель салона: он сможет добавлять и редактировать объявления только этого салона.</p>
+                <div className="form-grid">
+                  <label className="field-label">Email для входа *<input type="email" required value={admin.email} onChange={(e) => setAdmin({ ...admin, email: e.target.value })} placeholder="admin@salon.kg" /></label>
+                  <label className="field-label">Имя<input value={admin.first_name} onChange={(e) => setAdmin({ ...admin, first_name: e.target.value })} /></label>
+                  <label className="field-label">Пароль *
+                    <span className="field-range">
+                      <input required minLength={12} value={admin.password} onChange={(e) => setAdmin({ ...admin, password: e.target.value })} />
+                      <button type="button" className="button button--outline" onClick={() => setAdmin({ ...admin, password: generatePassword() })} title="Сгенерировать"><Wand2 size={15} /></button>
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
+            )}
             <label className="checkbox-label"><input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} /> Салон активен</label>
             <div className="admin-modal-actions">
               <button type="button" className="button button--secondary" onClick={() => setEditing(null)}>Отмена</button>
               <button type="submit" className="button button--primary" disabled={saving}>{saving ? 'Сохраняем…' : 'Сохранить'}</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {issued && (
+        <div className="admin-modal-backdrop" role="presentation">
+          <div className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="issued-dealer-title">
+            <h2 id="issued-dealer-title">Салон «{issued.dealer}» создан</h2>
+            <p>Передайте администратору салона данные для входа в его панель. Пароль больше не будет показан.</p>
+            <div className="credentials-box">
+              <span>Вход: <strong>{window.location.origin}/login</strong></span>
+              <span>Email: <strong>{issued.email}</strong></span>
+              <span>Пароль: <strong>{issued.password}</strong></span>
+            </div>
+            <div className="admin-modal-actions">
+              <button type="button" className="button button--outline" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/login
+${issued.email}
+${issued.password}`).then(() => notify('Скопировано.', 'success'))}>Скопировать</button>
+              <button type="button" className="button button--primary" onClick={() => setIssued(null)}>Готово</button>
+            </div>
+          </div>
         </div>
       )}
 

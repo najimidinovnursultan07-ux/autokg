@@ -227,6 +227,15 @@ class AdminDealerViewSet(viewsets.ModelViewSet):
             managers_count=Count("managers", filter=Q(managers__role="dealer"), distinct=True),
         ).select_related("city")
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        dealer = serializer.save()
+        data = self.get_serializer(self.get_queryset().get(pk=dealer.pk)).data
+        admin = serializer.created_admin
+        data["admin"] = {"id": admin.id, "email": admin.email}
+        return Response(data, status=status.HTTP_201_CREATED)
+
     @action(detail=True, methods=["post"])
     def toggle_active(self, request, pk=None):
         dealer = self.get_object()

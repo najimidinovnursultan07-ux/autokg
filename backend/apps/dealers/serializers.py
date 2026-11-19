@@ -28,6 +28,10 @@ class DealerSerializer(LogoUrlMixin, serializers.ModelSerializer):
     city_name = serializers.CharField(source="city.name", read_only=True, default=None)
     car_count = serializers.IntegerField(read_only=True, default=0)
     managers_count = serializers.IntegerField(read_only=True, default=0)
+    # Админ салона создаётся вместе с салоном (только при создании)
+    admin_email = serializers.EmailField(write_only=True, required=False)
+    admin_password = serializers.CharField(write_only=True, required=False, trim_whitespace=False)
+    admin_first_name = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=150)
 
     class Meta:
         model = Dealer
@@ -35,8 +39,50 @@ class DealerSerializer(LogoUrlMixin, serializers.ModelSerializer):
             "id", "name", "slug", "logo", "logo_url", "description",
             "phone", "whatsapp", "address", "city", "city_name",
             "is_active", "car_count", "managers_count", "created_at",
+            "admin_email", "admin_password", "admin_first_name",
         )
         read_only_fields = ("id", "car_count", "managers_count", "created_at")
+
+    def validate(self, attrs):
+        if self.instance is not None:
+            for key in ("admin_email", "admin_password", "admin_first_name"):
+                attrs.pop(key, None)
+            return attrs
+        errors = {}
+        email = (attrs.get("admin_email") or "").strip().lower()
+        password = attrs.get("admin_password") or ""
+        if not email:
+            errors["admin_email"] = ["Укажите email администратора салона."]
+        elif User.objects.filter(email__iexact=email).exists():
+            errors["admin_email"] = ["Пользователь с таким email уже существует."]
+        if not password:
+            errors["admin_password"] = ["Укажите пароль администратора салона."]
+        else:
+            try:
+                validate_password(password)
+            except Exception as exc:
+                errors["admin_password"] = list(getattr(exc, "messages", [str(exc)]))
+        if errors:
+            raise serializers.ValidationError(errors)
+        attrs["admin_email"] = email
+        return attrs
+
+    def create(self, validated_data):
+        from django.db import transaction
+
+        email = validated_data.pop("admin_email")
+        password = validated_data.pop("admin_password")
+        first_name = validated_data.pop("admin_first_name", "")
+        with transaction.atomic():
+            dealer = super().create(validated_data)
+            self.created_admin = User.objects.create_user(
+                email=email,
+                password=password,
+                first_name=first_name,
+                role=User.Role.DEALER,
+                dealer=dealer,
+            )
+        return dealer
 
     def validate_slug(self, value):
         value = (value or "").strip().lower()

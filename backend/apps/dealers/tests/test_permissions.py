@@ -278,9 +278,29 @@ class AdminApiTests(MarketplaceTestCase):
         self.client_admin.force_authenticate(self.admin)
 
     def test_dealer_crud_and_toggle(self):
+        # Без админа салона создать нельзя — и салон не создаётся
         resp = self.client_admin.post("/api/admin/dealers/", {"name": "Авто Лидер"}, format="json")
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(Dealer.objects.filter(name="Авто Лидер").exists())
+
+        resp = self.client_admin.post(
+            "/api/admin/dealers/",
+            {"name": "Авто Лидер", "admin_email": "Boss@Lider.kg", "admin_password": PASSWORD},
+            format="json",
+        )
         self.assertEqual(resp.status_code, 201, resp.data)
         self.assertEqual(resp.data["slug"], "avto-lider")
+        self.assertNotIn("admin_password", resp.data)
+        boss = User.objects.get(email="boss@lider.kg")
+        self.assertEqual((boss.role, boss.dealer_id, boss.is_staff), ("dealer", resp.data["id"], False))
+        self.assertEqual(resp.data["admin"]["email"], "boss@lider.kg")
+
+        # Админ салона сразу входит в свою панель
+        client = APIClient()
+        login = client.post("/api/auth/login/", {"email": "boss@lider.kg", "password": PASSWORD}, format="json")
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {login.data['access']}")
+        self.assertEqual(client.get("/api/dashboard/dealer/").data["slug"], "avto-lider")
+        self.assertEqual(client.get("/api/admin/dealers/").status_code, 403)
         dealer_id = resp.data["id"]
         resp = self.client_admin.patch(f"/api/admin/dealers/{dealer_id}/", {"is_active": False}, format="json")
         self.assertFalse(resp.data["is_active"])

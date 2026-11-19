@@ -8,16 +8,10 @@ import {
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
+import { generatePassword } from '../utils/password.js'
 
 const emptyForm = { email: '', first_name: '', last_name: '', phone: '', dealer: '', password: '' }
 
-// Временный пароль: 14 символов, буквы разных регистров + цифры + символ
-function generatePassword() {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
-  const bytes = crypto.getRandomValues(new Uint32Array(12))
-  const body = Array.from(bytes, (n) => alphabet[n % alphabet.length]).join('')
-  return `${body}-${(bytes[0] % 90) + 10}`
-}
 
 export default function AdminManagersPage() {
   const { notify } = useToast()
