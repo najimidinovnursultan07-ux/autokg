@@ -8,6 +8,8 @@ import GuestRoute from './components/routing/GuestRoute.jsx'
 import AdminLoginPage from './pages/AdminLoginPage.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComparePage from './pages/ComparePage.jsx'
+import MockPaymentPage from './pages/MockPaymentPage.jsx'
+import PaymentHistoryPage from './pages/PaymentHistoryPage.jsx'
 import AccountSettingsPage from './pages/AccountSettingsPage.jsx'
 import AdminCarsPage from './pages/AdminCarsPage.jsx'
 import AdminCatalogPage from './pages/AdminCatalogPage.jsx'
@@ -49,9 +51,11 @@ export default function App() {
             <Route path="my-cars" element={<MyCarsPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="account-settings" element={<AccountSettingsPage />} />
+            <Route path="payment-history" element={<PaymentHistoryPage />} />
           </Route>
           <Route path="cars/new" element={<CarFormPage />} />
           <Route path="cars/:id/edit" element={<CarFormPage />} />
+          <Route path="payment/mock" element={<MockPaymentPage />} />
         </Route>
         <Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>

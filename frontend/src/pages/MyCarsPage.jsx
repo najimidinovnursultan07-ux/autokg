@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, ArrowRight, CarFront, Edit3, EyeOff, Plus, RotateCcw, Send, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CarFront, Edit3, EyeOff, Plus, RotateCcw, Send, TrendingUp, Trash2 } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { deactivateCar, deleteCar, getMyCars, reactivateCar, submitCar } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
+import PromoteModal from '../components/cars/PromoteModal.jsx'
+import CarBadges from '../components/cars/CarBadges.jsx'
 import { EmptyState, ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
@@ -32,7 +34,13 @@ export default function MyCarsPage() {
   const [loading, setLoading] = useState(true)
   const [workingId, setWorkingId] = useState(null)
   const [error, setError] = useState('')
+  const [promotecar, setPromoteCar] = useState(null)
   const { notify } = useToast()
+
+  const handlePaymentCreated = (result) => {
+    setPromoteCar(null)
+    window.location.href = result.payment_url
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -127,11 +135,22 @@ export default function MyCarsPage() {
                   </Link>
                   <div className="my-car-info">
                     <span className={`status-pill status-pill--${car.status}`}>{statuses[car.status] || car.status}</span>
+                    <CarBadges car={car} size="sm" />
                     <Link className="my-car-title" to={`/cars/${car.id}/edit`}>{getCarTitle(car)}</Link>
                     <span className="my-car-price">{formatPrice(car.price)}</span>
                     {car.status === 'rejected' && <small className="rejection-note">Проверьте данные объявления и отправьте его повторно.</small>}
                   </div>
                   <div className="my-car-actions">
+                    {car.status === 'published' && (
+                      <button
+                        className="icon-action icon-action--promote"
+                        type="button"
+                        title="Продвинуть объявление"
+                        onClick={() => setPromoteCar(car)}
+                      >
+                        <TrendingUp size={17} />
+                      </button>
+                    )}
                     <Link className="icon-action" to={`/cars/${car.id}/edit`} aria-label="Редактировать"><Edit3 size={17} /></Link>
                     {['draft', 'rejected'].includes(car.status) && <button className="icon-action" type="button" disabled={workingId === car.id} onClick={() => performAction(car, 'submit')} aria-label="Отправить на модерацию"><Send size={17} /></button>}
                     {car.status === 'inactive' && <button className="icon-action" type="button" disabled={workingId === car.id} onClick={() => performAction(car, 'reactivate')} aria-label="Повторно опубликовать"><RotateCcw size={17} /></button>}
@@ -167,6 +186,13 @@ export default function MyCarsPage() {
         </EmptyState>
       )}
       {!loading && !error && count > 0 && <p className="account-list-count">Всего объявлений: {count}</p>}
+      {promotecar && (
+        <PromoteModal
+          car={promotecar}
+          onClose={() => setPromoteCar(null)}
+          onPaymentCreated={handlePaymentCreated}
+        />
+      )}
     </section>
   )
 }

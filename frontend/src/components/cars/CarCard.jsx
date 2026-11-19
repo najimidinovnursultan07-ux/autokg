@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { resolveMediaUrl } from '../../api/client.js'
 import { formatMileage, formatPrice, getCarCover, getCarTitle } from '../../utils/format.js'
 import FavoriteButton from './FavoriteButton.jsx'
+import CarBadges from './CarBadges.jsx'
 
 const transmissionLabels = {
   manual: 'Механика',
@@ -14,7 +15,7 @@ const transmissionLabels = {
 export default function CarCard({ car, featured = false }) {
   const image = getCarCover(car)
   return (
-    <article className={`car-card ${featured ? 'car-card--featured' : ''}`}>
+    <article className={`car-card ${featured ? 'car-card--featured' : ''} ${car.is_top ? 'car-card--top' : ''} ${car.is_highlighted ? 'car-card--highlighted' : ''}`}>
       <Link to={`/cars/${car.id}`} className="car-card-image">
         {image ? (
           <img src={resolveMediaUrl(image)} alt={getCarTitle(car)} loading="lazy" />
@@ -23,6 +24,7 @@ export default function CarCard({ car, featured = false }) {
         )}
         {car.condition === 'new' && <span className="car-badge">Новый</span>}
         <span className="image-count">{car.images?.length || 0} фото</span>
+        <CarBadges car={car} size="sm" />
       </Link>
       <FavoriteButton car={car} className="car-card-favorite" />
       <div className="car-card-body">

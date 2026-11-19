@@ -1,5 +1,6 @@
 import {
   CarFront,
+  CreditCard,
   Eye,
   EyeOff,
   Heart,
@@ -20,6 +21,7 @@ const navigation = [
   { id: 'active', label: 'Активные', to: '/my-cars?status=published', icon: Eye },
   { id: 'inactive', label: 'Неактивные', to: '/my-cars?status=inactive', icon: EyeOff },
   { id: 'favorites', label: 'Избранное', to: '/favorites', icon: Heart },
+  { id: 'payments', label: 'История платежей', to: '/payment-history', icon: CreditCard },
   { id: 'settings', label: 'Настройки аккаунта', to: '/account-settings', icon: Settings },
 ]
 

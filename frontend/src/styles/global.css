@@ -959,3 +959,75 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .compare-row-label { color: var(--muted); font-size: 12px; }
 .compare-row-value { font-weight: 600; color: var(--ink); }
 .compare-row-value--diff { background: #fffbeb; color: #b45309; }
+
+/* ── Car Badges ── */
+.car-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.car-badges--sm { position: absolute; top: 8px; left: 8px; z-index: 2; }
+.car-badges--md { margin-bottom: 10px; }
+.car-badge--top { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 5px; background: #f59e0b; color: white; font-size: 10px; font-weight: 800; letter-spacing: .05em; }
+.car-badge--urgent { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 5px; background: #ef4444; color: white; font-size: 10px; font-weight: 800; letter-spacing: .05em; }
+.car-badge--highlight { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 5px; background: #22c55e; color: white; font-size: 10px; font-weight: 700; }
+.car-card--top { border: 2px solid #f59e0b; box-shadow: 0 4px 20px rgba(245,158,11,.2); }
+.car-card--highlighted { border: 2px solid #22c55e; box-shadow: 0 4px 20px rgba(34,197,94,.15); }
+
+/* ── Promote Modal ── */
+.modal-backdrop { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.5); padding: 16px; }
+.modal-box { background: white; border-radius: 16px; width: 100%; max-width: 480px; padding: 28px; box-shadow: 0 24px 60px rgba(0,0,0,.18); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.modal-header h2 { font-size: 20px; margin: 0; }
+.modal-close { background: none; border: none; cursor: pointer; color: var(--muted); border-radius: 8px; padding: 4px; }
+.modal-close:hover { background: #f1f5f9; color: var(--ink); }
+.modal-subtitle { font-size: 13px; color: var(--muted); margin: 0 0 20px; }
+.promote-loading { display: flex; align-items: center; gap: 10px; padding: 24px 0; color: var(--muted); font-size: 14px; }
+.promote-cards { display: flex; flex-direction: column; gap: 10px; }
+.promote-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 12px; transition: border-color .15s; }
+.promote-card:hover { border-color: #94a3b8; }
+.promote-card--top { border-color: #fde68a; background: #fffbeb; }
+.promote-card--highlight { border-color: #bbf7d0; background: #f0fdf4; }
+.promote-card--urgent { border-color: #fecaca; background: #fef2f2; }
+.promote-card--active { opacity: .7; }
+.promote-card-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #f1f5f9; flex-shrink: 0; }
+.promote-card--top .promote-card-icon { background: #fef3c7; color: #d97706; }
+.promote-card--highlight .promote-card-icon { background: #dcfce7; color: #16a34a; }
+.promote-card--urgent .promote-card-icon { background: #fee2e2; color: #dc2626; }
+.promote-card-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.promote-card-body strong { font-size: 14px; color: var(--ink); }
+.promote-card-body span { font-size: 11px; color: var(--muted); }
+.promote-card-price { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.promote-card-price strong { font-size: 15px; font-weight: 800; color: var(--ink); }
+.promote-active-label { font-size: 11px; color: #22c55e; font-weight: 600; }
+.promote-btn { min-height: 34px; padding: 0 12px; font-size: 12px; gap: 5px; }
+.promote-note { margin: 20px 0 0; font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+/* ── Mock Payment Page ── */
+.mock-payment-card { max-width: 420px; margin: 60px auto; padding: 48px 36px; background: white; border: 1px solid var(--line); border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,.08); }
+.mock-payment-badge { background: #fbbf24; color: white; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px; letter-spacing: .1em; }
+.mock-payment-card h2 { font-size: 22px; margin: 0; }
+.mock-payment-desc { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.6; }
+.mock-payment-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+/* ── Payment History ── */
+.payment-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 24px; color: var(--muted); text-align: center; }
+.payment-empty h3 { font-size: 18px; color: var(--ink); margin: 0; }
+.payment-empty p { font-size: 13px; margin: 0; }
+.payment-list { display: flex; flex-direction: column; gap: 10px; }
+.payment-row { display: flex; align-items: center; gap: 14px; padding: 16px; background: white; border: 1px solid var(--line); border-radius: 12px; }
+.payment-status-icon { flex-shrink: 0; }
+.payment-info { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.payment-info strong { font-size: 14px; color: var(--ink); }
+.payment-car { font-size: 12px; color: var(--muted); }
+.payment-car a { color: var(--accent); text-decoration: none; }
+.payment-car a:hover { text-decoration: underline; }
+.payment-date { font-size: 11px; color: var(--muted); }
+.payment-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.payment-amount { font-size: 15px; font-weight: 800; color: var(--ink); }
+.payment-status-label { font-size: 11px; font-weight: 600; }
+.payment-expires { font-size: 10px; color: var(--muted); }
+
+/* ── Promote icon in MyCars ── */
+.icon-action--promote { color: #f59e0b; }
+.icon-action--promote:hover { background: #fef3c7; color: #d97706; }
+
+/* ── Spin animation ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin .8s linear infinite; }
