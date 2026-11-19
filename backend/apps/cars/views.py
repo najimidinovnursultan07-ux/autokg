@@ -117,9 +117,16 @@ class CarViewSet(viewsets.ModelViewSet):
                 is_active=True,
                 expires_at__gt=timezone.now(),
             )
-            return queryset.filter(status=Car.Status.PUBLISHED).annotate(
+            qs = queryset.filter(status=Car.Status.PUBLISHED).annotate(
                 has_top=ExpressionWrapper(Exists(active_top), output_field=BooleanField())
-            ).order_by("-has_top", "-published_at", "-created_at")
+            )
+            # ТОП всегда первый, затем применяется пользовательская сортировка
+            user_ordering = self.request.query_params.get("ordering", "-published_at")
+            safe_fields = ("price", "-price", "published_at", "-published_at",
+                           "created_at", "-created_at", "year", "-year", "mileage", "-mileage")
+            if user_ordering not in safe_fields:
+                user_ordering = "-published_at"
+            return qs.order_by("-has_top", user_ordering)
         if self.action == "retrieve" or (
             self.action == "upload_images" and self.request.method == "GET"
         ):
