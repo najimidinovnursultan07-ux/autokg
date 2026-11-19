@@ -62,9 +62,6 @@ export default function Header() {
           {isDealer && (
             <NavLink to="/dashboard/cars/new" onClick={close} className={navClass('mobile-only')}><Plus size={16} /> Добавить авто</NavLink>
           )}
-          {!isAuthenticated && (
-            <NavLink to="/login" onClick={close} className={navClass('mobile-only')}><Building2 size={16} /> Для автосалонов</NavLink>
-          )}
           {isAuthenticated && (
             <button type="button" className="nav-link nav-logout mobile-only" onClick={logout}><LogOut size={16} /> Выйти</button>
           )}
@@ -82,14 +79,11 @@ export default function Header() {
               <Plus size={17} /><span>Добавить авто</span>
             </Link>
           )}
-          {isAuthenticated ? (
+          {/* Гостям кнопки входа не показываем: салоны входят по прямой ссылке /login */}
+          {isAuthenticated && (
             <Link className="user-chip" to={homeForRole(user)} aria-label={panelLabel}>
               <span className="user-avatar"><Building2 size={15} /></span>
               <span>{isAdmin ? 'Админ' : (user?.dealer_name || 'Кабинет')}</span>
-            </Link>
-          ) : (
-            <Link className="button button--outline button--header header-login" to="/login">
-              <Building2 size={16} /><span>Для автосалонов</span>
             </Link>
           )}
         </div>

@@ -12,11 +12,11 @@ export default function ContactsPage() {
       </div>
       <div className="contact-grid">
         <Link className="contact-card" to="/catalog"><span className="contact-icon"><Search size={20} /></span><span className="eyebrow">Покупателям</span><strong>Найти автомобиль</strong><small>Свяжитесь с салоном по телефону или WhatsApp.</small></Link>
-        <Link className="contact-card" to="/login"><span className="contact-icon"><CarFront size={20} /></span><span className="eyebrow">Автосалонам</span><strong>Вход для автосалонов</strong><small>Доступ в кабинет выдаёт администратор AutoKG — напишите нам, чтобы подключить салон.</small></Link>
+        <div className="contact-card"><span className="contact-icon"><CarFront size={20} /></span><span className="eyebrow">Автосалонам</span><strong>Подключить автосалон</strong><small>Размещать объявления могут только автосалоны-партнёры. Напишите нам, чтобы подключить салон.</small></div>
         {supportEmail ? (
           <a className="contact-card" href={`mailto:${supportEmail}`}><span className="contact-icon"><Mail size={20} /></span><span className="eyebrow">Поддержка</span><strong>{supportEmail}</strong><small>Напишите нам по вопросам работы площадки.</small></a>
         ) : (
-          <div className="contact-card"><span className="contact-icon"><CircleHelp size={20} /></span><span className="eyebrow">Поддержка</span><strong>AutoKG для всей страны</strong><small>Если вопрос связан с объявлением, используйте контакты продавца или управление в личном кабинете.</small></div>
+          <div className="contact-card"><span className="contact-icon"><CircleHelp size={20} /></span><span className="eyebrow">Поддержка</span><strong>AutoKG для всей страны</strong><small>Если вопрос связан с объявлением, свяжитесь с автосалоном по телефону или WhatsApp.</small></div>
         )}
       </div>
       <div className="contact-bottom"><p><MapPin size={17} /> Платформа для покупателей и продавцов по всему Кыргызстану</p><Link className="button button--primary" to="/about">О проекте</Link></div>

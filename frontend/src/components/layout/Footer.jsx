@@ -24,7 +24,6 @@ export default function Footer() {
           <h3>AutoKG</h3>
           <Link to="/about">О проекте</Link>
           <Link to="/contacts">Контакты</Link>
-          <Link to="/login">Вход для автосалонов</Link>
         </div>
         <div className="footer-column footer-contact">
           <h3>Связаться с нами</h3>

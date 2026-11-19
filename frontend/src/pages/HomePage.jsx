@@ -195,7 +195,7 @@ export default function HomePage() {
       <section className="seller-cta">
         <div className="container seller-cta-inner">
           <div><span className="eyebrow eyebrow--light">Автосалонам</span><h2>Разместите автосалон на AutoKG</h2><p>Свяжитесь с нами — мы подключим салон и выдадим доступ в кабинет для управления объявлениями.</p></div>
-          <Link to="/login" className="button button--white"><CarFront size={17} /> Для автосалонов</Link>
+          <Link to="/contacts" className="button button--white"><CarFront size={17} /> Связаться с нами</Link>
         </div>
       </section>
     </>
