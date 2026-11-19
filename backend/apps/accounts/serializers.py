@@ -11,6 +11,9 @@ from .models import User
 
 class UserSerializer(serializers.ModelSerializer):
     profile_photo = ValidatedImageField(required=False, allow_null=True)
+    dealer_id = serializers.IntegerField(source="dealer.id", read_only=True, allow_null=True, default=None)
+    dealer_name = serializers.CharField(source="dealer.name", read_only=True, allow_null=True, default=None)
+    dealer_slug = serializers.CharField(source="dealer.slug", read_only=True, allow_null=True, default=None)
 
     class Meta:
         model = User
@@ -23,9 +26,12 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "is_staff",
             "profile_photo",
+            "dealer_id",
+            "dealer_name",
+            "dealer_slug",
             "updated_at",
         )
-        read_only_fields = ("id", "email", "role", "is_staff", "updated_at")
+        read_only_fields = ("id", "email", "role", "is_staff", "dealer_id", "dealer_name", "dealer_slug", "updated_at")
         extra_kwargs = {
             "first_name": {"allow_blank": False},
             "last_name": {"allow_blank": False},

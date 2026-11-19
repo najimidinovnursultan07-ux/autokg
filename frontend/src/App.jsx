@@ -10,6 +10,11 @@ import AboutPage from './pages/AboutPage.jsx'
 import ComparePage from './pages/ComparePage.jsx'
 import MockPaymentPage from './pages/MockPaymentPage.jsx'
 import PaymentHistoryPage from './pages/PaymentHistoryPage.jsx'
+import DealersPage from './pages/DealersPage.jsx'
+import DealerDetailPage from './pages/DealerDetailPage.jsx'
+import DealerDashboardPage from './pages/DealerDashboardPage.jsx'
+import AdminDealersPage from './pages/AdminDealersPage.jsx'
+import AdminManagersPage from './pages/AdminManagersPage.jsx'
 import AccountSettingsPage from './pages/AccountSettingsPage.jsx'
 import AdminCarsPage from './pages/AdminCarsPage.jsx'
 import AdminCatalogPage from './pages/AdminCatalogPage.jsx'
@@ -37,6 +42,8 @@ export default function App() {
         <Route path="catalog" element={<CatalogPage />} />
         <Route path="cars/:id" element={<CarDetailPage />} />
         <Route path="compare" element={<ComparePage />} />
+        <Route path="dealers" element={<DealersPage />} />
+        <Route path="dealers/:slug" element={<DealerDetailPage />} />
         <Route path="contacts" element={<ContactsPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route element={<GuestRoute />}>
@@ -63,6 +70,8 @@ export default function App() {
             <Route path="admin/users" element={<AdminUsersPage />} />
             <Route path="admin/cars" element={<AdminCarsPage />} />
             <Route path="admin/catalog" element={<AdminCatalogPage />} />
+            <Route path="admin/dealers" element={<AdminDealersPage />} />
+            <Route path="admin/managers" element={<AdminManagersPage />} />
           </Route>
         </Route>
         <Route path="admin/login" element={<AdminLoginPage />} />

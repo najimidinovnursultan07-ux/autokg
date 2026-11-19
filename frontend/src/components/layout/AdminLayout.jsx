@@ -1,4 +1,4 @@
-import { BarChart3, CarFront, ExternalLink, LayoutDashboard, LogOut, MapPinned, Users } from 'lucide-react'
+import { BarChart3, Building2, CarFront, ExternalLink, LayoutDashboard, LogOut, MapPinned, UserCheck, Users } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 
@@ -6,6 +6,8 @@ const navigation = [
   { to: '/admin', label: 'Обзор', icon: LayoutDashboard, end: true },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
   { to: '/admin/cars', label: 'Объявления', icon: CarFront },
+  { to: '/admin/dealers', label: 'Автосалоны', icon: Building2 },
+  { to: '/admin/managers', label: 'Менеджеры', icon: UserCheck },
   { to: '/admin/catalog', label: 'Справочники', icon: MapPinned },
 ]
 

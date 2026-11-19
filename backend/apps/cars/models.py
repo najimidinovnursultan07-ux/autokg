@@ -133,6 +133,15 @@ class Car(models.Model):
         on_delete=models.PROTECT,
         related_name="cars",
     )
+    dealer = models.ForeignKey(
+        "dealers.Dealer",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="cars",
+        verbose_name="Автосалон",
+        db_index=True,
+    )
     model = models.ForeignKey(
         Model,
         on_delete=models.PROTECT,

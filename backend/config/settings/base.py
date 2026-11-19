@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "apps.moderation.apps.ModerationConfig",
     "apps.admin_api.apps.AdminApiConfig",
     "apps.payments.apps.PaymentsConfig",
+    "apps.dealers.apps.DealersConfig",
 ]
 
 MIDDLEWARE = [

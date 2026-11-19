@@ -71,6 +71,14 @@ class User(AbstractUser):
         blank=True,
         null=True,
     )
+    dealer = models.ForeignKey(
+        "dealers.Dealer",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managers",
+        verbose_name="Автосалон",
+    )
     favorite_cars = models.ManyToManyField(
         "cars.Car",
         through="favorites.Favorite",

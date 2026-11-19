@@ -1104,3 +1104,29 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 /* ── Spin animation ── */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin .8s linear infinite; }
+
+/* ── Dealers ── */
+.dealer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.dealer-card { display: flex; align-items: center; gap: 14px; padding: 18px; background: white; border: 1px solid var(--line); border-radius: 14px; text-decoration: none; color: var(--ink); transition: box-shadow .2s, transform .2s; }
+.dealer-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.dealer-card-logo { width: 60px; height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #f1f5f9; overflow: hidden; }
+.dealer-card-logo img { width: 100%; height: 100%; object-fit: contain; }
+.dealer-card-body { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.dealer-card-body strong { font-size: 14px; font-weight: 700; }
+.dealer-card-body span { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+.dealer-car-count { color: var(--accent) !important; font-weight: 600; }
+.dealer-card-arrow { color: var(--muted); flex-shrink: 0; }
+
+/* Dealer detail */
+.dealer-detail-header { display: flex; gap: 28px; align-items: flex-start; padding: 28px; background: white; border: 1px solid var(--line); border-radius: 16px; margin-bottom: 32px; }
+.dealer-detail-logo { width: 100px; height: 100px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 16px; background: #f1f5f9; overflow: hidden; }
+.dealer-detail-logo img { width: 100%; height: 100%; object-fit: contain; }
+.dealer-detail-info h1 { font-size: 26px; margin: 0 0 8px; }
+.dealer-detail-info p { margin: 0 0 6px; font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.dealer-description { color: var(--ink) !important; }
+.dealer-detail-contacts { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.dealer-detail-cars h2 { font-size: 20px; margin-bottom: 20px; }
+
+@media (max-width: 600px) {
+  .dealer-detail-header { flex-direction: column; }
+}

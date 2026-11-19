@@ -120,13 +120,18 @@ class CarViewSet(viewsets.ModelViewSet):
             qs = queryset.filter(status=Car.Status.PUBLISHED).annotate(
                 has_top=ExpressionWrapper(Exists(active_top), output_field=BooleanField())
             )
-            # ТОП всегда первый, затем применяется пользовательская сортировка
+            # ТОП всегда первый — OrderingFilter не должен это перекрывать
             user_ordering = self.request.query_params.get("ordering", "-published_at")
-            safe_fields = ("price", "-price", "published_at", "-published_at",
-                           "created_at", "-created_at", "year", "-year", "mileage", "-mileage")
-            if user_ordering not in safe_fields:
-                user_ordering = "-published_at"
-            return qs.order_by("-has_top", user_ordering)
+            safe_fields = {
+                "price": "price", "-price": "-price",
+                "published_at": "published_at", "-published_at": "-published_at",
+                "created_at": "created_at", "-created_at": "-created_at",
+                "year": "year", "-year": "-year",
+                "mileage": "mileage", "-mileage": "-mileage",
+            }
+            second_order = safe_fields.get(user_ordering, "-published_at")
+            # has_top=True (1) идёт перед has_top=False (0) при DESC
+            return qs.order_by("-has_top", second_order)
         if self.action == "retrieve" or (
             self.action == "upload_images" and self.request.method == "GET"
         ):

@@ -16,6 +16,7 @@ import { getCompareList } from '../../utils/compare.js'
 
 const links = [
   { to: '/catalog', label: 'Каталог' },
+  { to: '/dealers', label: 'Салоны' },
   { to: '/about', label: 'О проекте' },
   { to: '/contacts', label: 'Контакты' },
 ]
