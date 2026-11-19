@@ -34,16 +34,16 @@ export default function DealersPage() {
               <div className="dealer-card-logo">
                 {dealer.logo_url
                   ? <img src={resolveMediaUrl(dealer.logo_url)} alt={dealer.name} />
-                  : <Building2 size={32} />
+                  : <Building2 size={40} />
                 }
               </div>
               <div className="dealer-card-body">
                 <strong>{dealer.name}</strong>
-                {dealer.city_name && <span><MapPin size={13} /> {dealer.city_name}</span>}
-                {dealer.phone && <span><Phone size={13} /> {dealer.phone}</span>}
-                <span className="dealer-car-count"><Car size={13} /> {dealer.car_count} авто</span>
+                {dealer.city_name && <span><MapPin size={16} /> {dealer.city_name}</span>}
+                {dealer.phone && <span><Phone size={16} /> {dealer.phone}</span>}
+                <span className="dealer-car-count"><Car size={16} /> {dealer.car_count} авто</span>
               </div>
-              <ArrowRight size={18} className="dealer-card-arrow" />
+              <ArrowRight size={22} className="dealer-card-arrow" />
             </Link>
           ))}
           {!dealers.length && (
