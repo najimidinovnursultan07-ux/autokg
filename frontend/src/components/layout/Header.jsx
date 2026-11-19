@@ -3,7 +3,6 @@ import { Building2, GitCompareArrows, LogOut, Menu, Plus, X } from 'lucide-react
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { getCompareList } from '../../utils/compare.js'
-import { homeForRole } from '../../utils/roles.js'
 
 const links = [
   { to: '/catalog', label: 'Каталог' },
@@ -20,8 +19,6 @@ export default function Header() {
   const [compareCount, setCompareCount] = useState(() => getCompareList().length)
   const navigate = useNavigate()
   const isDealer = isAuthenticated && user?.role === 'dealer'
-  const isAdmin = isAuthenticated && user?.role === 'admin' && user?.is_staff
-  const panelLabel = isAdmin ? 'Админ-панель' : 'Кабинет салона'
 
   useEffect(() => {
     const update = () => setCompareCount(getCompareList().length)
@@ -56,13 +53,14 @@ export default function Header() {
           {links.map((link) => (
             <NavLink key={link.to} to={link.to} onClick={close} className={navClass()}>{link.label}</NavLink>
           ))}
-          {(isDealer || isAdmin) && (
-            <NavLink to={homeForRole(user)} end onClick={close} className={navClass('mobile-only')}>{panelLabel}</NavLink>
+          {/* Ссылку на админку на публичном сайте не показываем — админ заходит по /admin */}
+          {isDealer && (
+            <NavLink to="/dashboard" end onClick={close} className={navClass('mobile-only')}>Кабинет салона</NavLink>
           )}
           {isDealer && (
             <NavLink to="/dashboard/cars/new" onClick={close} className={navClass('mobile-only')}><Plus size={16} /> Добавить авто</NavLink>
           )}
-          {isAuthenticated && (
+          {isDealer && (
             <button type="button" className="nav-link nav-logout mobile-only" onClick={logout}><LogOut size={16} /> Выйти</button>
           )}
         </nav>
@@ -80,10 +78,10 @@ export default function Header() {
             </Link>
           )}
           {/* Гостям кнопки входа не показываем: салоны входят по прямой ссылке /login */}
-          {isAuthenticated && (
-            <Link className="user-chip" to={homeForRole(user)} aria-label={panelLabel}>
+          {isDealer && (
+            <Link className="user-chip" to="/dashboard" aria-label="Кабинет салона">
               <span className="user-avatar"><Building2 size={15} /></span>
-              <span>{isAdmin ? 'Админ' : (user?.dealer_name || 'Кабинет')}</span>
+              <span>{user?.dealer_name || 'Кабинет'}</span>
             </Link>
           )}
         </div>

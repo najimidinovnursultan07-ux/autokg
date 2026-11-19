@@ -14,7 +14,13 @@ export default function AdminDashboardPage() {
     setLoading(true)
     setError('')
     try {
-      setStats(await getAdminStats())
+      const data = await getAdminStats()
+      setStats({
+        dealers: { total: 0, active: 0, ...data?.dealers },
+        cars: { total: 0, active: 0, hidden: 0, sold: 0, ...data?.cars },
+        managers: { total: 0, active: 0, ...data?.managers },
+        cars_by_dealer: Array.isArray(data?.cars_by_dealer) ? data.cars_by_dealer : [],
+      })
     } catch (err) {
       setError(getErrorMessage(err, 'Не удалось загрузить статистику.'))
     } finally {
