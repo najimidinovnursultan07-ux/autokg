@@ -110,7 +110,7 @@ class CreatePaymentView(APIView):
         provider = getattr(settings, "PAYMENT_PROVIDER", "mock")
         if provider == "mock":
             # Тестовый режим — возвращаем внутренний URL
-            base = getattr(settings, "FRONTEND_URL", "https://autokg-ten.vercel.app")
+            base = getattr(settings, "FRONTEND_URL", "https://autobuy-kg.vercel.app")
             return f"{base}/payment/mock?payment_id={payment.id}"
         # Finik — будет реализовано после получения реальных ключей
         return ""
