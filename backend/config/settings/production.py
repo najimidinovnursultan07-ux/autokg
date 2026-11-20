@@ -9,6 +9,27 @@ INSTALLED_APPS += ["cloudinary_storage", "cloudinary"]
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Фронтенд переехал на autobuy-kg.vercel.app. Новый домен разрешён всегда,
+# старый autokg-ten.vercel.app отключён — даже если он остался в переменных Render.
+FRONTEND_ORIGIN = "https://autobuy-kg.vercel.app"
+OLD_FRONTEND_ORIGIN = "https://autokg-ten.vercel.app"
+
+
+def _with_frontend(origins):
+    origins = [o.rstrip("/") for o in origins if o.rstrip("/") != OLD_FRONTEND_ORIGIN]
+    return list(dict.fromkeys([FRONTEND_ORIGIN, *origins]))
+
+
+CORS_ALLOWED_ORIGINS = _with_frontend(CORS_ALLOWED_ORIGINS)
+CSRF_TRUSTED_ORIGINS = _with_frontend(CSRF_TRUSTED_ORIGINS)
+if not PASSWORD_RESET_URL or PASSWORD_RESET_URL.startswith(OLD_FRONTEND_ORIGIN):
+    PASSWORD_RESET_URL = f"{FRONTEND_ORIGIN}/password-reset"
+if not FRONTEND_URL or FRONTEND_URL.rstrip("/") == OLD_FRONTEND_ORIGIN:
+    FRONTEND_URL = FRONTEND_ORIGIN
+# Фронт (vercel.app) и API (onrender.com) — разные сайты: refresh-cookie
+# должна быть SameSite=None, иначе браузер её не отправит и сессия слетит.
+AUTH_COOKIE_SAMESITE = "None"
+
 if not SECRET_KEY:
     raise ImproperlyConfigured("SECRET_KEY must be configured in production.")
 if not ALLOWED_HOSTS:

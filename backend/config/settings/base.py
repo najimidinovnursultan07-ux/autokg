@@ -211,7 +211,7 @@ PASSWORD_RESET_URL = env("PASSWORD_RESET_URL", default="")
 
 # Payments
 PAYMENT_PROVIDER = env("PAYMENT_PROVIDER", default="mock")
-FRONTEND_URL = env("FRONTEND_URL", default="https://autokg-ten.vercel.app")
+FRONTEND_URL = env("FRONTEND_URL", default="https://autobuy-kg.vercel.app")
 FINIK_MERCHANT_ID = env("FINIK_MERCHANT_ID", default="")
 FINIK_SECRET_KEY = env("FINIK_SECRET_KEY", default="")
 FINIK_API_URL = env("FINIK_API_URL", default="https://api.finik.kg/v1")
