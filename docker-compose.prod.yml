@@ -34,8 +34,6 @@ services:
              --workers $${GUNICORN_WORKERS:-3}
              --access-logfile -
              --error-logfile -"
-    volumes:
-      - media_data:/app/media
     depends_on:
       db:
         condition: service_healthy
@@ -58,8 +56,6 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:${HTTP_PORT:-8080}:80"
-    volumes:
-      - media_data:/var/www/media:ro
     depends_on:
       backend:
         condition: service_healthy
@@ -71,4 +67,3 @@ services:
 
 volumes:
   postgres_data:
-  media_data:

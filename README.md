@@ -320,7 +320,7 @@ Production Compose использует Django production settings и Gunicorn, 
    docker compose -f docker-compose.prod.yml ps
    ```
 
-   Контейнер backend применяет миграции, собирает Django static-файлы и запускает Gunicorn. Nginx обслуживает React SPA, проксирует `/api/`, `/django-admin/` и `/static/`, а `/media/` читает из общего volume. HTTPS должен завершаться на внешнем reverse proxy/load balancer, который передаёт `X-Forwarded-Proto: https`; production Django принудительно включает HTTPS redirect, HSTS и Secure cookies. Production порт Nginx по умолчанию привязан к `127.0.0.1:8080`, чтобы его мог обслуживать локальный TLS proxy.
+   Контейнер backend применяет миграции, собирает Django static-файлы и запускает Gunicorn. Nginx обслуживает React SPA, проксирует `/api/`, `/django-admin/` и `/static/`. Медиафайлы отдаются напрямую из публичного бакета Supabase Storage. HTTPS должен завершаться на внешнем reverse proxy/load balancer, который передаёт `X-Forwarded-Proto: https`; production Django принудительно включает HTTPS redirect, HSTS и Secure cookies. Production порт Nginx по умолчанию привязан к `127.0.0.1:8080`, чтобы его мог обслуживать локальный TLS proxy.
 
 3. Создайте администратора:
 
@@ -353,11 +353,13 @@ Production readiness проверяйте через HTTPS-домен:
 Invoke-RestMethod https://autobuy.example.com/api/health/ready/
 ```
 
-Также проверьте главную страницу, вход в `/django-admin/`, API-каталог и открытие загруженной фотографии по URL `/media/...`. Если readiness возвращает 503, проверьте PostgreSQL, `DB_*` параметры и логи backend.
+Также проверьте главную страницу, вход в `/django-admin/`, API-каталог и открытие загруженной фотографии по ссылке `https://<project>.supabase.co/storage/v1/object/public/<bucket>/...`. Если readiness возвращает 503, проверьте PostgreSQL, `DB_*` параметры и логи backend.
 
 ## Схема раздачи файлов
 
 - React production build обслуживается Nginx; fallback на `index.html` поддерживает React Router при прямом открытии вложенных маршрутов.
 - Django static assets собираются в `STATIC_ROOT` через `collectstatic` и отдаются WhiteNoise через Nginx proxy.
-- Car images и profile photos сохраняются в `MEDIA_ROOT`. Production Compose подключает один persistent `media_data` volume к backend на запись и Nginx на чтение.
+- Фото машин, логотипы салонов и фото профилей в production хранятся в Supabase Storage (`apps/common/storage.py`, клиент `supabase`). В БД записывается путь объекта в бакете, публичная ссылка строится через `get_public_url()`. Нужны `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_BUCKET_NAME`; бакет должен быть публичным. Локально без `SUPABASE_BUCKET_NAME` файлы пишутся в `MEDIA_ROOT`.
+- При загрузке фото сжимаются Pillow в WebP (`apps/common/images.py`): машины до 1280px (качество 80) + превью 400×300, логотипы до 400px, аватары до 512px; EXIF (включая GPS) удаляется.
+- Перенос старых файлов из Cloudinary: `python manage.py migrate_media_to_supabase --cloud-name <имя> --dry-run`, затем без `--dry-run`.
 - PostgreSQL хранится отдельно в persistent volume. `docker compose down` не удаляет volumes; резервное копирование БД и media нужно настроить до production-эксплуатации.

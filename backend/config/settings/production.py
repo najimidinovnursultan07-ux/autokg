@@ -5,7 +5,6 @@ from .base import *
 
 DEBUG = False
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
-INSTALLED_APPS += ["cloudinary_storage", "cloudinary"]
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
@@ -47,17 +46,16 @@ AUTH_COOKIE_SECURE = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
-# Cloudinary media storage
-CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME"),
-    "API_KEY": env("CLOUDINARY_API_KEY"),
-    "API_SECRET": env("CLOUDINARY_API_SECRET"),
-}
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# Медиафайлы — только в Supabase Storage
+_missing_supabase = [
+    name
+    for name in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_BUCKET_NAME")
+    if not globals()[name]
+]
+if _missing_supabase:
+    raise ImproperlyConfigured(
+        "Configure Supabase Storage in production: " + ", ".join(_missing_supabase)
+    )
+if not SUPABASE_URL.startswith("https://"):
+    raise ImproperlyConfigured("SUPABASE_URL must be an HTTPS URL.")
+STORAGES["default"] = {"BACKEND": "apps.common.storage.SupabaseStorage"}

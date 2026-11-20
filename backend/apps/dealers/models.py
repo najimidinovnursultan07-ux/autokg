@@ -18,7 +18,7 @@ _SAFE_SLUG = re.compile(r"^[a-z0-9-]+$")
 
 
 def make_ascii_slug(value):
-    """Латинский slug из кириллического названия (для URL и папок Cloudinary)."""
+    """Латинский slug из кириллического названия (для URL и папок в хранилище)."""
     return slugify(str(value).lower().translate(_TRANSLIT))
 
 

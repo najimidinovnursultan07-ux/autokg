@@ -126,9 +126,19 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Supabase Storage. Если бакет не задан — файлы пишутся в MEDIA_ROOT.
+SUPABASE_URL = env("SUPABASE_URL", default="")
+SUPABASE_SERVICE_ROLE_KEY = env("SUPABASE_SERVICE_ROLE_KEY", default="")
+SUPABASE_BUCKET_NAME = env("SUPABASE_BUCKET_NAME", default="")
+USE_SUPABASE_STORAGE = bool(SUPABASE_BUCKET_NAME)
+
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": (
+            "apps.common.storage.SupabaseStorage"
+            if USE_SUPABASE_STORAGE
+            else "django.core.files.storage.FileSystemStorage"
+        ),
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
@@ -235,5 +245,8 @@ LOGGING = {
             "level": "ERROR",
             "propagate": False,
         },
+        # supabase-клиент логирует каждый HTTP-запрос на INFO
+        "httpx": {"level": "WARNING"},
+        "httpcore": {"level": "WARNING"},
     },
 }

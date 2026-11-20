@@ -138,7 +138,7 @@ class DashboardCarViewSet(viewsets.ModelViewSet):
             car.save(update_fields=("published_at", "updated_at"))
 
     def perform_destroy(self, instance):
-        # Фото удаляются каскадом, файлы — из Cloudinary через сигнал post_delete
+        # Фото удаляются каскадом, файлы — из Supabase Storage через сигнал post_delete
         instance.delete()
 
     # ── Фото ──
@@ -188,7 +188,7 @@ class DashboardCarViewSet(viewsets.ModelViewSet):
         with transaction.atomic():
             photo = self._get_photo(car, photo_id)
             was_cover = photo.is_cover
-            photo.delete()  # файл удалится из Cloudinary после commit (signals.py)
+            photo.delete()  # файл удалится из Supabase Storage после commit (signals.py)
             if was_cover:
                 nxt = car.images.order_by("position", "pk").first()
                 if nxt:

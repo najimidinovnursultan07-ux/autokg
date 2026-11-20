@@ -272,6 +272,10 @@ def car_image_upload_to(instance, filename):
     return f"cars/{instance.car.dealer.storage_folder}/{uuid.uuid4().hex}{extension}"
 
 
+def car_thumbnail_upload_to(instance, filename):
+    return f"cars/{instance.car.dealer.storage_folder}/thumbs/{uuid.uuid4().hex}.webp"
+
+
 class CarImage(models.Model):
     car = models.ForeignKey(
         Car,
@@ -279,6 +283,8 @@ class CarImage(models.Model):
         related_name="images",
     )
     image = models.ImageField(upload_to=car_image_upload_to)
+    # Превью 400×300 WebP; создаётся при загрузке (см. signals.py)
+    thumbnail = models.ImageField(upload_to=car_thumbnail_upload_to, blank=True, default="")
     position = models.PositiveSmallIntegerField(default=0)
     is_cover = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

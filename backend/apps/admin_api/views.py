@@ -132,7 +132,7 @@ class AdminCarViewSet(viewsets.ModelViewSet):
             car.save(update_fields=("published_at", "updated_at"))
 
     def perform_destroy(self, instance):
-        # Файлы фото удаляются из Cloudinary сигналом post_delete
+        # Файлы фото удаляются из Supabase Storage сигналом post_delete
         instance.delete()
 
 

@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.accounts.models import User
 from apps.cars.models import Car
-from apps.common.media import THUMB_TRANSFORM, cloudinary_variant, file_url
+from apps.common.media import file_url
 from apps.dealers.models import Dealer
 
 
@@ -71,4 +71,4 @@ class AdminCarSerializer(serializers.ModelSerializer):
         cover = next((i for i in images if i.is_cover), images[0] if images else None)
         if cover is None:
             return None
-        return cloudinary_variant(file_url(cover.image, self.context.get("request")), THUMB_TRANSFORM)
+        return file_url(cover.thumbnail or cover.image, self.context.get("request"))

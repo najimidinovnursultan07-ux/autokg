@@ -229,7 +229,7 @@ class AuthenticationApiTests(TestCase):
         )
 
         self.assertEqual(uploaded.status_code, 200)
-        self.assertTrue(uploaded.data["profile_photo"].endswith(".jpg"))
+        self.assertTrue(uploaded.data["profile_photo"].endswith(".webp"))
         user.refresh_from_db()
         first_photo = user.profile_photo
         self.assertTrue(first_photo.storage.exists(first_photo.name))
@@ -252,7 +252,7 @@ class AuthenticationApiTests(TestCase):
         self.assertEqual(replaced.status_code, 200)
         user.refresh_from_db()
         active_photo = user.profile_photo
-        self.assertTrue(active_photo.name.endswith(".png"))
+        self.assertTrue(active_photo.name.endswith(".webp"))
         self.assertFalse(first_photo.storage.exists(first_photo.name))
         self.assertTrue(active_photo.storage.exists(active_photo.name))
 

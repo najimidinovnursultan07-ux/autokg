@@ -4,12 +4,11 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
 from apps.accounts.models import User
-from apps.common.media import cloudinary_variant, file_url
+from apps.common.media import file_url
 from apps.common.serializers import MAX_UPLOAD_PHOTO_BYTES, ValidatedImageField
 
 from .models import Dealer
 
-LOGO_TRANSFORM = "f_auto,q_auto,c_limit,w_400"
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
@@ -17,7 +16,16 @@ class LogoUrlMixin(serializers.Serializer):
     logo_url = serializers.SerializerMethodField()
 
     def get_logo_url(self, obj):
-        return cloudinary_variant(file_url(obj.logo, self.context.get("request")), LOGO_TRANSFORM)
+        return file_url(obj.logo, self.context.get("request"))
+
+    def update(self, instance, validated_data):
+        # Старый логотип удаляется из хранилища, если его заменили или убрали
+        old_logo = instance.logo
+        old_name = old_logo.name if old_logo else ""
+        updated = super().update(instance, validated_data)
+        if old_name and old_name != getattr(updated.logo, "name", None):
+            old_logo.storage.delete(old_name)
+        return updated
 
 
 class DealerSerializer(LogoUrlMixin, serializers.ModelSerializer):

@@ -11,7 +11,7 @@ from apps.common.serializers import (
     ValidatedImageField,
 )
 
-from apps.common.media import FULL_TRANSFORM, THUMB_TRANSFORM, cloudinary_variant, file_url
+from apps.common.media import file_url
 from apps.common.serializers import MAX_UPLOAD_PHOTO_BYTES
 
 from .models import Brand, Car, CarImage, City, Model
@@ -63,7 +63,7 @@ class CitySerializer(serializers.ModelSerializer):
 
 
 class CarImageSerializer(serializers.ModelSerializer):
-    """Фото машины. image — оригинал, url — w_1600 (f_auto,q_auto), thumb — w_400."""
+    """Фото машины. url — WebP до 1280px, thumb — превью 400×300 (старые фото: оригинал)."""
     url = serializers.SerializerMethodField()
     thumb = serializers.SerializerMethodField()
 
@@ -82,10 +82,10 @@ class CarImageSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_url(self, obj):
-        return cloudinary_variant(file_url(obj.image, self.context.get("request")), FULL_TRANSFORM)
+        return file_url(obj.image, self.context.get("request"))
 
     def get_thumb(self, obj):
-        return cloudinary_variant(file_url(obj.image, self.context.get("request")), THUMB_TRANSFORM)
+        return file_url(obj.thumbnail or obj.image, self.context.get("request"))
 
 
 class CarImageUpdateSerializer(serializers.Serializer):
@@ -153,9 +153,7 @@ class CarDealerSerializer(serializers.Serializer):
         return obj.city.name if obj.city else None
 
     def get_logo(self, obj):
-        return cloudinary_variant(
-            file_url(obj.logo, self.context.get("request")), "f_auto,q_auto,c_limit,w_200"
-        )
+        return file_url(obj.logo, self.context.get("request"))
 
 
 class CarSerializer(serializers.ModelSerializer):
