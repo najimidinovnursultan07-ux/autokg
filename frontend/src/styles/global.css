@@ -329,6 +329,10 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .contact-icon { display: grid; width: 39px; height: 39px; margin-bottom: 7px; place-items: center; border-radius: 10px; background: var(--green-soft); color: var(--green); }
 .contact-card strong { font-size: 14px; }
 .contact-card small { color: var(--muted); font-size: 10px; }
+.contact-actions { display: flex; width: 100%; margin-top: auto; padding-top: 8px; flex-direction: column; gap: 8px; }
+.contact-phone { display: inline-flex; align-items: center; gap: 7px; color: var(--ink, inherit); font-size: 14px; font-weight: 700; text-decoration: none; }
+.contact-phone:hover { color: var(--green); }
+.contact-whatsapp { gap: 7px; margin-top: 0; }
 .contact-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; padding: 20px 22px; border-radius: 10px; background: #edf4fc; }
 .contact-bottom p { margin: 0; color: var(--green); font-size: 13px; font-weight: 700; }
 .not-found { display: flex; min-height: 520px; align-items: center; justify-content: center; flex-direction: column; text-align: center; }

@@ -1,5 +1,24 @@
-import { CarFront, CircleHelp, Mail, MapPin, Search } from 'lucide-react'
+import { CarFront, CircleHelp, Mail, MapPin, MessageCircle, Phone, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
+
+const SUPPORT_PHONE = '+996 708 887 776'
+const SUPPORT_PHONE_DIGITS = SUPPORT_PHONE.replace(/\D/g, '')
+
+function ContactActions({ message }) {
+  return (
+    <div className="contact-actions">
+      <a className="contact-phone" href={`tel:+${SUPPORT_PHONE_DIGITS}`}><Phone size={15} /> {SUPPORT_PHONE}</a>
+      <a
+        className="seller-whatsapp contact-whatsapp"
+        href={`https://wa.me/${SUPPORT_PHONE_DIGITS}?text=${encodeURIComponent(message)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <MessageCircle size={16} /> Написать в WhatsApp
+      </a>
+    </div>
+  )
+}
 
 export default function ContactsPage() {
   const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL
@@ -12,11 +31,11 @@ export default function ContactsPage() {
       </div>
       <div className="contact-grid">
         <Link className="contact-card" to="/catalog"><span className="contact-icon"><Search size={20} /></span><span className="eyebrow">Покупателям</span><strong>Найти автомобиль</strong><small>Свяжитесь с салоном по телефону или WhatsApp.</small></Link>
-        <div className="contact-card"><span className="contact-icon"><CarFront size={20} /></span><span className="eyebrow">Автосалонам</span><strong>Подключить автосалон</strong><small>Размещать объявления могут только автосалоны-партнёры. Напишите нам, чтобы подключить салон.</small></div>
+        <div className="contact-card"><span className="contact-icon"><CarFront size={20} /></span><span className="eyebrow">Автосалонам</span><strong>Подключить автосалон</strong><small>Размещать объявления могут только автосалоны-партнёры. Напишите нам, чтобы подключить салон.</small><ContactActions message="Здравствуйте! Хочу подключить автосалон к AutoBuy." /></div>
         {supportEmail ? (
           <a className="contact-card" href={`mailto:${supportEmail}`}><span className="contact-icon"><Mail size={20} /></span><span className="eyebrow">Поддержка</span><strong>{supportEmail}</strong><small>Напишите нам по вопросам работы площадки.</small></a>
         ) : (
-          <div className="contact-card"><span className="contact-icon"><CircleHelp size={20} /></span><span className="eyebrow">Поддержка</span><strong>AutoBuy для всей страны</strong><small>Если вопрос связан с объявлением, свяжитесь с автосалоном по телефону или WhatsApp.</small></div>
+          <div className="contact-card"><span className="contact-icon"><CircleHelp size={20} /></span><span className="eyebrow">Поддержка</span><strong>AutoBuy для всей страны</strong><small>Если вопрос связан с объявлением, свяжитесь с автосалоном по телефону или WhatsApp. По работе площадки — пишите нам.</small><ContactActions message="Здравствуйте! У меня вопрос по AutoBuy." /></div>
         )}
       </div>
       <div className="contact-bottom"><p><MapPin size={17} /> Платформа для покупателей и продавцов по всему Кыргызстану</p><Link className="button button--primary" to="/about">О проекте</Link></div>
