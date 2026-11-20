@@ -27,7 +27,7 @@ export default function LoginPage() {
         setError('Вход доступен только менеджерам автосалонов и администратору.')
         return
       }
-      notify('Вы вошли в AutoKG.', 'success')
+      notify('Вы вошли в AutoBuy.', 'success')
       const from = location.state?.from?.pathname
       const home = homeForRole(user)
       navigate(from && from.startsWith(home) ? from : home, { replace: true })
@@ -52,7 +52,7 @@ export default function LoginPage() {
         <span className="eyebrow">Для автосалонов</span>
         <h1>Вход в кабинет</h1>
         <p className="auth-intro">
-          Размещать объявления на AutoKG могут только автосалоны-партнёры.
+          Размещать объявления на AutoBuy могут только автосалоны-партнёры.
           Аккаунт выдаёт администратор платформы.
         </p>
         {error && <div className="form-alert" role="alert">{error}</div>}

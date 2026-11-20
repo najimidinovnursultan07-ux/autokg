@@ -105,7 +105,7 @@ api.interceptors.response.use(
       return api(request)
     } catch (refreshError) {
       setAccessToken(null)
-      window.dispatchEvent(new CustomEvent('autokg:session-expired'))
+      window.dispatchEvent(new CustomEvent('autobuy:session-expired'))
       return Promise.reject(refreshError)
     }
   },

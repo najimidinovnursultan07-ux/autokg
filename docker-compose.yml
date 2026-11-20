@@ -3,15 +3,15 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-autokg}
-      POSTGRES_USER: ${DB_USER:-autokg}
+      POSTGRES_DB: ${DB_NAME:-autobuy}
+      POSTGRES_USER: ${DB_USER:-autobuy}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     ports:
       - "127.0.0.1:${POSTGRES_PUBLISH_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-autokg} -d ${DB_NAME:-autokg}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-autobuy} -d ${DB_NAME:-autobuy}"]
       interval: 5s
       timeout: 5s
       retries: 10

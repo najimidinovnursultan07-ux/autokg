@@ -83,7 +83,7 @@ class AuthenticationApiTests(TestCase):
         self.assertIn("access", login.data)
         self.assertNotIn("refresh", login.data)
         access = login.data["access"]
-        old_refresh = login.cookies["autokg_refresh"].value
+        old_refresh = login.cookies["autobuy_refresh"].value
 
         refresh = self.client.post(
             "/api/auth/refresh/",
@@ -94,10 +94,10 @@ class AuthenticationApiTests(TestCase):
         self.assertEqual(refresh.status_code, 200)
         self.assertIn("access", refresh.data)
         self.assertNotIn("refresh", refresh.data)
-        rotated_refresh = refresh.cookies["autokg_refresh"].value
+        rotated_refresh = refresh.cookies["autobuy_refresh"].value
         self.assertNotEqual(rotated_refresh, old_refresh)
 
-        self.client.cookies["autokg_refresh"] = old_refresh
+        self.client.cookies["autobuy_refresh"] = old_refresh
         replay = self.client.post(
             "/api/auth/refresh/",
             {},
@@ -105,7 +105,7 @@ class AuthenticationApiTests(TestCase):
             **self.csrf_headers,
         )
         self.assertEqual(replay.status_code, 401)
-        self.client.cookies["autokg_refresh"] = rotated_refresh
+        self.client.cookies["autobuy_refresh"] = rotated_refresh
 
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
         me = self.client.get("/api/auth/me/")
@@ -119,7 +119,7 @@ class AuthenticationApiTests(TestCase):
             **self.csrf_headers,
         )
         self.assertEqual(logout.status_code, 204)
-        self.assertEqual(logout.cookies["autokg_refresh"].value, "")
+        self.assertEqual(logout.cookies["autobuy_refresh"].value, "")
 
     def test_refresh_throttle_allows_multiple_session_restores(self):
         User.objects.create_user(
@@ -162,7 +162,7 @@ class AuthenticationApiTests(TestCase):
 
         self.assertEqual(response.status_code, 401)
         self.assertNotIn("access", response.data)
-        self.assertNotIn("autokg_refresh", response.cookies)
+        self.assertNotIn("autobuy_refresh", response.cookies)
 
     def test_profile_patch_cannot_change_email_or_role(self):
         user = User.objects.create_user(
@@ -297,7 +297,7 @@ class AuthenticationApiTests(TestCase):
             **self.csrf_headers,
         )
         old_access = login.data["access"]
-        old_refresh = login.cookies["autokg_refresh"].value
+        old_refresh = login.cookies["autobuy_refresh"].value
 
         reset_request = self.client.post(
             "/api/auth/password-reset/",
@@ -328,7 +328,7 @@ class AuthenticationApiTests(TestCase):
         self.assertEqual(old_access_response.status_code, 401)
 
         self.client.credentials()
-        self.client.cookies["autokg_refresh"] = old_refresh
+        self.client.cookies["autobuy_refresh"] = old_refresh
         old_refresh_response = self.client.post(
             "/api/auth/refresh/",
             {},
@@ -385,7 +385,7 @@ class AuthenticationApiTests(TestCase):
             **self.csrf_headers,
         )
         self.assertEqual(changed.status_code, 200)
-        self.assertEqual(changed.cookies["autokg_refresh"].value, "")
+        self.assertEqual(changed.cookies["autobuy_refresh"].value, "")
 
         old_access_response = self.client.get("/api/auth/me/")
         self.assertEqual(old_access_response.status_code, 401)

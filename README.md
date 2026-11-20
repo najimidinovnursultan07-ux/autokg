@@ -1,11 +1,11 @@
-# AutoKG
+# AutoBuy
 
 Маркетплейс автомобилей Кыргызстана: React/Vite frontend, Django REST API и PostgreSQL.
 
 ## Структура проекта
 
 ```text
-AutoKG/
+AutoBuy/
 ├── .env.example
 ├── .env.production.example
 ├── .gitignore
@@ -224,8 +224,8 @@ pip install -r backend\requirements.txt
 Если PostgreSQL установлен отдельно и роль/база ещё не созданы, выполните в `psql -U postgres` (пароль укажите такой же, как `DB_PASSWORD`):
 
 ```sql
-CREATE USER autokg WITH PASSWORD 'local-only-change-me';
-CREATE DATABASE autokg OWNER autokg;
+CREATE USER autobuy WITH PASSWORD 'local-only-change-me';
+CREATE DATABASE autobuy OWNER autobuy;
 ```
 
 ### 2. Запустить Backend
@@ -350,7 +350,7 @@ docker compose logs --tail 100 frontend
 Production readiness проверяйте через HTTPS-домен:
 
 ```powershell
-Invoke-RestMethod https://autokg.example.com/api/health/ready/
+Invoke-RestMethod https://autobuy.example.com/api/health/ready/
 ```
 
 Также проверьте главную страницу, вход в `/django-admin/`, API-каталог и открытие загруженной фотографии по URL `/media/...`. Если readiness возвращает 503, проверьте PostgreSQL, `DB_*` параметры и логи backend.

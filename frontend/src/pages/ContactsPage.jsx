@@ -16,7 +16,7 @@ export default function ContactsPage() {
         {supportEmail ? (
           <a className="contact-card" href={`mailto:${supportEmail}`}><span className="contact-icon"><Mail size={20} /></span><span className="eyebrow">Поддержка</span><strong>{supportEmail}</strong><small>Напишите нам по вопросам работы площадки.</small></a>
         ) : (
-          <div className="contact-card"><span className="contact-icon"><CircleHelp size={20} /></span><span className="eyebrow">Поддержка</span><strong>AutoKG для всей страны</strong><small>Если вопрос связан с объявлением, свяжитесь с автосалоном по телефону или WhatsApp.</small></div>
+          <div className="contact-card"><span className="contact-icon"><CircleHelp size={20} /></span><span className="eyebrow">Поддержка</span><strong>AutoBuy для всей страны</strong><small>Если вопрос связан с объявлением, свяжитесь с автосалоном по телефону или WhatsApp.</small></div>
         )}
       </div>
       <div className="contact-bottom"><p><MapPin size={17} /> Платформа для покупателей и продавцов по всему Кыргызстану</p><Link className="button button--primary" to="/about">О проекте</Link></div>

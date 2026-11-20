@@ -1,4 +1,4 @@
-const KEY = 'autokg_search_history'
+const KEY = 'autobuy_search_history'
 const MAX = 8
 
 export function getSearchHistory() {

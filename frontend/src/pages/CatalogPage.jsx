@@ -197,7 +197,7 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
                   <div className="search-history-dropdown">
                     <div className="search-history-header">
                       <span><Clock size={13} /> История поиска</span>
-                      <button type="button" onClick={() => { removeSearchHistory('__all__'); setSearchHistory([]); localStorage.removeItem('autokg_search_history') }}>Очистить</button>
+                      <button type="button" onClick={() => { removeSearchHistory('__all__'); setSearchHistory([]); localStorage.removeItem('autobuy_search_history') }}>Очистить</button>
                     </div>
                     {searchHistory.map((item) => (
                       <div key={item} className="search-history-item">

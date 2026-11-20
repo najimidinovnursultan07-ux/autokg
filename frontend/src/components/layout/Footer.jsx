@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="container footer-main">
         <div className="footer-brand-column">
           <Link className="brand brand--footer" to="/">
-            <span className="brand-name">Auto<span>KG</span></span>
+            <span className="brand-name">Auto<span>Buy</span></span>
           </Link>
           <p>Платформа, которая соединяет людей и автомобили по всему Кыргызстану.</p>
         </div>
@@ -21,7 +21,7 @@ export default function Footer() {
           <Link to="/about">Как это работает</Link>
         </div>
         <div className="footer-column">
-          <h3>AutoKG</h3>
+          <h3>AutoBuy</h3>
           <Link to="/about">О проекте</Link>
           <Link to="/contacts">Контакты</Link>
         </div>
@@ -36,7 +36,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>© {currentYear} AutoKG. Все права защищены.</span>
+        <span>© {currentYear} AutoBuy. Все права защищены.</span>
         <span>Сделано с заботой об автолюбителях Кыргызстана</span>
       </div>
     </footer>

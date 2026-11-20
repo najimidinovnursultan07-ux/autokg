@@ -20,7 +20,7 @@ export default function CarCard({ car, featured = false }) {
         {image ? (
           <img src={resolveMediaUrl(image)} alt={getCarTitle(car)} loading="lazy" />
         ) : (
-          <div className="image-placeholder"><span>AutoKG</span></div>
+          <div className="image-placeholder"><span>AutoBuy</span></div>
         )}
         {car.condition === 'new' && <span className="car-badge">Новый</span>}
         <span className="image-count">{car.images?.length || 0} фото</span>

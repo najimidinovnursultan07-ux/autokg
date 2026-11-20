@@ -51,8 +51,8 @@ export default function ComparePage() {
 
   useEffect(() => {
     const update = () => setCompareList(getCompareList())
-    window.addEventListener('autokg:compare-updated', update)
-    return () => window.removeEventListener('autokg:compare-updated', update)
+    window.addEventListener('autobuy:compare-updated', update)
+    return () => window.removeEventListener('autobuy:compare-updated', update)
   }, [])
 
   const remove = (id) => {
@@ -71,7 +71,7 @@ export default function ComparePage() {
     <section className="container page-section">
       <div className="compare-heading">
         <div>
-          <span className="eyebrow">AutoKG</span>
+          <span className="eyebrow">AutoBuy</span>
           <h1><GitCompareArrows size={28} /> Сравнение автомобилей</h1>
         </div>
         {cars.length > 0 && (
@@ -101,7 +101,7 @@ export default function ComparePage() {
                       <Link to={`/cars/${car.id}`}>
                         {car.images?.[0]?.image
                           ? <img src={resolveMediaUrl(car.images[0].thumb || car.images[0].image)} alt={getCarTitle(car)} className="compare-car-img" />
-                          : <div className="compare-car-img compare-car-img--placeholder">AutoKG</div>
+                          : <div className="compare-car-img compare-car-img--placeholder">AutoBuy</div>
                         }
                         <strong>{getCarTitle(car)}</strong>
                       </Link>

@@ -43,7 +43,7 @@ export default function PasswordResetPage() {
         <div className="auth-icon">{message ? <MailCheck size={22} /> : <KeyRound size={22} />}</div>
         <span className="eyebrow">Безопасность аккаунта</span>
         <h1>{isConfirm ? 'Новый пароль' : 'Восстановление пароля'}</h1>
-        <p className="auth-intro">{isConfirm ? 'Создайте новый пароль для входа в AutoKG.' : 'Укажите электронную почту — отправим инструкции, если аккаунт существует.'}</p>
+        <p className="auth-intro">{isConfirm ? 'Создайте новый пароль для входа в AutoBuy.' : 'Укажите электронную почту — отправим инструкции, если аккаунт существует.'}</p>
         {message ? <div className="success-panel">{message}</div> : (
           <form className="form-stack" onSubmit={submit}>
             {error && <div className="form-alert" role="alert">{error}</div>}

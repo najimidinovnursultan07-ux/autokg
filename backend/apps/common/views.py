@@ -16,7 +16,7 @@ class ApiRootView(APIView):
 
     def get(self, request):
         return Response({
-            "message": "AutoKG API",
+            "message": "AutoBuy API",
             "version": "1.0",
             "status": "ok",
             "docs": {

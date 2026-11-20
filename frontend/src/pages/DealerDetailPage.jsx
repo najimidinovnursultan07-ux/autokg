@@ -79,7 +79,7 @@ export default function DealerDetailPage() {
   const newCount = cars.filter((c) => c.condition === 'new').length
   const color = brandColor(dealer.name)
   const whatsappHref = dealer.whatsapp
-    ? `https://wa.me/${dealer.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Пишу с AutoKG по поводу автомобилей салона «${dealer.name}».`)}`
+    ? `https://wa.me/${dealer.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Пишу с AutoBuy по поводу автомобилей салона «${dealer.name}».`)}`
     : ''
   const mapQuery = [dealer.city_name, dealer.address].filter(Boolean).join(', ')
   const mapHref = dealer.address ? `https://2gis.kg/search/${encodeURIComponent(mapQuery)}` : ''
@@ -88,7 +88,7 @@ export default function DealerDetailPage() {
     const url = window.location.href
     try {
       if (navigator.share) {
-        await navigator.share({ title: dealer.name, text: `Автосалон ${dealer.name} на AutoKG`, url })
+        await navigator.share({ title: dealer.name, text: `Автосалон ${dealer.name} на AutoBuy`, url })
         return
       }
       await navigator.clipboard.writeText(url)
@@ -120,7 +120,7 @@ export default function DealerDetailPage() {
             <div className="dealer-identity">
               <div className="dealer-title">
                 <h1>{dealer.name}</h1>
-                <span className="dealer-verified"><BadgeCheck size={16} /> Партнёр AutoKG</span>
+                <span className="dealer-verified"><BadgeCheck size={16} /> Партнёр AutoBuy</span>
               </div>
               {(dealer.city_name || dealer.address) && (
                 <p className="dealer-location">

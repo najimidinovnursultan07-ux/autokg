@@ -32,7 +32,7 @@ export default function AdminDashboardPage() {
 
   return (
     <section className="admin-page">
-      <PageTitle eyebrow="Администрирование" title="Обзор платформы" description="Автосалоны, менеджеры и объявления AutoKG." />
+      <PageTitle eyebrow="Администрирование" title="Обзор платформы" description="Автосалоны, менеджеры и объявления AutoBuy." />
       {loading ? <LoadingState label="Загружаем статистику…" /> : error ? <ErrorState message={error} onRetry={load} /> : (
         <>
           <div className="admin-stat-grid">

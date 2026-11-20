@@ -21,9 +21,9 @@ export default function DealersPage() {
   return (
     <section className="container page-section">
       <PageTitle
-        eyebrow="AutoKG"
+        eyebrow="AutoBuy"
         title="Автосалоны"
-        description="Официальные партнёры платформы AutoKG в Кыргызстане."
+        description="Официальные партнёры платформы AutoBuy в Кыргызстане."
       />
       {loading ? <LoadingState label="Загружаем салоны…" /> : error ? (
         <ErrorState message={error} onRetry={() => window.location.reload()} />

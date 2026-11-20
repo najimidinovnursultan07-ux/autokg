@@ -24,7 +24,7 @@ export default function AdminLayout() {
       <aside className="admin-sidebar">
         <div className="admin-brand">
           <span className="admin-brand-mark"><BarChart3 size={19} /></span>
-          <span><strong>AutoKG</strong><small>Панель администратора</small></span>
+          <span><strong>AutoBuy</strong><small>Панель администратора</small></span>
         </div>
         <nav className="admin-navigation" aria-label="Административная панель">
           {navigation.map(({ to, label, icon: Icon, end }) => (

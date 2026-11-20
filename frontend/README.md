@@ -1,6 +1,6 @@
-# AutoKG frontend
+# AutoBuy frontend
 
-React, Vite, JavaScript, React Router, Axios and Lucide React application for the AutoKG marketplace.
+React, Vite, JavaScript, React Router, Axios and Lucide React application for the AutoBuy marketplace.
 
 ## Local development
 

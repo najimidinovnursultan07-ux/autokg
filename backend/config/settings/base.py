@@ -15,7 +15,7 @@ DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
 INSTALLED_APPS = [
-    "apps.common.admin_config.AutoKGAdminConfig",
+    "apps.common.admin_config.AutoBuyAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -87,8 +87,8 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": DB_ENGINE,
-            "NAME": env("DB_NAME", default="autokg"),
-            "USER": env("DB_USER", default="autokg"),
+            "NAME": env("DB_NAME", default="autobuy"),
+            "USER": env("DB_USER", default="autobuy"),
             "PASSWORD": env("DB_PASSWORD", default=""),
             "HOST": env("DB_HOST", default="localhost"),
             "PORT": env("DB_PORT", default="5432"),
@@ -184,7 +184,7 @@ CSRF_TRUSTED_ORIGINS = env.list(
     default=[],
 )
 
-AUTH_COOKIE_NAME = "autokg_refresh"
+AUTH_COOKIE_NAME = "autobuy_refresh"
 AUTH_COOKIE_PATH = "/api/auth/"
 AUTH_COOKIE_SECURE = env.bool("AUTH_COOKIE_SECURE", default=not DEBUG)
 AUTH_COOKIE_SAMESITE = env(
@@ -205,7 +205,7 @@ EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
 EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
 DEFAULT_FROM_EMAIL = env(
     "DEFAULT_FROM_EMAIL",
-    default="no-reply@autokg.local",
+    default="no-reply@autobuy.local",
 )
 PASSWORD_RESET_URL = env("PASSWORD_RESET_URL", default="")
 

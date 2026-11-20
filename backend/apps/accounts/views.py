@@ -148,7 +148,7 @@ class PasswordResetRequestView(generics.GenericAPIView):
                 f"{urlencode({'uid': uid, 'token': token})}"
             )
             send_mail(
-                subject="Восстановление пароля AutoKG",
+                subject="Восстановление пароля AutoBuy",
                 message=(
                     "Для установки нового пароля перейдите по ссылке. "
                     f"Если вы не запрашивали восстановление, проигнорируйте письмо:\n\n"

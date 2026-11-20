@@ -1,9 +1,9 @@
 from django.contrib.admin import AdminSite
 
 
-class AutoKGAdminSite(AdminSite):
-    site_header = "AutoKG"
-    site_title = "AutoKG — администрирование"
+class AutoBuyAdminSite(AdminSite):
+    site_header = "AutoBuy"
+    site_title = "AutoBuy — администрирование"
     index_title = "Управление маркетплейсом"
 
     def has_permission(self, request):

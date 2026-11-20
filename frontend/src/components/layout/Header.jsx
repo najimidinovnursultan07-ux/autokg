@@ -22,8 +22,8 @@ export default function Header() {
 
   useEffect(() => {
     const update = () => setCompareCount(getCompareList().length)
-    window.addEventListener('autokg:compare-updated', update)
-    return () => window.removeEventListener('autokg:compare-updated', update)
+    window.addEventListener('autobuy:compare-updated', update)
+    return () => window.removeEventListener('autobuy:compare-updated', update)
   }, [])
 
   const close = () => setMenuOpen(false)
@@ -36,8 +36,8 @@ export default function Header() {
   return (
     <header className="site-header">
       <div className="header-inner container">
-        <Link className="brand" to="/" aria-label="AutoKG — на главную">
-          <span className="brand-name">Auto<span>KG</span></span>
+        <Link className="brand" to="/" aria-label="AutoBuy — на главную">
+          <span className="brand-name">Auto<span>Buy</span></span>
         </Link>
 
         <button

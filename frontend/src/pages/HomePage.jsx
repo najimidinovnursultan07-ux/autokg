@@ -144,7 +144,7 @@ export default function HomePage() {
           <div>
             <span className="eyebrow">Автосалоны Кыргызстана</span>
             <h1>Автомобили от проверенных салонов</h1>
-            <p>Все объявления — только от автосалонов-партнёров AutoKG. Звоните и пишите в WhatsApp напрямую.</p>
+            <p>Все объявления — только от автосалонов-партнёров AutoBuy. Звоните и пишите в WhatsApp напрямую.</p>
           </div>
           <img src={herofon} alt="" aria-hidden="true" />
         </div>
@@ -237,15 +237,15 @@ export default function HomePage() {
       )}
 
       <section className="container value-strip">
-        <div className="section-heading value-heading"><div><span className="eyebrow">Почему AutoKG</span><h2>Покупайте у проверенных салонов</h2></div></div>
-        <div className="value-item"><span className="value-icon"><ShieldCheck size={20} /></span><div><strong>Только проверенные салоны</strong><p>Объявления публикуют только автосалоны-партнёры, подключённые администрацией AutoKG.</p></div></div>
+        <div className="section-heading value-heading"><div><span className="eyebrow">Почему AutoBuy</span><h2>Покупайте у проверенных салонов</h2></div></div>
+        <div className="value-item"><span className="value-icon"><ShieldCheck size={20} /></span><div><strong>Только проверенные салоны</strong><p>Объявления публикуют только автосалоны-партнёры, подключённые администрацией AutoBuy.</p></div></div>
         <div className="value-item"><span className="value-icon"><Building2 size={20} /></span><div><strong>Все салоны в одном месте</strong><p>Сравнивайте предложения разных автосалонов без поездок по городу.</p></div></div>
         <div className="value-item"><span className="value-icon"><BadgeCheck size={20} /></span><div><strong>Прямой контакт с салоном</strong><p>Звоните или пишите в WhatsApp салону прямо со страницы автомобиля.</p></div></div>
       </section>
 
       <section className="seller-cta">
         <div className="container seller-cta-inner">
-          <div><span className="eyebrow eyebrow--light">Автосалонам</span><h2>Разместите автосалон на AutoKG</h2><p>Свяжитесь с нами — мы подключим салон и выдадим доступ в кабинет для управления объявлениями.</p></div>
+          <div><span className="eyebrow eyebrow--light">Автосалонам</span><h2>Разместите автосалон на AutoBuy</h2><p>Свяжитесь с нами — мы подключим салон и выдадим доступ в кабинет для управления объявлениями.</p></div>
           <Link to="/contacts" className="button button--white">Связаться с нами <ChevronRight size={17} /></Link>
         </div>
       </section>

@@ -13,7 +13,7 @@ export default function AboutPage() {
       <div className="about-hero">
         <span className="eyebrow">О платформе</span>
         <h1>Автомобильный рынок<br /><em>ближе и понятнее</em></h1>
-        <p>AutoKG — площадка для покупки и продажи автомобилей в Кыргызстане. Мы помогаем находить объявления, сравнивать автомобили и удобно управлять продажей.</p>
+        <p>AutoBuy — площадка для покупки и продажи автомобилей в Кыргызстане. Мы помогаем находить объявления, сравнивать автомобили и удобно управлять продажей.</p>
         <Link className="button button--primary" to="/catalog">Открыть каталог <ArrowRight size={17} /></Link>
       </div>
       <div className="about-values">{values.map(({ icon: Icon, title, text }) => <article className="about-value" key={title}><span className="value-icon"><Icon size={20} /></span><h2>{title}</h2><p>{text}</p></article>)}</div>

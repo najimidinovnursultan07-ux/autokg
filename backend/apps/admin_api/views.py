@@ -17,7 +17,7 @@ from apps.cars.filters import CarFilter
 from apps.cars.models import Brand, Car, City, Model
 from apps.cars.pagination import CarPagination
 from apps.cars.serializers import BrandSerializer, CitySerializer, ModelSerializer
-from apps.common.permissions import IsAutoKGAdmin
+from apps.common.permissions import IsAutoBuyAdmin
 from apps.dealers.models import Dealer
 
 from .serializers import AdminCarSerializer, AdminUserSerializer
@@ -32,7 +32,7 @@ class AdminPagination(PageNumberPagination):
 class AdminStatsView(APIView):
     """Число салонов, объявлений и объявлений по салонам."""
 
-    permission_classes = (IsAutoKGAdmin,)
+    permission_classes = (IsAutoBuyAdmin,)
 
     def get(self, request):
         dealers = Dealer.objects.aggregate(
@@ -67,7 +67,7 @@ class AdminStatsView(APIView):
 
 class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = AdminUserSerializer
-    permission_classes = (IsAutoKGAdmin,)
+    permission_classes = (IsAutoBuyAdmin,)
     pagination_class = AdminPagination
     filter_backends = (DjangoFilterBackend, SearchFilter, OrderingFilter)
     filterset_fields = ("is_active", "role")
@@ -104,7 +104,7 @@ class AdminCarViewSet(viewsets.ModelViewSet):
     """Модерация всех объявлений: просмотр, смена статуса / салона, удаление."""
 
     serializer_class = AdminCarSerializer
-    permission_classes = (IsAutoKGAdmin,)
+    permission_classes = (IsAutoBuyAdmin,)
     pagination_class = CarPagination
     filter_backends = (DjangoFilterBackend, SearchFilter, OrderingFilter)
     filterset_class = CarFilter
@@ -137,7 +137,7 @@ class AdminCarViewSet(viewsets.ModelViewSet):
 
 
 class ProtectedCatalogViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAutoKGAdmin,)
+    permission_classes = (IsAutoBuyAdmin,)
     pagination_class = AdminPagination
     filter_backends = (SearchFilter, OrderingFilter)
     ordering = ("name",)

@@ -1,8 +1,8 @@
 from rest_framework.permissions import BasePermission
 
 
-class IsAutoKGAdmin(BasePermission):
-    message = "Доступ разрешён только администраторам AutoKG."
+class IsAutoBuyAdmin(BasePermission):
+    message = "Доступ разрешён только администраторам AutoBuy."
 
     def has_permission(self, request, view):
         user = request.user

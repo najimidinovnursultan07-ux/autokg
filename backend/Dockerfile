@@ -10,12 +10,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN addgroup --system --gid 10001 autokg \
-    && adduser --system --uid 10001 --ingroup autokg autokg \
+RUN addgroup --system --gid 10001 autobuy \
+    && adduser --system --uid 10001 --ingroup autobuy autobuy \
     && mkdir -p /app/media /app/staticfiles \
-    && chown -R autokg:autokg /app/media /app/staticfiles
+    && chown -R autobuy:autobuy /app/media /app/staticfiles
 
-USER autokg
+USER autobuy
 
 EXPOSE 8000
 

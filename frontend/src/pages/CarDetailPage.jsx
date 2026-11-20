@@ -92,7 +92,7 @@ export default function CarDetailPage() {
     <section className="container detail-section">
       <Link className="back-link" to="/catalog"><ArrowLeft size={17} /> Каталог</Link>
       <div className="detail-heading">
-        <div><span className="eyebrow">{car.city_name || 'Кыргызстан'} · объявление AutoKG</span><h1>{getCarTitle(car)}</h1></div>
+        <div><span className="eyebrow">{car.city_name || 'Кыргызстан'} · объявление AutoBuy</span><h1>{getCarTitle(car)}</h1></div>
         <div className="detail-heading-actions">
           {car.views_count > 0 && <span className="detail-views"><Eye size={15} /> {car.views_count} просмотров</span>}
           <button
@@ -111,7 +111,7 @@ export default function CarDetailPage() {
         <div className="detail-main">
           <div className="gallery">
             <div className="gallery-main" onClick={() => images.length > 0 && setLightbox(true)} style={{ cursor: images.length > 0 ? 'zoom-in' : 'default' }}>
-              {currentImage ? <img src={resolveMediaUrl(currentImage)} alt={getCarTitle(car)} /> : <div className="image-placeholder"><span>AutoKG</span></div>}
+              {currentImage ? <img src={resolveMediaUrl(currentImage)} alt={getCarTitle(car)} /> : <div className="image-placeholder"><span>AutoBuy</span></div>}
               {images.length > 1 && <>
                 <button className="gallery-arrow gallery-arrow--left" onClick={(e) => { e.stopPropagation(); setActiveImage((activeImage - 1 + images.length) % images.length) }} aria-label="Предыдущее фото"><ChevronLeft /></button>
                 <button className="gallery-arrow gallery-arrow--right" onClick={(e) => { e.stopPropagation(); setActiveImage((activeImage + 1) % images.length) }} aria-label="Следующее фото"><ChevronRight /></button>
@@ -175,7 +175,7 @@ export default function CarDetailPage() {
           {(car.dealer_detail?.whatsapp || car.contact_phone) && (
             <a
               className="seller-whatsapp"
-              href={`https://wa.me/${(car.dealer_detail?.whatsapp || car.contact_phone)?.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Интересует ${getCarTitle(car)} на AutoKG`)}`}
+              href={`https://wa.me/${(car.dealer_detail?.whatsapp || car.contact_phone)?.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Интересует ${getCarTitle(car)} на AutoBuy`)}`}
               target="_blank"
               rel="noopener noreferrer"
             >

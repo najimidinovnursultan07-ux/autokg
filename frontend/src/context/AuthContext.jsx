@@ -67,8 +67,8 @@ export function AuthProvider({ children }) {
       setAccessToken(null)
       setUser(null)
     }
-    window.addEventListener('autokg:session-expired', expireSession)
-    return () => window.removeEventListener('autokg:session-expired', expireSession)
+    window.addEventListener('autobuy:session-expired', expireSession)
+    return () => window.removeEventListener('autobuy:session-expired', expireSession)
   }, [])
 
   const signIn = useCallback(
