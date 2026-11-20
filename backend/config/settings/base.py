@@ -161,6 +161,8 @@ REST_FRAMEWORK = {
         "user": "1000/hour",
         "auth": "5/minute",
         "auth_refresh": "30/minute",
+        "contacts": "60/hour",
+        "rates": "120/hour",
     },
 }
 

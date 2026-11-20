@@ -116,7 +116,7 @@ export default function DealerDashboardPage() {
           <div className="admin-table-wrap">
             <table className="admin-table dealer-cars-table">
               <thead>
-                <tr><th>Автомобиль</th><th>Цена</th><th>Статус</th><th>Просмотры</th><th>Действия</th></tr>
+                <tr><th>Автомобиль</th><th>Цена</th><th>Статус</th><th>Просмотры</th><th title="Сколько раз открыли номер / нажали WhatsApp">Номер / WhatsApp</th><th>Действия</th></tr>
               </thead>
               <tbody>
                 {cars.map((car) => {
@@ -138,6 +138,7 @@ export default function DealerDashboardPage() {
                       <td>{formatPrice(car.price, car.currency)}</td>
                       <td><span className={`admin-status admin-status--${car.status}`}>{CAR_STATUS_LABELS[car.status] || car.status}</span></td>
                       <td>{car.views_count || 0}</td>
+                      <td>{car.phone_views || 0} / {car.whatsapp_clicks || 0}</td>
                       <td>
                         <div className="table-actions">
                           <Link className="icon-action" to={`/dashboard/cars/${car.id}/edit`} title="Изменить" aria-label="Изменить"><Edit3 size={16} /></Link>

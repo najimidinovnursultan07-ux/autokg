@@ -1,4 +1,5 @@
 import re
+from datetime import timedelta
 
 from django.utils import timezone
 from rest_framework import serializers
@@ -18,6 +19,8 @@ from .models import Brand, Car, CarImage, City, Model
 
 MAX_IMAGES_PER_CAR = 15
 MIN_CAR_YEAR = 1980
+PRICE_DROP_WINDOW = timedelta(days=30)
+PRICE_HISTORY_LIMIT = 10
 
 
 def get_active_promotions(car):
@@ -173,6 +176,39 @@ class CarSerializer(serializers.ModelSerializer):
     is_highlighted = serializers.SerializerMethodField()
     is_urgent = serializers.SerializerMethodField()
     promotions = serializers.SerializerMethodField()
+    price_drop = serializers.SerializerMethodField()
+    price_history = serializers.SerializerMethodField()
+
+    def _history(self, obj):
+        # Использует prefetch_related("price_history"), новые записи — первыми
+        return list(obj.price_history.all())
+
+    def get_price_drop(self, obj):
+        """Старая цена, если последнее изменение было снижением за последние 30 дней."""
+        history = self._history(obj)
+        if len(history) < 2:
+            return None
+        current, previous = history[0], history[1]
+        if (
+            current.currency != previous.currency
+            or current.currency != obj.currency
+            or previous.price <= obj.price
+            or current.created_at < timezone.now() - PRICE_DROP_WINDOW
+        ):
+            return None
+        return {
+            "old_price": str(previous.price),
+            "currency": previous.currency,
+            "changed_at": current.created_at,
+        }
+
+    def get_price_history(self, obj):
+        if not self.context.get("include_price_history"):
+            return None
+        return [
+            {"price": str(item.price), "currency": item.currency, "changed_at": item.created_at}
+            for item in self._history(obj)[:PRICE_HISTORY_LIMIT]
+        ]
 
     def get_is_top(self, obj):
         from django.utils import timezone
@@ -231,10 +267,14 @@ class CarSerializer(serializers.ModelSerializer):
             "contact_phone",
             "status",
             "views_count",
+            "phone_views",
+            "whatsapp_clicks",
             "is_top",
             "is_highlighted",
             "is_urgent",
             "promotions",
+            "price_drop",
+            "price_history",
             "published_at",
             "created_at",
             "updated_at",
@@ -250,6 +290,10 @@ class CarSerializer(serializers.ModelSerializer):
             "model_name",
             "city_name",
             "views_count",
+            "phone_views",
+            "whatsapp_clicks",
+            "price_drop",
+            "price_history",
             "is_top",
             "is_highlighted",
             "is_urgent",
@@ -308,3 +352,38 @@ class CarSerializer(serializers.ModelSerializer):
                 "Нельзя создать объявление для неактивного города."
             )
         return value
+
+
+# ── Публичная выдача: без телефонов и статистики салона ───────────────────
+
+class PublicCarDealerSerializer(CarDealerSerializer):
+    phone = None
+    whatsapp = None
+
+
+class PublicCarSerializer(CarSerializer):
+    """
+    Номер телефона и WhatsApp не отдаются в каталоге — только по запросу
+    POST /api/cars/<id>/contacts/ (кнопка «Показать номер»), который считает клики.
+    """
+
+    dealer_detail = PublicCarDealerSerializer(source="dealer", read_only=True)
+    has_phone = serializers.SerializerMethodField()
+    has_whatsapp = serializers.SerializerMethodField()
+
+    class Meta(CarSerializer.Meta):
+        fields = tuple(
+            f for f in CarSerializer.Meta.fields
+            if f not in ("contact_phone", "phone_views", "whatsapp_clicks")
+        ) + ("has_phone", "has_whatsapp")
+        read_only_fields = fields
+
+    def get_has_phone(self, obj):
+        return bool(obj.dealer.phone or obj.contact_phone)
+
+    def get_has_whatsapp(self, obj):
+        return bool(obj.dealer.whatsapp or obj.contact_phone)
+
+
+class ContactRevealSerializer(serializers.Serializer):
+    kind = serializers.ChoiceField(choices=("phone", "whatsapp"))

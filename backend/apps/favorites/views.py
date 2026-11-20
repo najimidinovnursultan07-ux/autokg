@@ -28,7 +28,7 @@ class FavoriteViewSet(ModelViewSet):
                 "car__model__brand",
                 "car__city",
             )
-            .prefetch_related("car__images")
+            .prefetch_related("car__images", "car__price_history")
         )
 
     def perform_create(self, serializer):

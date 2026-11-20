@@ -1,8 +1,6 @@
 import { CarFront, CircleHelp, Mail, MapPin, MessageCircle, Phone, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
-
-const SUPPORT_PHONE = '+996 708 887 776'
-const SUPPORT_PHONE_DIGITS = SUPPORT_PHONE.replace(/\D/g, '')
+import { SUPPORT_PHONE, SUPPORT_PHONE_DIGITS } from '../utils/contacts.js'
 
 function ContactActions({ message }) {
   return (

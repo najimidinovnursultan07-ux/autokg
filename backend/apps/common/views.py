@@ -4,7 +4,10 @@ from django.db import OperationalError, connection
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.status import HTTP_503_SERVICE_UNAVAILABLE
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+
+from .rates import get_rates
 
 
 logger = logging.getLogger(__name__)
@@ -51,3 +54,20 @@ class ReadinessCheckView(APIView):
                 status=HTTP_503_SERVICE_UNAVAILABLE,
             )
         return Response({"status": "ready", "database": "ok"})
+
+
+class ExchangeRatesView(APIView):
+    """Курс НБКР: сколько сомов за 1 USD/EUR/RUB/KZT/CNY."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "rates"
+
+    def get(self, request):
+        data = get_rates()
+        if not data:
+            return Response({"detail": "Курс временно недоступен."}, status=HTTP_503_SERVICE_UNAVAILABLE)
+        response = Response(data)
+        response["Cache-Control"] = "public, max-age=3600"
+        return response

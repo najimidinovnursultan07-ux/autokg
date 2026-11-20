@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, Building2, ChevronLeft, ChevronRight, Eye, Fuel, Gauge, GitCompareArrows, MapPin, Phone, Settings2, ShieldCheck, X } from 'lucide-react'
+import { ArrowLeft, Building2, ChevronLeft, ChevronRight, Eye, Fuel, Gauge, GitCompareArrows, MapPin, MessageCircle, Phone, Settings2, ShieldCheck, TrendingDown, X } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
-import { getCar } from '../api/cars.js'
+import { getCar, revealCarContacts } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
 import FavoriteButton from '../components/cars/FavoriteButton.jsx'
+import ShareButtons from '../components/cars/ShareButtons.jsx'
 import { ErrorState, LoadingState } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
-import { formatMileage, formatPrice, getCarTitle } from '../utils/format.js'
+import { formatConvertedPrice, formatDate, formatMileage, formatPrice, getCarTitle } from '../utils/format.js'
+import { whatsappLink } from '../utils/contacts.js'
+import useRates from '../hooks/useRates.js'
 import { addToCompare, isInCompare, removeFromCompare } from '../utils/compare.js'
 
 const labels = {
@@ -17,6 +20,93 @@ const labels = {
   condition: { new: 'Новый', used: 'С пробегом', damaged: 'Требует ремонта' },
 }
 
+function SellerContacts({ car }) {
+  const [contacts, setContacts] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const message = `Здравствуйте! Интересует ${getCarTitle(car)} на AutoBuy`
+
+  const reveal = async (kind) => {
+    setError('')
+    const data = await revealCarContacts(car.id, kind)
+    setContacts(data)
+    return data
+  }
+
+  const showPhone = async () => {
+    setLoading(true)
+    try {
+      await reveal('phone')
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, 'Не удалось получить номер. Попробуйте ещё раз.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const openWhatsapp = async () => {
+    // Окно открываем сразу по клику — иначе браузер заблокирует его после запроса
+    const popup = window.open('', '_blank')
+    try {
+      const data = await reveal('whatsapp')
+      const href = whatsappLink(data.whatsapp, message)
+      if (!href) throw new Error('no whatsapp')
+      if (popup) popup.location.href = href
+      else window.location.href = href
+    } catch (requestError) {
+      popup?.close()
+      setError(getErrorMessage(requestError, 'Не удалось открыть WhatsApp. Попробуйте ещё раз.'))
+    }
+  }
+
+  return (
+    <>
+      {car.has_whatsapp && (
+        <button type="button" className="seller-whatsapp" onClick={openWhatsapp}>
+          <MessageCircle size={16} /> Написать в WhatsApp
+        </button>
+      )}
+      {car.has_phone && (contacts?.phone ? (
+        <a className="seller-phone seller-phone--revealed" href={`tel:${contacts.phone}`}>
+          <Phone size={14} /> {contacts.phone}
+        </a>
+      ) : (
+        <button type="button" className="button button--outline seller-show-phone" onClick={showPhone} disabled={loading}>
+          <Phone size={15} /> {loading ? 'Загружаем…' : 'Показать номер'}
+        </button>
+      ))}
+      {error && <p className="seller-contact-error" role="alert">{error}</p>}
+    </>
+  )
+}
+
+function PriceHistory({ history }) {
+  if (!history || history.length < 2) return null
+  return (
+    <div className="detail-card price-history-card">
+      <h2>История цены</h2>
+      <ul className="price-history">
+        {history.map((item, index) => {
+          const previous = history[index + 1]
+          const diff = previous && previous.currency === item.currency ? Number(item.price) - Number(previous.price) : 0
+          return (
+            <li key={`${item.changed_at}-${index}`}>
+              <span>{formatDate(item.changed_at)}</span>
+              <strong>{formatPrice(item.price, item.currency)}</strong>
+              {diff !== 0 && (
+                <em className={diff < 0 ? 'price-diff price-diff--down' : 'price-diff price-diff--up'}>
+                  {diff < 0 ? '−' : '+'}{formatPrice(Math.abs(diff), item.currency)}
+                </em>
+              )}
+              {!previous && <em className="price-diff">первая цена</em>}
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 export default function CarDetailPage() {
   const { id } = useParams()
   const [car, setCar] = useState(null)
@@ -25,6 +115,7 @@ export default function CarDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [inCompare, setInCompare] = useState(false)
+  const rates = useRates()
 
   useEffect(() => {
     if (car) setInCompare(isInCompare(car.id))
@@ -125,10 +216,22 @@ export default function CarDetailPage() {
             <div className="spec-grid">{features.map(([label, value]) => <div className="spec-item" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
           </div>
           <div className="detail-card description-card"><h2>Описание</h2><p>{car.description || 'Продавец не добавил описание.'}</p></div>
+          <PriceHistory history={car.price_history} />
         </div>
         <aside className="seller-panel">
           <span className="eyebrow">Цена автомобиля</span>
-          <strong className="detail-price">{formatPrice(car.price, car.currency)}</strong>
+          {car.price_drop && (
+            <span className="price-drop-label"><TrendingDown size={14} /> Цена снижена</span>
+          )}
+          <strong className={`detail-price ${car.price_drop ? 'detail-price--dropped' : ''}`}>{formatPrice(car.price, car.currency)}</strong>
+          {car.price_drop && (
+            <s className="detail-old-price">{formatPrice(car.price_drop.old_price, car.price_drop.currency)}</s>
+          )}
+          {formatConvertedPrice(car.price, car.currency, rates) && (
+            <span className="detail-converted-price" title={`По курсу НБКР на ${rates.date}: 1 $ = ${Number(rates.rates.USD).toFixed(2)} сом`}>
+              {formatConvertedPrice(car.price, car.currency, rates)} <small>по курсу НБКР</small>
+            </span>
+          )}
 
           {/* Dealer блок */}
           {car.dealer_detail ? (
@@ -156,7 +259,7 @@ export default function CarDetailPage() {
               <span className="seller-avatar">
                 {car.owner_detail?.profile_photo
                   ? <img src={resolveMediaUrl(car.owner_detail.profile_photo)} alt={car.owner_detail.first_name || 'Продавец'} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%'}} />
-                  : <span>{(car.owner_detail?.first_name || car.contact_phone || 'A').slice(0, 1).toUpperCase()}</span>
+                  : <span>{(car.owner_detail?.first_name || 'A').slice(0, 1).toUpperCase()}</span>
                 }
               </span>
               <div>
@@ -171,24 +274,14 @@ export default function CarDetailPage() {
             </div>
           )}
 
-          {/* Контакты */}
-          {(car.dealer_detail?.whatsapp || car.contact_phone) && (
-            <a
-              className="seller-whatsapp"
-              href={`https://wa.me/${(car.dealer_detail?.whatsapp || car.contact_phone)?.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Интересует ${getCarTitle(car)} на AutoBuy`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Написать в WhatsApp
-            </a>
-          )}
-          {(car.dealer_detail?.phone || car.contact_phone) && (
-            <a className="seller-phone" href={`tel:${car.dealer_detail?.phone || car.contact_phone}`}>
-              <Phone size={14} /> {car.dealer_detail?.phone || car.contact_phone}
-            </a>
-          )}
+          {/* Контакты: номер открывается по клику и считается в статистике салона */}
+          <SellerContacts car={car} />
 
           <div className="seller-notice"><ShieldCheck size={17} /><span>Не переводите предоплату до личного осмотра автомобиля.</span></div>
+          <ShareButtons
+            title={getCarTitle(car)}
+            text={`${getCarTitle(car)} — ${formatPrice(car.price, car.currency)} на AutoBuy`}
+          />
           <div className="seller-facts">
             <span><Gauge size={16} />{formatMileage(car.mileage)}</span>
             <span><Fuel size={16} />{labels.engine_type[car.engine_type] || '—'}</span>

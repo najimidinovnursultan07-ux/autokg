@@ -1,7 +1,8 @@
-import { ArrowUpRight, Building2, Gauge, MapPin, Settings2 } from 'lucide-react'
+import { ArrowUpRight, Building2, Gauge, MapPin, Settings2, TrendingDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { resolveMediaUrl } from '../../api/client.js'
-import { formatMileage, formatPrice, getCarCover, getCarTitle } from '../../utils/format.js'
+import useRates from '../../hooks/useRates.js'
+import { formatConvertedPrice, formatMileage, formatPrice, getCarCover, getCarTitle } from '../../utils/format.js'
 import FavoriteButton from './FavoriteButton.jsx'
 import CarBadges from './CarBadges.jsx'
 
@@ -14,6 +15,8 @@ const transmissionLabels = {
 
 export default function CarCard({ car, featured = false }) {
   const image = getCarCover(car)
+  const rates = useRates()
+  const converted = formatConvertedPrice(car.price, car.currency, rates)
   return (
     <article className={`car-card ${featured ? 'car-card--featured' : ''} ${car.is_top ? 'car-card--top' : ''} ${car.is_highlighted ? 'car-card--highlighted' : ''} ${car.is_urgent ? 'car-card--urgent' : ''}`}>
       <Link to={`/cars/${car.id}`} className="car-card-image">
@@ -36,7 +39,16 @@ export default function CarCard({ car, featured = false }) {
             <ArrowUpRight size={17} />
           </Link>
         </div>
-        <strong className="car-card-price">{formatPrice(car.price, car.currency)}</strong>
+        <div className="car-card-price-row">
+          <strong className="car-card-price">{formatPrice(car.price, car.currency)}</strong>
+          {car.price_drop && (
+            <span className="car-card-drop" title="Цена снижена">
+              <TrendingDown size={13} />
+              <s>{formatPrice(car.price_drop.old_price, car.price_drop.currency)}</s>
+            </span>
+          )}
+        </div>
+        {converted && <small className="car-card-converted">{converted}</small>}
         <div className="car-card-meta">
           <span><Gauge size={15} />{formatMileage(car.mileage)}</span>
           <span><Settings2 size={15} />{transmissionLabels[car.transmission] || '—'}</span>

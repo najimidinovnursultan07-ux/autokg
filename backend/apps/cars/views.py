@@ -2,9 +2,11 @@ from django.db.models import BooleanField, Exists, ExpressionWrapper, F, OuterRe
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.dealers.permissions import PublicReadOnly
 
@@ -13,9 +15,10 @@ from .models import Brand, Car, City, Model
 from .pagination import CarPagination
 from .serializers import (
     BrandSerializer,
-    CarSerializer,
     CitySerializer,
+    ContactRevealSerializer,
     ModelSerializer,
+    PublicCarSerializer,
 )
 
 
@@ -24,8 +27,12 @@ def public_cars_queryset():
     return (
         Car.objects.filter(status=Car.Status.ACTIVE, dealer__is_active=True)
         .select_related("owner", "dealer", "dealer__city", "model", "model__brand", "city")
-        .prefetch_related("images")
+        .prefetch_related("images", "price_history")
     )
+
+
+def is_own_dealer_view(request, car):
+    return request.user.is_authenticated and request.user.dealer_id == car.dealer_id
 
 
 class BrandViewSet(viewsets.ReadOnlyModelViewSet):
@@ -69,7 +76,7 @@ class CarViewSet(viewsets.ReadOnlyModelViewSet):
     POST/PUT/PATCH/DELETE здесь: аноним → 401, авторизованный → 403.
     """
 
-    serializer_class = CarSerializer
+    serializer_class = PublicCarSerializer
     pagination_class = CarPagination
     permission_classes = (PublicReadOnly,)
     filter_backends = (DjangoFilterBackend, SearchFilter, OrderingFilter)
@@ -84,6 +91,7 @@ class CarViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = tuple(f for f in SAFE_ORDERING if not f.startswith("-"))
     ordering = ("-published_at", "-created_at")
     lookup_value_regex = "[0-9a-f-]{36}"
+    throttle_scope = None  # задаётся для действия contacts
 
     def get_queryset(self):
         qs = public_cars_queryset()
@@ -111,9 +119,34 @@ class CarViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = backend().filter_queryset(self.request, queryset, self)
         return queryset
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["include_price_history"] = self.action == "retrieve"
+        return context
+
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        if not request.user.is_authenticated or request.user.dealer_id != instance.dealer_id:
+        if not is_own_dealer_view(request, instance):
             Car.objects.filter(pk=instance.pk).update(views_count=F("views_count") + 1)
             instance.views_count = (instance.views_count or 0) + 1
         return Response(self.get_serializer(instance).data)
+
+    @action(
+        detail=True,
+        methods=("post",),
+        url_path="contacts",
+        permission_classes=(AllowAny,),
+        throttle_classes=(ScopedRateThrottle,),
+        throttle_scope="contacts",
+    )
+    def contacts(self, request, pk=None):
+        """«Показать номер» / «Написать в WhatsApp»: отдаёт контакты и считает клик."""
+        serializer = ContactRevealSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        car = self.get_object()
+        if not is_own_dealer_view(request, car):
+            counter = "phone_views" if serializer.validated_data["kind"] == "phone" else "whatsapp_clicks"
+            Car.objects.filter(pk=car.pk).update(**{counter: F(counter) + 1})
+        phone = car.dealer.phone or car.contact_phone
+        whatsapp = car.dealer.whatsapp or car.contact_phone
+        return Response({"phone": phone or None, "whatsapp": whatsapp or None})

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
+from django.utils import timezone
 from django.db.models import Q
 
 
@@ -195,6 +196,9 @@ class Car(models.Model):
         db_index=True,
     )
     views_count = models.PositiveIntegerField(default=0, db_index=True)
+    # Сколько раз открыли номер / нажали «Написать в WhatsApp» (статистика салона)
+    phone_views = models.PositiveIntegerField(default=0)
+    whatsapp_clicks = models.PositiveIntegerField(default=0)
     published_at = models.DateTimeField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -262,6 +266,23 @@ class Car(models.Model):
 
     def __str__(self):
         return f"{self.brand} {self.model} ({self.year})"
+
+
+class CarPriceHistory(models.Model):
+    """Цена объявления на момент изменения (первая запись — цена при создании)."""
+
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="price_history")
+    price = models.DecimalField(max_digits=14, decimal_places=2)
+    currency = models.CharField(max_length=3, choices=CarCurrency.choices)
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        ordering = ("-created_at", "-id")
+        verbose_name = "Изменение цены"
+        verbose_name_plural = "История цен"
+
+    def __str__(self):
+        return f"{self.car_id}: {self.price} {self.currency}"
 
 
 def car_image_upload_to(instance, filename):

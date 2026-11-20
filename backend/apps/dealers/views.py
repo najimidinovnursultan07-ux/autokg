@@ -22,6 +22,7 @@ from apps.cars.serializers import (
     CarImageSerializer,
     CarImagesUploadSerializer,
     CarSerializer,
+    PublicCarSerializer,
 )
 from apps.cars.views import public_cars_queryset
 
@@ -71,7 +72,7 @@ class PublicDealerDetailView(APIView):
         ctx = {"request": request}
         return Response({
             "dealer": DealerPublicSerializer(dealer, context=ctx).data,
-            "cars": CarSerializer(cars, many=True, context=ctx).data,
+            "cars": PublicCarSerializer(cars, many=True, context=ctx).data,
         })
 
 
@@ -119,7 +120,7 @@ class DashboardCarViewSet(viewsets.ModelViewSet):
         return (
             Car.objects.filter(dealer_id=self.request.user.dealer_id)
             .select_related("owner", "dealer", "dealer__city", "model", "model__brand", "city")
-            .prefetch_related("images")
+            .prefetch_related("images", "price_history")
         )
 
     def perform_create(self, serializer):

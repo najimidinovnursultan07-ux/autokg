@@ -71,3 +71,9 @@ export async function setMainCarPhoto(carId, photoId) {
   const { data } = await api.post(`/dashboard/cars/${carId}/photos/${photoId}/main/`)
   return data
 }
+
+// «Показать номер» / «Написать в WhatsApp»: номер отдаётся только здесь, клик считается
+export async function revealCarContacts(id, kind) {
+  const { data } = await api.post(`/cars/${id}/contacts/`, { kind })
+  return data
+}

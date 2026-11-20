@@ -24,3 +24,27 @@ export const CAR_STATUS_LABELS = {
   hidden: 'Скрыто',
   sold: 'Продано',
 }
+
+// Пересчёт по курсу НБКР: USD → сом и сом → USD (для подписи «≈ …» под ценой)
+export function convertPrice(value, currency, rates) {
+  const amount = Number(value)
+  const usd = Number(rates?.rates?.USD)
+  if (!Number.isFinite(amount) || !usd) return null
+  if (currency === 'USD') return { amount: amount * usd, currency: 'KGS' }
+  if (currency === 'KGS') return { amount: amount / usd, currency: 'USD' }
+  return null
+}
+
+export function formatConvertedPrice(value, currency, rates) {
+  const converted = convertPrice(value, currency, rates)
+  if (!converted) return ''
+  const rounded = converted.currency === 'KGS'
+    ? Math.round(converted.amount / 1000) * 1000
+    : Math.round(converted.amount / 10) * 10
+  return `≈ ${formatPrice(rounded, converted.currency)}`
+}
+
+export function formatDate(value) {
+  if (!value) return ''
+  return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(value))
+}
