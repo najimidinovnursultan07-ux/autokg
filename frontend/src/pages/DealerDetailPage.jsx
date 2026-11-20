@@ -6,8 +6,12 @@ import { Link, useParams } from 'react-router-dom'
 import { getDealerBySlug } from '../api/dealers.js'
 import { resolveMediaUrl } from '../api/client.js'
 import CarGrid from '../components/cars/CarGrid.jsx'
+import DealerReviews from '../components/dealers/DealerReviews.jsx'
+import StarRating from '../components/dealers/StarRating.jsx'
+import TwoGisMap from '../components/dealers/TwoGisMap.jsx'
 import { LoadingState, ErrorState } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
+import { hasLocation, toLatLng, twoGisPointUrl, twoGisRouteUrl } from '../utils/twoGis.js'
 
 const BRAND_COLORS = ['#1f2937', '#b91c1c', '#1d4ed8', '#047857', '#7c3aed', '#c2410c', '#0f766e']
 
@@ -61,6 +65,11 @@ export default function DealerDetailPage() {
 
   useEffect(() => { load() }, [load])
 
+  const mapMarkers = useMemo(
+    () => (hasLocation(dealer) ? [{ id: dealer.id, position: toLatLng(dealer) }] : []),
+    [dealer],
+  )
+
   const brands = useMemo(() => {
     const counts = new Map()
     cars.forEach((c) => { if (c.brand) counts.set(c.brand, (counts.get(c.brand) || 0) + 1) })
@@ -82,7 +91,10 @@ export default function DealerDetailPage() {
     ? `https://wa.me/${dealer.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Здравствуйте! Пишу с AutoBuy по поводу автомобилей салона «${dealer.name}».`)}`
     : ''
   const mapQuery = [dealer.city_name, dealer.address].filter(Boolean).join(', ')
-  const mapHref = dealer.address ? `https://2gis.kg/search/${encodeURIComponent(mapQuery)}` : ''
+  const located = hasLocation(dealer)
+  const mapHref = located
+    ? twoGisRouteUrl(dealer.latitude, dealer.longitude)
+    : dealer.address ? `https://2gis.kg/search/${encodeURIComponent(mapQuery)}` : ''
 
   const share = async () => {
     const url = window.location.href
@@ -122,6 +134,9 @@ export default function DealerDetailPage() {
                 <h1>{dealer.name}</h1>
                 <span className="dealer-verified"><BadgeCheck size={16} /> Партнёр AutoBuy</span>
               </div>
+              <a className="dealer-rating-link" href="#reviews">
+                <StarRating rating={dealer.rating} count={dealer.reviews_count} />
+              </a>
               {(dealer.city_name || dealer.address) && (
                 <p className="dealer-location">
                   <MapPin size={16} />
@@ -165,6 +180,20 @@ export default function DealerDetailPage() {
               </div>
             )}
           </div>
+
+          {located && (
+            <div className="dealer-map">
+              <div className="dealer-map-head">
+                <h2>Как добраться</h2>
+                <div className="dealer-map-links">
+                  <a className="button button--outline" href={twoGisPointUrl(dealer.latitude, dealer.longitude)} target="_blank" rel="noopener noreferrer"><MapPin size={16} /> Открыть в 2ГИС</a>
+                  <a className="button button--primary" href={twoGisRouteUrl(dealer.latitude, dealer.longitude)} target="_blank" rel="noopener noreferrer"><Navigation size={16} /> Маршрут</a>
+                </div>
+              </div>
+              {dealer.address && <p className="dealer-map-address"><MapPin size={15} /> {[dealer.city_name, dealer.address].filter(Boolean).join(', ')}</p>}
+              <TwoGisMap markers={mapMarkers} height={300} />
+            </div>
+          )}
         </div>
 
         <section className="dealer-cars">
@@ -206,6 +235,10 @@ export default function DealerDetailPage() {
             </Link>
           )}
         </section>
+
+        <div id="reviews">
+          <DealerReviews dealer={dealer} />
+        </div>
       </div>
 
       {(dealer.phone || whatsappHref) && (

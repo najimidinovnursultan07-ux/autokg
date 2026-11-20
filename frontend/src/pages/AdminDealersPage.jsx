@@ -8,11 +8,12 @@ import {
   toggleDealerActive, updateAdminDealer,
 } from '../api/dealers.js'
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
+import LocationPicker from '../components/dealers/LocationPicker.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
 import { generatePassword } from '../utils/password.js'
 
-const emptyForm = { name: '', slug: '', phone: '', whatsapp: '', address: '', city: '', description: '', is_active: true }
+const emptyForm = { name: '', slug: '', phone: '', whatsapp: '', address: '', latitude: '', longitude: '', city: '', description: '', is_active: true }
 const MAX_LOGO = 5 * 1024 * 1024
 
 export default function AdminDealersPage() {
@@ -181,6 +182,11 @@ export default function AdminDealersPage() {
               <label className="field-label">Город<select value={form.city || ''} onChange={set('city')}><option value="">Не указан</option>{cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
               <label className="field-label">Адрес<input maxLength="300" value={form.address} onChange={set('address')} /></label>
             </div>
+            <LocationPicker
+              latitude={form.latitude}
+              longitude={form.longitude}
+              onChange={(latitude, longitude) => setForm((current) => ({ ...current, latitude, longitude }))}
+            />
             <label className="field-label">Описание<textarea rows={3} value={form.description} onChange={set('description')} /></label>
             {!editing.id && (
               <fieldset className="dealer-admin-fieldset">

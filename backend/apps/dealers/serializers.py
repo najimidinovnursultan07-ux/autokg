@@ -7,10 +7,20 @@ from apps.accounts.models import User
 from apps.common.media import cloudinary_variant, file_url
 from apps.common.serializers import MAX_UPLOAD_PHOTO_BYTES, ValidatedImageField
 
-from .models import Dealer
+from .models import Dealer, DealerReview
 
 LOGO_TRANSFORM = "f_auto,q_auto,c_limit,w_400"
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+def check_location(attrs, instance=None):
+    """Координаты задаются парой: либо обе, либо ни одной."""
+    lat = attrs.get("latitude", getattr(instance, "latitude", None))
+    lng = attrs.get("longitude", getattr(instance, "longitude", None))
+    if (lat is None) != (lng is None):
+        raise serializers.ValidationError(
+            {"latitude": ["Укажите точку на карте целиком (широта и долгота)."]}
+        )
 
 
 class LogoUrlMixin(serializers.Serializer):
@@ -37,13 +47,14 @@ class DealerSerializer(LogoUrlMixin, serializers.ModelSerializer):
         model = Dealer
         fields = (
             "id", "name", "slug", "logo", "logo_url", "description",
-            "phone", "whatsapp", "address", "city", "city_name",
+            "phone", "whatsapp", "address", "latitude", "longitude", "city", "city_name",
             "is_active", "car_count", "managers_count", "created_at",
             "admin_email", "admin_password", "admin_first_name",
         )
         read_only_fields = ("id", "car_count", "managers_count", "created_at")
 
     def validate(self, attrs):
+        check_location(attrs, self.instance)
         if self.instance is not None:
             for key in ("admin_email", "admin_password", "admin_first_name"):
                 attrs.pop(key, None)
@@ -103,12 +114,19 @@ class DealerSerializer(LogoUrlMixin, serializers.ModelSerializer):
 class DealerPublicSerializer(LogoUrlMixin, serializers.ModelSerializer):
     city_name = serializers.CharField(source="city.name", read_only=True, default=None)
     car_count = serializers.IntegerField(read_only=True, default=0)
+    rating = serializers.SerializerMethodField()
+    reviews_count = serializers.IntegerField(read_only=True, default=0)
+
+    def get_rating(self, obj):
+        value = getattr(obj, "rating", None)
+        return round(float(value), 1) if value is not None else None
 
     class Meta:
         model = Dealer
         fields = (
             "id", "name", "slug", "logo_url", "description",
-            "phone", "whatsapp", "address", "city_name", "car_count",
+            "phone", "whatsapp", "address", "latitude", "longitude", "city_name", "car_count",
+            "rating", "reviews_count",
         )
 
 
@@ -122,9 +140,13 @@ class DealerProfileSerializer(LogoUrlMixin, serializers.ModelSerializer):
         model = Dealer
         fields = (
             "id", "name", "slug", "logo", "logo_url", "description",
-            "phone", "whatsapp", "address", "city", "city_name", "is_active",
+            "phone", "whatsapp", "address", "latitude", "longitude", "city", "city_name", "is_active",
         )
         read_only_fields = ("id", "slug", "is_active")
+
+    def validate(self, attrs):
+        check_location(attrs, self.instance)
+        return attrs
 
 
 class ManagerSerializer(serializers.ModelSerializer):
@@ -186,3 +208,53 @@ class PasswordResetByAdminSerializer(serializers.Serializer):
     def validate_password(self, value):
         validate_password(value, user=self.context.get("user"))
         return value
+
+
+# ── Отзывы ─────────────────────────────────────────────────────────────────
+
+class DealerReviewSerializer(serializers.ModelSerializer):
+    """Публичный отзыв: показываем только имя, оценку, текст и дату."""
+
+    class Meta:
+        model = DealerReview
+        fields = ("id", "author_name", "rating", "text", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class DealerReviewCreateSerializer(serializers.ModelSerializer):
+    # Скрытое поле-ловушка для ботов: человек его не видит и не заполняет
+    website = serializers.CharField(required=False, allow_blank=True, write_only=True)
+
+    class Meta:
+        model = DealerReview
+        fields = ("author_name", "rating", "text", "website")
+
+    def validate_author_name(self, value):
+        value = " ".join(value.split())
+        if len(value) < 2:
+            raise serializers.ValidationError("Укажите имя.")
+        return value
+
+    def validate_text(self, value):
+        value = value.strip()
+        if len(value) < 10:
+            raise serializers.ValidationError("Напишите хотя бы пару предложений (от 10 символов).")
+        return value
+
+    def validate_rating(self, value):
+        if not 1 <= value <= 5:
+            raise serializers.ValidationError("Оценка — от 1 до 5.")
+        return value
+
+
+class AdminDealerReviewSerializer(serializers.ModelSerializer):
+    dealer_name = serializers.CharField(source="dealer.name", read_only=True)
+    dealer_slug = serializers.CharField(source="dealer.slug", read_only=True)
+
+    class Meta:
+        model = DealerReview
+        fields = (
+            "id", "dealer", "dealer_name", "dealer_slug", "author_name",
+            "rating", "text", "status", "created_at", "updated_at",
+        )
+        read_only_fields = tuple(f for f in fields if f != "status")

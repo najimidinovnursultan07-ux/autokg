@@ -14,6 +14,7 @@ import DealerDashboardPage from './pages/DealerDashboardPage.jsx'
 import DealerProfilePage from './pages/DealerProfilePage.jsx'
 import AdminDealersPage from './pages/AdminDealersPage.jsx'
 import AdminManagersPage from './pages/AdminManagersPage.jsx'
+import AdminReviewsPage from './pages/AdminReviewsPage.jsx'
 import AccountSettingsPage from './pages/AccountSettingsPage.jsx'
 import AdminCarsPage from './pages/AdminCarsPage.jsx'
 import AdminCatalogPage from './pages/AdminCatalogPage.jsx'
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="admin" element={<AdminDashboardPage />} />
             <Route path="admin/dealers" element={<AdminDealersPage />} />
             <Route path="admin/managers" element={<AdminManagersPage />} />
+            <Route path="admin/reviews" element={<AdminReviewsPage />} />
             <Route path="admin/cars" element={<AdminCarsPage />} />
             <Route path="admin/catalog" element={<AdminCatalogPage />} />
           </Route>

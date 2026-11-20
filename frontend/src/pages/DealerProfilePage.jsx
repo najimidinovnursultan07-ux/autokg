@@ -5,11 +5,12 @@ import { getLookups } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
 import { getDealerProfile, updateDealerProfile } from '../api/dealers.js'
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
+import LocationPicker from '../components/dealers/LocationPicker.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
 
-const FIELDS = ['name', 'description', 'phone', 'whatsapp', 'address', 'city']
+const FIELDS = ['name', 'description', 'phone', 'whatsapp', 'address', 'city', 'latitude', 'longitude']
 const MAX_LOGO = 5 * 1024 * 1024
 
 export default function DealerProfilePage() {
@@ -103,6 +104,11 @@ export default function DealerProfilePage() {
             <label className="field-label">WhatsApp<input type="tel" maxLength="20" value={form.whatsapp} onChange={set('whatsapp')} placeholder="+996700123456" /></label>
           </div>
           <label className="field-label">Адрес<input maxLength="300" value={form.address} onChange={set('address')} placeholder="г. Бишкек, ул. …" /></label>
+          <LocationPicker
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onChange={(latitude, longitude) => setForm((current) => ({ ...current, latitude, longitude }))}
+          />
           <label className="field-label">Описание<textarea rows="4" value={form.description} onChange={set('description')} placeholder="Расскажите о салоне: опыт, гарантии, услуги…" /></label>
         </section>
         <div className="form-actions">

@@ -2,6 +2,7 @@ import re
 import uuid
 from pathlib import Path
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
 
@@ -40,6 +41,15 @@ class Dealer(models.Model):
     phone = models.CharField("Телефон", max_length=20, blank=True)
     whatsapp = models.CharField("WhatsApp", max_length=20, blank=True)
     address = models.CharField("Адрес", max_length=300, blank=True)
+    # Точка на карте 2ГИС (ставится кликом по карте в профиле салона)
+    latitude = models.DecimalField(
+        "Широта", max_digits=9, decimal_places=6, null=True, blank=True,
+        validators=[MinValueValidator(-90), MaxValueValidator(90)],
+    )
+    longitude = models.DecimalField(
+        "Долгота", max_digits=9, decimal_places=6, null=True, blank=True,
+        validators=[MinValueValidator(-180), MaxValueValidator(180)],
+    )
     city = models.ForeignKey(
         "cars.City",
         on_delete=models.SET_NULL,
@@ -77,3 +87,39 @@ class Dealer(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class DealerReview(models.Model):
+    """Отзыв о салоне. Публикуется только после проверки администратором."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "На проверке"
+        PUBLISHED = "published", "Опубликован"
+        REJECTED = "rejected", "Отклонён"
+
+    dealer = models.ForeignKey(Dealer, on_delete=models.CASCADE, related_name="reviews", verbose_name="Автосалон")
+    author_name = models.CharField("Имя", max_length=80)
+    rating = models.PositiveSmallIntegerField(
+        "Оценка", validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    text = models.TextField("Отзыв", max_length=2000)
+    status = models.CharField(
+        "Статус", max_length=16, choices=Status.choices, default=Status.PENDING, db_index=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        verbose_name = "Отзыв о салоне"
+        verbose_name_plural = "Отзывы о салонах"
+        indexes = [models.Index(fields=("dealer", "status"))]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(rating__gte=1, rating__lte=5),
+                name="dealer_review_rating_1_5",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.dealer} — {self.rating}★ ({self.get_status_display()})"

@@ -163,6 +163,7 @@ REST_FRAMEWORK = {
         "auth_refresh": "30/minute",
         "contacts": "60/hour",
         "rates": "120/hour",
+        "reviews": "5/day",
     },
 }
 

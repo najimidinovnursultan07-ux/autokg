@@ -1400,3 +1400,77 @@ button.seller-whatsapp { gap: 8px; font-family: inherit; }
 .price-diff--down { color: #15803d !important; font-weight: 700; }
 .price-diff--up { color: #bd5139 !important; font-weight: 700; }
 .toast-stack { bottom: 90px; }
+
+/* ── Карта 2ГИС ── */
+.twogis-map { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: #eef2f6; }
+.twogis-map-canvas { width: 100%; height: 100%; }
+.twogis-map-overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 20px; color: var(--muted); font-size: 13px; text-align: center; pointer-events: none; }
+.map-popup { display: flex; min-width: 180px; flex-direction: column; gap: 4px; font-family: inherit; }
+.map-popup strong { color: var(--ink); font-size: 14px; }
+.map-popup span { color: var(--muted); font-size: 12px; }
+.map-popup-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.map-popup-actions a { color: var(--accent); font-size: 12px; font-weight: 700; }
+.dealers-view-toggle { display: inline-flex; margin-bottom: 18px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+.dealers-view-toggle button { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; }
+.dealers-view-toggle button.is-active { background: var(--accent); color: white; }
+.dealers-view-toggle small { opacity: .8; }
+.dealers-map-note { display: block; margin-top: 10px; color: var(--muted); font-size: 12px; }
+.dealer-map { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--line); }
+.dealer-map-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.dealer-map-head h2 { margin: 0; font-size: 18px; }
+.dealer-map-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.dealer-map-links .button { min-height: 40px; }
+.dealer-map-address { display: flex; align-items: center; gap: 6px; margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+.location-picker { display: flex; flex-direction: column; gap: 9px; margin: 6px 0 14px; }
+.location-picker-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.field-label-text { display: inline-flex; align-items: center; gap: 6px; color: #45524b; font-size: 11px; font-weight: 700; }
+.location-picker-head small { color: var(--muted); font-size: 11px; }
+.location-picker-value { display: inline-flex; align-items: center; gap: 10px; font-size: 12px; }
+.location-picker-value a { color: var(--accent); font-weight: 600; }
+.location-picker-clear { display: inline-flex; align-items: center; gap: 3px; border: 0; background: none; color: #b0545d; font-size: 12px; cursor: pointer; }
+.location-picker-paste { display: flex; gap: 8px; }
+.location-picker-paste input { flex: 1; min-height: 40px; padding: 0 12px; border: 1px solid #dfe6f0; border-radius: 7px; font-size: 12px; }
+.location-picker-paste .button { min-height: 40px; }
+.location-picker-error { color: #b0545d; font-size: 11px; }
+
+/* ── Рейтинг и отзывы ── */
+.stars { display: inline-flex; gap: 1px; }
+.star { position: relative; display: inline-block; }
+.star svg { display: block; }
+.star-empty { color: #d6dde6; }
+.star-fill { position: absolute; inset: 0 auto 0 0; overflow: hidden; color: #f5a524; }
+.star-fill svg { fill: currentColor; }
+.star-rating { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.star-rating strong { color: var(--ink); }
+.star-rating--empty { font-size: 12px; }
+.dealer-card-body .star-rating { font-size: 12px; }
+.dealer-rating-link { display: inline-block; margin-top: 6px; text-decoration: none; }
+.dealer-reviews { margin-top: 34px; padding: 24px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+.dealer-reviews-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
+.dealer-reviews-head h2 { margin: 0 0 6px; font-size: 20px; }
+.dealer-review-notice { margin: 16px 0 0; padding: 12px 14px; border-radius: 9px; background: #e8f6ed; color: #2f7550; font-size: 13px; }
+.dealer-review-form { display: flex; max-width: 620px; flex-direction: column; gap: 14px; margin-top: 18px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fafcff; }
+.dealer-review-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.dealer-review-hint { color: var(--muted); font-size: 11px; }
+.field-error { color: #b0545d; font-size: 11px; font-weight: 500; }
+.hp-field { position: absolute; left: -10000px; width: 1px; height: 1px; opacity: 0; }
+.star-input { display: flex; gap: 4px; }
+.star-input button { padding: 2px; border: 0; background: none; color: #d6dde6; cursor: pointer; transition: transform .1s, color .1s; }
+.star-input button:hover { transform: scale(1.1); }
+.star-input button.is-active { color: #f5a524; }
+.star-input button.is-active svg { fill: currentColor; }
+.dealer-review-list { margin: 18px 0 0; padding: 0; list-style: none; }
+.dealer-review { padding: 16px 0; border-top: 1px solid #edf1f5; }
+.dealer-review:first-child { border-top: 0; }
+.dealer-review-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.dealer-review-top strong { color: var(--ink); font-size: 14px; }
+.dealer-review-top span { color: var(--muted); font-size: 12px; }
+.dealer-review p { margin: 8px 0 0; color: #3d4b5c; font-size: 14px; line-height: 1.6; white-space: pre-line; }
+.dealer-review-empty { margin: 16px 0 0; color: var(--muted); font-size: 13px; }
+.dealer-review-more { margin-top: 12px; }
+.admin-review-list { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.admin-review { padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+.admin-review-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 12px; color: var(--muted); }
+.admin-review-top strong { color: var(--ink); font-size: 13px; }
+.admin-review p { margin: 10px 0 12px; color: #3d4b5c; font-size: 13px; line-height: 1.6; white-space: pre-line; }
+.admin-review .table-actions .button { min-height: 36px; font-size: 12px; }

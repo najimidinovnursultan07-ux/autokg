@@ -3,7 +3,7 @@ from django.db.models import Count
 
 from apps.accounts.models import User
 
-from .models import Dealer
+from .models import Dealer, DealerReview
 
 
 class ManagerInline(admin.TabularInline):
@@ -36,3 +36,12 @@ class DealerAdmin(admin.ModelAdmin):
     @admin.display(description="Объявлений", ordering="cars_total")
     def cars_total(self, obj):
         return obj.cars_total
+
+
+@admin.register(DealerReview)
+class DealerReviewAdmin(admin.ModelAdmin):
+    list_display = ("dealer", "author_name", "rating", "status", "created_at")
+    list_filter = ("status", "rating", "dealer")
+    list_editable = ("status",)
+    search_fields = ("author_name", "text", "dealer__name")
+    readonly_fields = ("created_at", "updated_at")

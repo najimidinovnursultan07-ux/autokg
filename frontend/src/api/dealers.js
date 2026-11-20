@@ -72,3 +72,29 @@ export async function resetManagerPassword(id, password) {
 export async function deleteAdminManager(id) {
   await api.delete(`/admin/managers/${id}/`)
 }
+
+// ── Отзывы ──
+export async function getDealerReviews(slug, page = 1) {
+  const { data } = await api.get(`/dealers/${encodeURIComponent(slug)}/reviews/`, { params: { page } })
+  return data
+}
+
+export async function createDealerReview(slug, payload) {
+  const { data } = await api.post(`/dealers/${encodeURIComponent(slug)}/reviews/`, payload)
+  return data
+}
+
+// ── Админ: модерация отзывов ──
+export async function getAdminReviews(params = {}) {
+  const { data } = await api.get('/admin/reviews/', { params })
+  return data
+}
+
+export async function updateAdminReview(id, payload) {
+  const { data } = await api.patch(`/admin/reviews/${id}/`, payload)
+  return data
+}
+
+export async function deleteAdminReview(id) {
+  await api.delete(`/admin/reviews/${id}/`)
+}

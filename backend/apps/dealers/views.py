@@ -1,5 +1,6 @@
 from django.db import transaction
-from django.db.models import Count, Max, Q
+from django.db.models import Avg, Count, IntegerField, Max, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -9,7 +10,9 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.generics import ListCreateAPIView
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -26,10 +29,13 @@ from apps.cars.serializers import (
 )
 from apps.cars.views import public_cars_queryset
 
-from .models import Dealer
+from .models import Dealer, DealerReview
 from .permissions import IsAdminRole, IsDealerOwnerOrAdmin, IsDealerRole
 from .serializers import (
+    AdminDealerReviewSerializer,
     DealerProfileSerializer,
+    DealerReviewCreateSerializer,
+    DealerReviewSerializer,
     DealerPublicSerializer,
     DealerSerializer,
     ManagerSerializer,
@@ -40,13 +46,27 @@ ACTIVE_CARS = Q(cars__status=Car.Status.ACTIVE)
 DEALER_PAGE_CARS_LIMIT = 24
 
 
+def with_rating(queryset):
+    """Средняя оценка и число опубликованных отзывов (подзапросы — без размножения строк)."""
+    published = DealerReview.objects.filter(
+        dealer=OuterRef("pk"), status=DealerReview.Status.PUBLISHED
+    ).values("dealer")
+    return queryset.annotate(
+        rating=Subquery(published.annotate(avg=Avg("rating")).values("avg")[:1]),
+        reviews_count=Coalesce(
+            Subquery(published.annotate(n=Count("id")).values("n")[:1], output_field=IntegerField()),
+            0,
+        ),
+    )
+
+
 # ── Публичные ──────────────────────────────────────────────────────────────
 
 class PublicDealerListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        dealers = (
+        dealers = with_rating(
             Dealer.objects.filter(is_active=True)
             .annotate(car_count=Count("cars", filter=ACTIVE_CARS))
             .select_related("city")
@@ -63,7 +83,7 @@ class PublicDealerDetailView(APIView):
 
     def get(self, request, slug):
         dealer = get_object_or_404(
-            Dealer.objects.annotate(car_count=Count("cars", filter=ACTIVE_CARS))
+            with_rating(Dealer.objects.annotate(car_count=Count("cars", filter=ACTIVE_CARS)))
             .select_related("city"),
             slug=slug,
             is_active=True,
@@ -74,6 +94,46 @@ class PublicDealerDetailView(APIView):
             "dealer": DealerPublicSerializer(dealer, context=ctx).data,
             "cars": PublicCarSerializer(cars, many=True, context=ctx).data,
         })
+
+
+class DealerReviewListCreateView(ListCreateAPIView):
+    """
+    GET  — опубликованные отзывы салона.
+    POST — новый отзыв; появится на сайте после проверки администратором.
+    """
+
+    permission_classes = [AllowAny]
+    throttle_scope = "reviews"
+
+    def get_throttles(self):
+        # Лимит только на отправку отзывов, чтение — по общим правилам
+        if self.request.method == "POST":
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
+
+    def get_dealer(self):
+        if not hasattr(self, "_dealer"):
+            self._dealer = get_object_or_404(Dealer, slug=self.kwargs["slug"], is_active=True)
+        return self._dealer
+
+    def get_serializer_class(self):
+        return DealerReviewCreateSerializer if self.request.method == "POST" else DealerReviewSerializer
+
+    def get_queryset(self):
+        return self.get_dealer().reviews.filter(status=DealerReview.Status.PUBLISHED)
+
+    def create(self, request, *args, **kwargs):
+        dealer = self.get_dealer()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        honeypot = serializer.validated_data.pop("website", "")
+        if not honeypot:
+            # Бот, заполнивший ловушку, получает тот же ответ, но отзыв не сохраняется
+            serializer.save(dealer=dealer)
+        return Response(
+            {"detail": "Спасибо! Отзыв появится на сайте после проверки."},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 # ── Кабинет салона (role=dealer) ───────────────────────────────────────────
@@ -283,3 +343,18 @@ class AdminManagerViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_409_CONFLICT,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminDealerReviewViewSet(viewsets.ModelViewSet):
+    """Модерация отзывов: публикация, отклонение, удаление."""
+
+    permission_classes = [IsAdminRole]
+    serializer_class = AdminDealerReviewSerializer
+    filter_backends = (DjangoFilterBackend, SearchFilter, OrderingFilter)
+    filterset_fields = ("status", "dealer")
+    search_fields = ("author_name", "text", "dealer__name")
+    ordering = ("-created_at",)
+    http_method_names = ("get", "patch", "delete", "head", "options")
+
+    def get_queryset(self):
+        return DealerReview.objects.select_related("dealer")
