@@ -1365,6 +1365,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .floating-whatsapp { right: 16px; bottom: 16px; width: 54px; padding: 0; justify-content: center; }
   .floating-whatsapp span { display: none; }
 }
+/* Кнопка «наверх» встаёт над WhatsApp, чтобы её не перекрывало */
+body:has(.floating-whatsapp) .scroll-top-fab { right: 20px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); width: 54px; height: 54px; }
+@media (max-width: 640px) {
+  body:has(.floating-whatsapp) .scroll-top-fab { right: 16px; bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
+}
 
 /* ── Контакты продавца ── */
 button.seller-whatsapp { gap: 8px; font-family: inherit; }
