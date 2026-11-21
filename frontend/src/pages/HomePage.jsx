@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   Building2,
   CalendarDays,
-  CarFront,
   ChevronRight,
   Crown,
   Flame,
@@ -25,17 +24,24 @@ import CarCard from '../components/cars/CarCard.jsx'
 import { EmptyState, ErrorState } from '../components/common/States.jsx'
 import Shelf, { ShelfSkeleton } from '../components/home/Shelf.jsx'
 import { getErrorMessage } from '../utils/errors.js'
-import { getCarCover } from '../utils/format.js'
 import herofon from '../assets/herofon.png'
+import coupeImg from '../assets/body-types/coupe.webp'
+import hatchbackImg from '../assets/body-types/hatchback.webp'
+import minivanImg from '../assets/body-types/minivan.webp'
+import pickupImg from '../assets/body-types/pickup.webp'
+import sedanImg from '../assets/body-types/sedan.webp'
+import suvImg from '../assets/body-types/suv.webp'
+import wagonImg from '../assets/body-types/wagon.webp'
 
+// Постоянные картинки категорий (src/assets/body-types)
 const BODY_TYPES = [
-  ['sedan', 'Седаны'],
-  ['suv', 'Внедорожники'],
-  ['hatchback', 'Хэтчбеки'],
-  ['minivan', 'Минивэны'],
-  ['wagon', 'Универсалы'],
-  ['pickup', 'Пикапы'],
-  ['coupe', 'Купе'],
+  ['sedan', 'Седаны', sedanImg],
+  ['suv', 'Внедорожники', suvImg],
+  ['hatchback', 'Хэтчбеки', hatchbackImg],
+  ['minivan', 'Минивэны', minivanImg],
+  ['wagon', 'Универсалы', wagonImg],
+  ['pickup', 'Пикапы', pickupImg],
+  ['coupe', 'Купе', coupeImg],
 ]
 
 const QUICK_FILTERS = [
@@ -115,11 +121,6 @@ export default function HomePage() {
 
   const topCars = useMemo(() => cars.filter((c) => c.is_top || c.is_urgent || c.is_highlighted), [cars])
 
-  // Фото для категорий берём из реальных объявлений
-  const categories = useMemo(() => BODY_TYPES.map(([value, label]) => {
-    const car = cars.find((c) => c.body_type === value && c.images?.length)
-    return { value, label, image: car ? getCarCover(car) : '' }
-  }), [cars])
 
   const featuredDealers = dealers.filter((d) => !d.is_featured && dealerCars[d.slug]?.length)
   const premiumDealers = dealers.filter((d) => d.is_featured && dealerCars[d.slug]?.length)
@@ -217,10 +218,10 @@ export default function HomePage() {
 
           {/* Категории по типу кузова */}
           <Shelf title="Что ищете?" allTo="/catalog" variant="categories">
-            {categories.map(({ value, label, image }) => (
+            {BODY_TYPES.map(([value, label, image]) => (
               <Link key={value} to={`/catalog?body_type=${value}`} className="category-tile">
                 <span className="category-tile-img">
-                  {image ? <img src={resolveMediaUrl(image)} alt="" loading="lazy" /> : <CarFront size={34} />}
+                  <img src={image} alt="" loading="lazy" width="480" height="360" />
                 </span>
                 <span>{label}</span>
               </Link>
