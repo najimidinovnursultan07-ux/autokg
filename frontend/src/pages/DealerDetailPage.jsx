@@ -240,13 +240,6 @@ export default function DealerDetailPage() {
           <DealerReviews dealer={dealer} />
         </div>
       </div>
-
-      {(dealer.phone || whatsappHref) && (
-        <div className="dealer-sticky">
-          {dealer.phone && <a className="dealer-action dealer-action--call" href={`tel:${dealer.phone}`}><Phone size={18} /> Позвонить</a>}
-          {whatsappHref && <a className="dealer-action dealer-action--wa" href={whatsappHref} target="_blank" rel="noopener noreferrer"><MessageCircle size={18} /> WhatsApp</a>}
-        </div>
-      )}
     </div>
   )
 }

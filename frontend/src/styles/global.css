@@ -1168,7 +1168,6 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .dealer-cars .car-card-dealer { display: none; }
 .dealer-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 40px 20px; border: 1px dashed var(--line); border-radius: 18px; background: white; color: var(--muted); text-align: center; }
 .dealer-empty strong { color: var(--ink); }
-.dealer-sticky { display: none; }
 
 @media (min-width: 1200px) {
   .dealer-cars .car-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -1180,18 +1179,18 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
   .dealer-cars .car-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
-  .dealer-page { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
-  .dealer-hero { height: 130px; }
-  .dealer-body { margin-top: -60px; gap: 24px; }
+  .dealer-page { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+  /* Шапка выше, а карточка заходит на неё меньше — иначе логотип закрывает «Все салоны» */
+  .dealer-hero { height: 150px; }
+  .dealer-hero-inner { padding-top: 14px; }
+  .dealer-body { margin-top: -40px; gap: 24px; }
   .dealer-card-main { gap: 18px; padding: 0 18px 18px; }
   .dealer-profile-top { grid-template-columns: 1fr; gap: 14px; }
-  .dealer-avatar { width: 88px; height: 88px; margin-top: -40px; border-radius: 22px; font-size: 30px; }
+  .dealer-avatar { width: 84px; height: 84px; margin-top: -34px; border-radius: 22px; font-size: 30px; }
   .dealer-title h1 { font-size: 24px; }
   .dealer-profile-bottom { padding-top: 18px; }
   .dealer-cars-head h2 { font-size: 19px; }
   .dealer-cars .car-grid { gap: 11px; }
-  body:has(.dealer-sticky) .scroll-top-fab { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
-  .dealer-sticky { position: fixed; right: 0; bottom: 0; left: 0; z-index: 40; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(255,255,255,.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 -8px 24px rgba(15,23,42,.08); }
 }
 
 /* ── Dealer panel (CarDetail sidebar) ── */
