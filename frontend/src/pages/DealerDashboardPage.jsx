@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { BadgeCheck, ChevronLeft, ChevronRight, Edit3, Eye, EyeOff, FileSpreadsheet, Plus, Rocket, Search, Trash2 } from 'lucide-react'
+import { BadgeCheck, CalendarClock, ChevronLeft, ChevronRight, Edit3, Eye, EyeOff, FileSpreadsheet, Plus, Rocket, Search, Trash2 } from 'lucide-react'
 import { Link, useOutletContext, useSearchParams } from 'react-router-dom'
-import { deleteDashboardCar, listDashboardCars, setDashboardCarStatus } from '../api/cars.js'
+import { deleteDashboardCar, listDashboardCars, saveDashboardCar, setDashboardCarStatus } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
 import ImportCarsModal from '../components/cars/ImportCarsModal.jsx'
 import PromoteModal from '../components/cars/PromoteModal.jsx'
@@ -9,9 +9,10 @@ import { EmptyState, ErrorState, LoadingState, PageTitle } from '../components/c
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
 import { CAR_STATUS_LABELS, formatPrice, getCarCover, getCarTitle } from '../utils/format.js'
+import { DEFAULT_LISTING_DAYS, LISTING_DURATIONS, listingExpiry } from '../utils/listing.js'
 
 const PAGE_SIZE = 20
-const statusTabs = [['', 'Все'], ['active', 'Активные'], ['hidden', 'Скрытые'], ['sold', 'Проданные']]
+const statusTabs = [['', 'Все'], ['active', 'Активные'], ['expired', 'Срок истёк'], ['hidden', 'Скрытые'], ['sold', 'Проданные']]
 
 export default function DealerDashboardPage() {
   const { notify } = useToast()
@@ -28,6 +29,8 @@ export default function DealerDashboardPage() {
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [promoteCar, setPromoteCar] = useState(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [renewCar, setRenewCar] = useState(null)
+  const [renewDays, setRenewDays] = useState(String(DEFAULT_LISTING_DAYS))
   const { subscription, reloadSubscription } = useOutletContext() || {}
   const canImport = Boolean(subscription?.plan?.has_excel_import)
   // На «Старте» видны только просмотры; звонки и WhatsApp — с «Бизнеса»
@@ -39,7 +42,8 @@ export default function DealerDashboardPage() {
     try {
       const data = await listDashboardCars({
         search: search || undefined,
-        status: status || undefined,
+        status: status && status !== 'expired' ? status : undefined,
+        expired: status === 'expired' ? 1 : undefined,
         page,
         page_size: PAGE_SIZE,
       })
@@ -69,6 +73,22 @@ export default function DealerDashboardPage() {
       await load()
     } catch (err) {
       notify(getErrorMessage(err, 'Не удалось изменить статус.'), 'error')
+    } finally {
+      setWorkingId(null)
+    }
+  }
+
+  const renew = async () => {
+    const car = renewCar
+    setWorkingId(car.id)
+    try {
+      await saveDashboardCar({ duration_days: Number(renewDays), status: 'active' }, car.id)
+      notify(Number(renewDays) ? `Объявление продлено на ${renewDays} дней.` : 'Объявление размещено без срока.', 'success')
+      setRenewCar(null)
+      await load()
+      reloadSubscription?.()
+    } catch (err) {
+      notify(getErrorMessage(err, 'Не удалось продлить объявление.'), 'error')
     } finally {
       setWorkingId(null)
     }
@@ -131,7 +151,7 @@ export default function DealerDashboardPage() {
           <div className="admin-table-wrap">
             <table className="admin-table dealer-cars-table">
               <thead>
-                <tr><th>Автомобиль</th><th>Цена</th><th>Статус</th><th>Просмотры</th>{showContactStats && <th title="Сколько раз открыли номер / нажали WhatsApp">Номер / WhatsApp</th>}<th>Действия</th></tr>
+                <tr><th>Автомобиль</th><th>Цена</th><th>Статус</th><th>Срок</th><th>Просмотры</th>{showContactStats && <th title="Сколько раз открыли номер / нажали WhatsApp">Номер / WhatsApp</th>}<th>Действия</th></tr>
               </thead>
               <tbody>
                 {cars.map((car) => {
@@ -151,7 +171,16 @@ export default function DealerDashboardPage() {
                         </div>
                       </td>
                       <td>{formatPrice(car.price, car.currency)}</td>
-                      <td><span className={`admin-status admin-status--${car.status}`}>{CAR_STATUS_LABELS[car.status] || car.status}</span></td>
+                      <td>
+                        {car.status === 'active' && car.is_expired
+                          ? <span className="admin-status admin-status--rejected">Не на сайте</span>
+                          : <span className={`admin-status admin-status--${car.status}`}>{CAR_STATUS_LABELS[car.status] || car.status}</span>}
+                      </td>
+                      <td>
+                        {car.status === 'active'
+                          ? <span className={`listing-expiry listing-expiry--${listingExpiry(car).tone}`}>{listingExpiry(car).text}</span>
+                          : <span className="listing-expiry listing-expiry--none">—</span>}
+                      </td>
                       <td>{car.views_count || 0}</td>
                       {showContactStats && <td>{car.phone_views || 0} / {car.whatsapp_clicks || 0}</td>}
                       <td>
@@ -169,6 +198,10 @@ export default function DealerDashboardPage() {
                               onClick={() => changeStatus(car, 'sold', 'Объявление отмечено как проданное.')}><BadgeCheck size={16} /></button>
                           )}
                           {car.status === 'active' && (
+                            <button className="icon-action" type="button" disabled={busy} title="Продлить срок" aria-label="Продлить срок"
+                              onClick={() => { setRenewDays(String(DEFAULT_LISTING_DAYS)); setRenewCar(car) }}><CalendarClock size={16} /></button>
+                          )}
+                          {car.status === 'active' && !car.is_expired && (
                             <button className="icon-action" type="button" title="Продвинуть" aria-label="Продвинуть"
                               onClick={() => setPromoteCar(car)}><Rocket size={16} /></button>
                           )}
@@ -210,6 +243,26 @@ export default function DealerDashboardPage() {
               <button type="button" className="button button--secondary" onClick={() => setConfirmDelete(null)}>Отмена</button>
               <button type="button" className="button button--danger" disabled={workingId === confirmDelete.id} onClick={remove}>
                 {workingId === confirmDelete.id ? 'Удаляем…' : 'Удалить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renewCar && (
+        <div className="admin-modal-backdrop" role="presentation">
+          <div className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="renew-title">
+            <h2 id="renew-title">Продлить объявление</h2>
+            <p>«{getCarTitle(renewCar)}» — {listingExpiry(renewCar).text.toLowerCase()}. Новый срок считается с сегодняшнего дня.</p>
+            <label className="field-label">Срок размещения
+              <select value={renewDays} onChange={(e) => setRenewDays(e.target.value)}>
+                {LISTING_DURATIONS.map(([days, label]) => <option key={days} value={days}>{label}</option>)}
+              </select>
+            </label>
+            <div className="admin-modal-actions">
+              <button type="button" className="button button--secondary" onClick={() => setRenewCar(null)}>Отмена</button>
+              <button type="button" className="button button--primary" disabled={workingId === renewCar.id} onClick={renew}>
+                {workingId === renewCar.id ? 'Продлеваем…' : 'Продлить'}
               </button>
             </div>
           </div>

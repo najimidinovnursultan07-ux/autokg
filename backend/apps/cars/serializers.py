@@ -15,7 +15,16 @@ from apps.common.serializers import (
 from apps.common.media import FULL_TRANSFORM, THUMB_TRANSFORM, cloudinary_variant, file_url
 from apps.common.serializers import MAX_UPLOAD_PHOTO_BYTES
 
-from .models import Brand, Car, CarImage, City, Model
+from .models import (
+    DEFAULT_LISTING_DAYS,
+    LISTING_DURATIONS,
+    Brand,
+    Car,
+    CarImage,
+    City,
+    Model,
+    listing_expiry,
+)
 
 MAX_IMAGES_PER_CAR = 15
 MIN_CAR_YEAR = 1980
@@ -178,6 +187,14 @@ class CarSerializer(serializers.ModelSerializer):
     promotions = serializers.SerializerMethodField()
     price_drop = serializers.SerializerMethodField()
     price_history = serializers.SerializerMethodField()
+    # Срок размещения в днях (0 — без срока). При создании по умолчанию 30.
+    duration_days = serializers.ChoiceField(
+        choices=(0, *LISTING_DURATIONS), write_only=True, required=False
+    )
+    is_expired = serializers.SerializerMethodField()
+
+    def get_is_expired(self, obj):
+        return obj.is_expired
 
     def _history(self, obj):
         # Использует prefetch_related("price_history"), новые записи — первыми
@@ -276,11 +293,16 @@ class CarSerializer(serializers.ModelSerializer):
             "price_drop",
             "price_history",
             "published_at",
+            "expires_at",
+            "duration_days",
+            "is_expired",
             "created_at",
             "updated_at",
             "images",
         )
         read_only_fields = (
+            "expires_at",
+            "is_expired",
             "id",
             "owner",
             "owner_detail",
@@ -334,7 +356,19 @@ class CarSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Введите телефон в международном формате.")
         return value
 
+    def update(self, instance, validated_data):
+        days = validated_data.pop("duration_days", None)
+        if days is not None:
+            validated_data["expires_at"] = listing_expiry(days)
+        elif validated_data.get("status") == Car.Status.ACTIVE and instance.is_expired:
+            # Публикуют снова истёкшее объявление без выбора срока — срок по умолчанию
+            validated_data["expires_at"] = listing_expiry(DEFAULT_LISTING_DAYS)
+        return super().update(instance, validated_data)
+
     def create(self, validated_data):
+        validated_data["expires_at"] = listing_expiry(
+            validated_data.pop("duration_days", DEFAULT_LISTING_DAYS)
+        )
         # Телефон по умолчанию — телефон салона
         if not validated_data.get("contact_phone"):
             dealer = validated_data.get("dealer")
@@ -374,7 +408,7 @@ class PublicCarSerializer(CarSerializer):
     class Meta(CarSerializer.Meta):
         fields = tuple(
             f for f in CarSerializer.Meta.fields
-            if f not in ("contact_phone", "phone_views", "whatsapp_clicks")
+            if f not in ("contact_phone", "phone_views", "whatsapp_clicks", "duration_days")
         ) + ("has_phone", "has_whatsapp")
         read_only_fields = fields
 

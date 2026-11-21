@@ -194,8 +194,12 @@ class DashboardCarViewSet(viewsets.ModelViewSet):
     lookup_value_regex = "[0-9a-f-]{36}"
 
     def get_queryset(self):
+        qs = Car.objects.filter(dealer_id=self.request.user.dealer_id)
+        expired = self.request.query_params.get("expired")
+        if expired in ("1", "true"):
+            qs = qs.filter(status=Car.Status.ACTIVE, expires_at__lte=timezone.now())
         return (
-            Car.objects.filter(dealer_id=self.request.user.dealer_id)
+            qs
             .select_related("owner", "dealer", "dealer__city", "model", "model__brand", "city")
             .prefetch_related("images", "price_history")
         )
@@ -216,7 +220,11 @@ class DashboardCarViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         instance = serializer.instance
         new_status = serializer.validated_data.get("status", instance.status)
-        if new_status == Car.Status.ACTIVE and instance.status != Car.Status.ACTIVE:
+        data = serializer.validated_data
+        # Продление истёкшего: указан новый срок или явно «Опубликовать» (см. CarSerializer.update)
+        renewing = instance.is_expired and ("duration_days" in data or data.get("status") == Car.Status.ACTIVE)
+        goes_live = instance.status != Car.Status.ACTIVE or renewing
+        if new_status == Car.Status.ACTIVE and goes_live:
             ensure_can_publish(instance.dealer, exclude_car_id=instance.pk)
         car = serializer.save()
         if car.status == Car.Status.ACTIVE and car.published_at is None:

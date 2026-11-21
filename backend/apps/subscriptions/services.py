@@ -54,10 +54,15 @@ def current_plan_subquery(field, dealer_ref="pk"):
 
 # ── Лимиты и бонусы ────────────────────────────────────────────────────────
 
-def active_cars_count(dealer):
-    from apps.cars.models import Car
+def live_cars(dealer):
+    """Объявления, которые занимают место в лимите: опубликованы и срок не истёк."""
+    from apps.cars.models import Car, not_expired_q
 
-    return Car.objects.filter(dealer=dealer, status=Car.Status.ACTIVE).count()
+    return Car.objects.filter(dealer=dealer, status=Car.Status.ACTIVE).filter(not_expired_q())
+
+
+def active_cars_count(dealer):
+    return live_cars(dealer).count()
 
 
 def promotions_used(dealer, at=None):
@@ -111,7 +116,7 @@ def ensure_can_publish(dealer, *, exclude_car_id=None):
                       "Сохраните объявление скрытым и подключите тариф в разделе «Мой тариф».",
             "code": "no_subscription",
         })
-    qs = Car.objects.filter(dealer=dealer, status=Car.Status.ACTIVE)
+    qs = live_cars(dealer)
     if exclude_car_id:
         qs = qs.exclude(pk=exclude_car_id)
     limit = subscription.plan.max_active_cars
@@ -136,6 +141,8 @@ def use_promotion(dealer, car, promotion_type):
         raise ValidationError({"detail": "Это объявление принадлежит другому автосалону."})
     if car.status != Car.Status.ACTIVE:
         raise ValidationError({"detail": "Продвигать можно только опубликованное объявление."})
+    if car.is_expired:
+        raise ValidationError({"detail": "Срок размещения истёк — сначала продлите объявление."})
 
     subscription = current_subscription(dealer)
     if subscription is None:

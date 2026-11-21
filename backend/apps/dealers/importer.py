@@ -23,6 +23,7 @@ from apps.cars.models import (
     CarDriveType,
     CarEngineType,
     CarTransmission,
+    LISTING_DURATIONS,
     City,
     Model,
 )
@@ -50,13 +51,15 @@ COLUMNS = [
     ("city", "Город", True, None),
     ("contact_phone", "Телефон", False, None),
     ("description", "Описание", True, None),
+    ("duration_days", "Срок размещения, дней", False, None),
 ]
+NO_EXPIRY = "без срока"
 LABELS = {field: title for field, title, _, _ in COLUMNS}
 LABELS.update({"non_field_errors": "Строка", "status": "Статус"})
 
 EXAMPLE_ROW = [
     "Toyota", "Camry", 2019, 1850000, "сом", 85000, 2.5, "Бензин", "Автоматическая",
-    "Передний", "Седан", "С пробегом", "белый", "Бишкек", "", "Один владелец, полное ТО у дилера.",
+    "Передний", "Седан", "С пробегом", "белый", "Бишкек", "", "Один владелец, полное ТО у дилера.", 30,
 ]
 
 
@@ -117,6 +120,8 @@ def build_template():
             values = sorted({m.brand.name for m in Model.objects.filter(is_active=True, brand__is_active=True).select_related("brand")})
         elif field == "city":
             values = list(City.objects.filter(is_active=True).values_list("name", flat=True))
+        elif field == "duration_days":
+            values = [*LISTING_DURATIONS, NO_EXPIRY]
         elif choices is not None:
             values = [label for _, label in choices.choices]
         else:
@@ -237,6 +242,9 @@ def _payload(values, models, cities, lookups):
     for field in ("color", "description"):
         if values.get(field) is not None:
             data[field] = str(values[field]).strip()
+    duration = values.get("duration_days")
+    if duration not in (None, ""):
+        data["duration_days"] = 0 if _norm(duration) == NO_EXPIRY else _number(duration, integer=True)
     phone = values.get("contact_phone")
     if phone not in (None, ""):
         data["contact_phone"] = str(int(phone)) if isinstance(phone, float) else str(phone).strip()
@@ -260,7 +268,7 @@ def import_cars(upload, *, user, dealer, publish):
     Возвращает (result, errors). При ошибках ничего не создаётся.
     publish=True — публикует, пока позволяет лимит тарифа, остальные сохраняет скрытыми.
     """
-    from apps.subscriptions.services import current_subscription
+    from apps.subscriptions.services import current_subscription, live_cars
 
     rows = _read_rows(upload)
     models = {
@@ -296,7 +304,7 @@ def import_cars(upload, *, user, dealer, publish):
         if publish:
             subscription = current_subscription(dealer)
             if subscription:
-                active = Car.objects.filter(dealer=dealer, status=Car.Status.ACTIVE).count()
+                active = live_cars(dealer).count()
                 slots = max(subscription.plan.max_active_cars - active, 0)
         now = timezone.now()
         published = 0

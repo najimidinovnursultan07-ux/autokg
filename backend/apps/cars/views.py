@@ -11,7 +11,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from apps.dealers.permissions import PublicReadOnly
 
 from .filters import CarFilter
-from .models import Brand, Car, City, Model
+from .models import Brand, Car, City, Model, not_expired_q
 from .pagination import CarPagination
 from .serializers import (
     BrandSerializer,
@@ -28,6 +28,7 @@ def public_cars_queryset():
 
     return (
         Car.objects.filter(status=Car.Status.ACTIVE, dealer__is_active=True)
+        .filter(not_expired_q())
         .filter(active_subscription_exists("dealer"))
         .select_related("owner", "dealer", "dealer__city", "model", "model__brand", "city")
         .prefetch_related("images", "price_history")

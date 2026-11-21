@@ -13,6 +13,8 @@ import { resolveMediaUrl } from '../api/client.js'
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage, getFieldErrors } from '../utils/errors.js'
+import { formatDate } from '../utils/format.js'
+import { DEFAULT_LISTING_DAYS, LISTING_DURATIONS } from '../utils/listing.js'
 
 const MAX_YEAR = new Date().getFullYear() + 1
 const MIN_YEAR = 1980
@@ -53,6 +55,9 @@ export default function CarFormPage() {
   const { notify } = useToast()
   const [form, setForm] = useState(initialForm)
   const [carStatus, setCarStatus] = useState('active')
+  // Срок размещения: при создании — 30 дней, при редактировании '' — не менять
+  const [duration, setDuration] = useState(isEditing ? '' : String(DEFAULT_LISTING_DAYS))
+  const [currentExpiry, setCurrentExpiry] = useState(null)
   const [lookups, setLookups] = useState({ brands: [], models: [], cities: [] })
   const [selectedBrandId, setSelectedBrandId] = useState('')
   const [existingImages, setExistingImages] = useState([])
@@ -84,6 +89,7 @@ export default function CarFormPage() {
         if (car) {
           setCarId(car.id)
           setCarStatus(car.status)
+          setCurrentExpiry({ expires_at: car.expires_at, is_expired: car.is_expired })
           setSelectedBrandId(String(catalog.models.find((m) => m.id === car.model)?.brand || ''))
           setForm({
             model: String(car.model),
@@ -179,6 +185,7 @@ export default function CarFormPage() {
         engine_volume: form.engine_volume || null,
         status,
       }
+      if (duration !== '') payload.duration_days = Number(duration)
       const car = await saveDashboardCar(payload, carId)
       savedId = car.id
       setCarId(car.id)
@@ -218,6 +225,22 @@ export default function CarFormPage() {
             <label className="field-label">Модель<select value={form.model} onChange={update('model')} required><option value="">Выберите модель</option>{availableModels.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>{fieldError('model')}</label>
             <label className="field-label">Город<select value={form.city} onChange={update('city')} required><option value="">Выберите город</option>{lookups.cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
             <label className="field-label">Год выпуска<input type="number" min={MIN_YEAR} max={MAX_YEAR} required value={form.year} onChange={update('year')} placeholder="Например, 2020" />{fieldError('year')}</label>
+            <label className="field-label">Срок размещения на сайте
+              <select value={duration} onChange={(e) => setDuration(e.target.value)}>
+                {isEditing && (
+                  <option value="">
+                    {currentExpiry?.is_expired
+                      ? 'Срок истёк — при публикации 30 дней'
+                      : currentExpiry?.expires_at ? `Не менять (до ${formatDate(currentExpiry.expires_at)})` : 'Не менять (без срока)'}
+                  </option>
+                )}
+                {LISTING_DURATIONS.map(([days, label]) => (
+                  <option key={days} value={days}>{isEditing && days ? `Продлить: ${label} с сегодня` : label}</option>
+                ))}
+              </select>
+              <small>После окончания срока объявление скроется с сайта, но останется в кабинете — его можно продлить.</small>
+              {fieldError('duration_days')}
+            </label>
           </div>
         </section>
 

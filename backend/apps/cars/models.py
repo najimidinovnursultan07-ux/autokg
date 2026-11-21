@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 import uuid
@@ -8,6 +9,24 @@ from django.core.validators import MaxValueValidator, MinValueValidator, RegexVa
 from django.db import models
 from django.utils import timezone
 from django.db.models import Q
+
+
+# Срок размещения объявления (дни). 0 — без срока.
+LISTING_DURATIONS = (7, 14, 30, 60, 90)
+DEFAULT_LISTING_DAYS = 30
+
+
+def listing_expiry(days, start=None):
+    """Дата окончания размещения; None — без срока."""
+    if not days:
+        return None
+    return (start or timezone.now()) + timedelta(days=days)
+
+
+def not_expired_q(prefix="", at=None):
+    """Q-условие «срок размещения не истёк» (для Car или через связь, prefix='cars__')."""
+    at = at or timezone.now()
+    return Q(**{f"{prefix}expires_at__isnull": True}) | Q(**{f"{prefix}expires_at__gt": at})
 
 
 class CarStatus(models.TextChoices):
@@ -200,6 +219,8 @@ class Car(models.Model):
     phone_views = models.PositiveIntegerField(default=0)
     whatsapp_clicks = models.PositiveIntegerField(default=0)
     published_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    # Когда объявление само уйдёт с сайта; пусто — без срока
+    expires_at = models.DateTimeField("Размещено до", null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -263,6 +284,10 @@ class Car(models.Model):
     @property
     def brand(self):
         return self.model.brand
+
+    @property
+    def is_expired(self):
+        return self.expires_at is not None and self.expires_at <= timezone.now()
 
     def __str__(self):
         return f"{self.brand} {self.model} ({self.year})"

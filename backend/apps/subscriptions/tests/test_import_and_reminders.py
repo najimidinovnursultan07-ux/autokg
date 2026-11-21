@@ -39,6 +39,7 @@ def row(**overrides):
         "mileage": 85000, "engine_volume": 2.5, "engine_type": "Бензин", "transmission": "Автоматическая",
         "drive_type": "Передний", "body_type": "Седан", "condition": "С пробегом", "color": "белый",
         "city": "бишкек", "contact_phone": "", "description": "Хорошее состояние",
+        "duration_days": "",
     }
     data.update(overrides)
     return [data[field] for field, _, _, _ in COLUMNS]
@@ -72,6 +73,17 @@ class ExcelImportTests(MarketplaceTestCase):
         self.assertEqual(str(cars[0].price), "1850000.00")
         self.assertEqual(cars[1].currency, "USD")
         self.assertEqual(cars[0].contact_phone, "+996700111111")  # телефон салона
+        self.assertIsNotNone(cars[0].expires_at)  # по умолчанию 30 дней
+
+    def test_import_duration_column(self):
+        resp = self.upload(xlsx([row(duration_days=7), row(year=2020, duration_days="без срока")]))
+        self.assertEqual(resp.status_code, 201, resp.data)
+        cars = Car.objects.filter(dealer=self.dealer_a).order_by("year")
+        self.assertEqual((cars[0].expires_at - cars[0].created_at).days, 6)
+        self.assertIsNone(cars[1].expires_at)
+        resp = self.upload(xlsx([row(duration_days=5)]))
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("Срок размещения", " ".join(resp.data["errors"]))
 
     def test_publish_respects_plan_limit(self):
         # пробный «Бизнес», лимит 30
