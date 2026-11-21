@@ -22,6 +22,7 @@ from apps.common.permissions import IsAutoBuyAdmin
 from apps.dealers.models import Dealer
 
 from .report import build_report, build_report_xlsx, parse_period
+from .report_pdf import build_report_pdf
 from .serializers import AdminCarSerializer, AdminUserSerializer
 
 
@@ -92,6 +93,21 @@ class AdminReportExportView(APIView):
         )
         response["Content-Disposition"] = (
             f'attachment; filename="autobuy-report-{start:%Y-%m-%d}_{end:%Y-%m-%d}.xlsx"'
+        )
+        return response
+
+
+class AdminReportPdfView(APIView):
+    """Тот же отчёт в PDF (A4 альбомная) — для печати и отправки."""
+
+    permission_classes = (IsAutoBuyAdmin,)
+
+    def get(self, request):
+        start, end, start_dt, end_dt = parse_period(request.query_params)
+        content = build_report_pdf(build_report(start_dt, end_dt), start, end)
+        response = HttpResponse(content, content_type="application/pdf")
+        response["Content-Disposition"] = (
+            f'attachment; filename="autobuy-report-{start:%Y-%m-%d}_{end:%Y-%m-%d}.pdf"'
         )
         return response
 

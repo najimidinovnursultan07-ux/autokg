@@ -64,8 +64,16 @@ class AdminReportTests(MarketplaceTestCase):
         names = [c.value for c in wb["Салоны"]["A"]][1:]
         self.assertEqual(sorted(names), ["Салон А", "Салон Б"])
 
+    def test_export_pdf(self):
+        resp = self.admin_client.get("/api/admin/report/pdf/?from=2026-01-01&to=2026-12-31")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["Content-Type"], "application/pdf")
+        self.assertTrue(resp.content.startswith(b"%PDF"))
+        self.assertIn("2026-01-01_2026-12-31.pdf", resp["Content-Disposition"])
+
     def test_dealer_cannot_see_report(self):
         client = APIClient()
         client.force_authenticate(self.manager_a)
         self.assertEqual(client.get("/api/admin/report/").status_code, 403)
         self.assertEqual(client.get("/api/admin/report/export/").status_code, 403)
+        self.assertEqual(client.get("/api/admin/report/pdf/").status_code, 403)

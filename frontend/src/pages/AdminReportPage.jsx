@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  AlertTriangle, ArrowDown, ArrowUp, Building2, CarFront, Download, Inbox, MousePointerClick, Search, Wallet,
+  AlertTriangle, ArrowDown, ArrowUp, Building2, CarFront, Download, FileText, Inbox, MousePointerClick, Search, Wallet,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { downloadAdminReport, getAdminReport } from '../api/admin.js'
+import { downloadAdminReport, downloadAdminReportPdf, getAdminReport } from '../api/admin.js'
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
@@ -75,7 +75,7 @@ export default function AdminReportPage() {
   const [report, setReport] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [exporting, setExporting] = useState(false)
+  const [exporting, setExporting] = useState('')
   const [search, setSearch] = useState('')
   const [planFilter, setPlanFilter] = useState('')
   const [sort, setSort] = useState({ key: 'revenue', dir: 'desc' })
@@ -101,14 +101,15 @@ export default function AdminReportPage() {
     if (value !== 'custom') setRange(presetRange(value))
   }
 
-  const exportXlsx = async () => {
-    setExporting(true)
+  // exporting: '' | 'xlsx' | 'pdf'
+  const exportReport = async (format) => {
+    setExporting(format)
     try {
-      await downloadAdminReport({ from, to })
+      await (format === 'pdf' ? downloadAdminReportPdf : downloadAdminReport)({ from, to })
     } catch (err) {
       notify(getErrorMessage(err, 'Не удалось выгрузить отчёт.'), 'error')
     } finally {
-      setExporting(false)
+      setExporting('')
     }
   }
 
@@ -156,9 +157,14 @@ export default function AdminReportPage() {
         title="Отчёт по автосалонам"
         description="Тарифы, объявления, интерес покупателей и оплаты по всем салонам."
         action={(
-          <button type="button" className="button button--primary" onClick={exportXlsx} disabled={exporting || !report}>
-            <Download size={17} /> {exporting ? 'Готовим файл…' : 'Скачать Excel'}
-          </button>
+          <div className="page-title-actions">
+            <button type="button" className="button button--outline" onClick={() => exportReport('pdf')} disabled={Boolean(exporting) || !report}>
+              <FileText size={17} /> {exporting === 'pdf' ? 'Готовим PDF…' : 'Скачать PDF'}
+            </button>
+            <button type="button" className="button button--primary" onClick={() => exportReport('xlsx')} disabled={Boolean(exporting) || !report}>
+              <Download size={17} /> {exporting === 'xlsx' ? 'Готовим файл…' : 'Скачать Excel'}
+            </button>
+          </div>
         )}
       />
 

@@ -12,6 +12,11 @@ export function downloadAdminReport({ from, to }) {
   return downloadFile(`/admin/report/export/?${query}`, `autobuy-report-${from}_${to}.xlsx`)
 }
 
+export function downloadAdminReportPdf({ from, to }) {
+  const query = new URLSearchParams({ from, to }).toString()
+  return downloadFile(`/admin/report/pdf/?${query}`, `autobuy-report-${from}_${to}.pdf`)
+}
+
 export async function getAdminStats() {
   const { data } = await api.get('/admin/stats/')
   return data
