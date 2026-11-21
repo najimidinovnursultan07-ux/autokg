@@ -23,6 +23,7 @@ export default function Footer() {
         <div className="footer-column">
           <h3>AutoBuy</h3>
           <Link to="/about">О проекте</Link>
+          <Link to="/pricing">Тарифы для автосалонов</Link>
           <Link to="/contacts">Контакты</Link>
         </div>
         <div className="footer-column footer-contact">

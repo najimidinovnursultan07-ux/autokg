@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CarFront,
   ChevronRight,
+  Crown,
   Flame,
   Leaf,
   Search,
@@ -47,6 +48,7 @@ const QUICK_FILTERS = [
 ]
 
 const DEALER_SHELVES = 3
+const PREMIUM_LIMIT = 4
 
 // Стабильный цвет плитки салона без логотипа
 function tileColor(name = '') {
@@ -79,13 +81,19 @@ export default function HomePage() {
         getDealers(),
         getLookups().catch(() => ({ brands: [] })),
       ])
-      const sortedDealers = [...dealerList].sort((a, b) => (b.car_count || 0) - (a.car_count || 0))
+      // Премиум-салоны — первыми, дальше по числу машин
+      const sortedDealers = [...dealerList].sort(
+        (a, b) => Number(b.is_featured) - Number(a.is_featured) || (b.car_count || 0) - (a.car_count || 0),
+      )
       setCars(carsPage.results || [])
       setDealers(sortedDealers)
       setBrands(lookups.brands || [])
 
       // Ленты по самым крупным салонам
-      const featured = sortedDealers.filter((d) => d.car_count > 0).slice(0, DEALER_SHELVES)
+      const withCars = sortedDealers.filter((d) => d.car_count > 0)
+      const premium = withCars.filter((d) => d.is_featured).slice(0, PREMIUM_LIMIT)
+      const regular = withCars.filter((d) => !d.is_featured).slice(0, DEALER_SHELVES)
+      const featured = [...premium, ...regular]
       const pages = await Promise.all(
         featured.map((d) => listCars({ dealer: d.slug, page_size: 10 }).catch(() => ({ results: [] }))),
       )
@@ -113,7 +121,8 @@ export default function HomePage() {
     return { value, label, image: car ? getCarCover(car) : '' }
   }), [cars])
 
-  const featuredDealers = dealers.filter((d) => dealerCars[d.slug]?.length)
+  const featuredDealers = dealers.filter((d) => !d.is_featured && dealerCars[d.slug]?.length)
+  const premiumDealers = dealers.filter((d) => d.is_featured && dealerCars[d.slug]?.length)
 
   const submitSearch = (event) => {
     event.preventDefault()
@@ -162,6 +171,37 @@ export default function HomePage() {
         <div className="container"><ErrorState message={error} onRetry={load} /></div>
       ) : (
         <>
+          {/* Премиум-салоны (тариф «Премиум») — отдельный блок с их машинами */}
+          {premiumDealers.length > 0 && (
+            <section className="premium-block" aria-labelledby="premium-title">
+              <div className="container premium-block-head">
+                <span className="eyebrow"><Crown size={14} /> Премиум-салоны</span>
+                <h2 id="premium-title">Проверенные салоны AutoBuy</h2>
+              </div>
+              {premiumDealers.map((d) => (
+                <Shelf
+                  key={d.slug}
+                  title={(
+                    <>
+                      {d.name}
+                      <BadgeCheck size={17} className="verified-mark" aria-label="Проверенный дилер" />
+                      <small className="premium-shelf-meta">{d.car_count} авто{d.city_name ? ` · ${d.city_name}` : ''}{d.reviews_count ? ` · ★ ${Number(d.rating).toFixed(1)}` : ''}</small>
+                    </>
+                  )}
+                  icon={(
+                    <span className="shelf-dealer-logo" style={d.logo_url ? undefined : { background: tileColor(d.name) }}>
+                      {d.logo_url ? <img src={resolveMediaUrl(d.logo_url)} alt="" /> : <b>{initials(d.name)}</b>}
+                    </span>
+                  )}
+                  allTo={`/dealers/${d.slug}`}
+                  allLabel="Все авто салона"
+                >
+                  {dealerCars[d.slug].map((car) => <div key={car.id} className="shelf-card"><CarCard car={car} /></div>)}
+                </Shelf>
+              ))}
+            </section>
+          )}
+
           {/* Популярные салоны — плитки-логотипы */}
           <Shelf title="Популярные салоны" allTo="/dealers" variant="dealers">
             {loading ? <ShelfSkeleton count={6} variant="tile" /> : dealers.map((d) => (
@@ -245,8 +285,8 @@ export default function HomePage() {
 
       <section className="seller-cta">
         <div className="container seller-cta-inner">
-          <div><span className="eyebrow eyebrow--light">Автосалонам</span><h2>Разместите автосалон на AutoBuy</h2><p>Свяжитесь с нами — мы подключим салон и выдадим доступ в кабинет для управления объявлениями.</p></div>
-          <Link to="/contacts" className="button button--white">Связаться с нами <ChevronRight size={17} /></Link>
+          <div><span className="eyebrow eyebrow--light">Автосалонам</span><h2>Разместите автосалон на AutoBuy</h2><p>Свой кабинет и страница салона на любом тарифе. Выберите тариф — мы подключим салон и выдадим доступ.</p></div>
+          <Link to="/pricing" className="button button--white">Тарифы для салонов <ChevronRight size={17} /></Link>
         </div>
       </section>
 

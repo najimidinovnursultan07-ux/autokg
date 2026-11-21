@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, Building2, Car, List, Map as MapIcon, MapPin, Phone } from 'lucide-react'
+import { ArrowRight, Building2, Car, List, Map as MapIcon, MapPin, Phone, BadgeCheck } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getDealers } from '../api/dealers.js'
 import { resolveMediaUrl } from '../api/client.js'
@@ -96,7 +96,7 @@ export default function DealersPage() {
                 }
               </div>
               <div className="dealer-card-body">
-                <strong>{dealer.name}</strong>
+                <strong>{dealer.name}{dealer.is_verified && <BadgeCheck size={16} className="verified-mark" aria-label="Проверенный дилер" />}</strong>
                 <StarRating rating={dealer.rating} count={dealer.reviews_count} size={14} compact />
                 {dealer.city_name && <span><MapPin size={16} /> {dealer.city_name}</span>}
                 {dealer.phone && <span><Phone size={16} /> {dealer.phone}</span>}

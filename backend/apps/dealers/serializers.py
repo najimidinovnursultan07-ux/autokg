@@ -116,6 +116,8 @@ class DealerPublicSerializer(LogoUrlMixin, serializers.ModelSerializer):
     car_count = serializers.IntegerField(read_only=True, default=0)
     rating = serializers.SerializerMethodField()
     reviews_count = serializers.IntegerField(read_only=True, default=0)
+    is_verified = serializers.BooleanField(read_only=True, default=False)
+    is_featured = serializers.BooleanField(read_only=True, default=False)
 
     def get_rating(self, obj):
         value = getattr(obj, "rating", None)
@@ -126,7 +128,7 @@ class DealerPublicSerializer(LogoUrlMixin, serializers.ModelSerializer):
         fields = (
             "id", "name", "slug", "logo_url", "description",
             "phone", "whatsapp", "address", "latitude", "longitude", "city_name", "car_count",
-            "rating", "reviews_count",
+            "rating", "reviews_count", "is_verified", "is_featured",
         )
 
 

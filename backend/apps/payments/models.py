@@ -80,10 +80,13 @@ class Promotion(models.Model):
         related_name="promotions",
     )
     promotion_type = models.CharField(max_length=16, choices=ServiceType.choices)
+    # Пусто — продвижение из бонусов тарифа (оплата на сайте не принимается)
     payment = models.OneToOneField(
         Payment,
         on_delete=models.PROTECT,
         related_name="promotion",
+        null=True,
+        blank=True,
     )
     starts_at = models.DateTimeField()
     expires_at = models.DateTimeField(db_index=True)

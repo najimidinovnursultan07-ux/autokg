@@ -1,0 +1,27 @@
+# Ежедневные напоминания об окончании тарифов (письма салонам + сводка в Telegram).
+# Нужны секреты репозитория: BACKEND_URL (https://...onrender.com) и CRON_SECRET
+# (то же значение, что в переменной окружения CRON_SECRET на бэкенде).
+name: Subscription reminders
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # 09:00 по Бишкеку
+  workflow_dispatch:
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send reminders
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$BACKEND_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Секреты BACKEND_URL и CRON_SECRET не заданы — пропускаем."
+            exit 0
+          fi
+          # Бесплатный Render засыпает — даём время проснуться
+          curl --fail --silent --show-error --retry 4 --retry-delay 20 --retry-all-errors --max-time 90 \
+            -X POST -H "X-Cron-Secret: $CRON_SECRET" \
+            "${BACKEND_URL%/}/api/internal/subscription-reminders/"

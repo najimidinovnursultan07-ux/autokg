@@ -6,7 +6,9 @@ import ProtectedRoute from './components/routing/ProtectedRoute.jsx'
 import GuestRoute from './components/routing/GuestRoute.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComparePage from './pages/ComparePage.jsx'
-import MockPaymentPage from './pages/MockPaymentPage.jsx'
+import MySubscriptionPage from './pages/MySubscriptionPage.jsx'
+import PricingPage from './pages/PricingPage.jsx'
+import AdminSubscriptionsPage from './pages/AdminSubscriptionsPage.jsx'
 import PaymentHistoryPage from './pages/PaymentHistoryPage.jsx'
 import DealersPage from './pages/DealersPage.jsx'
 import DealerDetailPage from './pages/DealerDetailPage.jsx'
@@ -41,6 +43,7 @@ export default function App() {
         <Route path="dealers/:slug" element={<DealerDetailPage />} />
         <Route path="contacts" element={<ContactsPage />} />
         <Route path="about" element={<AboutPage />} />
+        <Route path="pricing" element={<PricingPage />} />
 
         {/* Вход (публичной регистрации нет) */}
         <Route element={<GuestRoute />}>
@@ -56,10 +59,10 @@ export default function App() {
             <Route path="dashboard/cars/new" element={<CarFormPage />} />
             <Route path="dashboard/cars/:id/edit" element={<CarFormPage />} />
             <Route path="dashboard/profile" element={<DealerProfilePage />} />
+            <Route path="dashboard/subscription" element={<MySubscriptionPage />} />
             <Route path="dashboard/payments" element={<PaymentHistoryPage />} />
             <Route path="dashboard/account" element={<AccountSettingsPage />} />
           </Route>
-          <Route path="payment/mock" element={<MockPaymentPage />} />
         </Route>
 
         {/* Админка платформы — только role=admin */}
@@ -69,6 +72,7 @@ export default function App() {
             <Route path="admin/dealers" element={<AdminDealersPage />} />
             <Route path="admin/managers" element={<AdminManagersPage />} />
             <Route path="admin/reviews" element={<AdminReviewsPage />} />
+            <Route path="admin/subscriptions" element={<AdminSubscriptionsPage />} />
             <Route path="admin/cars" element={<AdminCarsPage />} />
             <Route path="admin/catalog" element={<AdminCatalogPage />} />
           </Route>

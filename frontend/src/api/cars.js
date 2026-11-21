@@ -1,4 +1,5 @@
 import { api } from './client.js'
+import { downloadFile } from './download.js'
 
 // ── Публичный каталог ──
 export async function listCars(params = {}) {
@@ -45,6 +46,19 @@ export async function setDashboardCarStatus(id, status) {
 
 export async function deleteDashboardCar(id) {
   await api.delete(`/dashboard/cars/${id}/`)
+}
+
+// ── Загрузка из Excel (тарифы «Бизнес» и «Премиум») ──
+export function downloadImportTemplate() {
+  return downloadFile('/dashboard/cars/import-template/', 'autobuy-import-template.xlsx')
+}
+
+export async function importDashboardCars(file, publish) {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('publish', publish ? '1' : '0')
+  const { data } = await api.post('/dashboard/cars/import/', form)
+  return data
 }
 
 // Загрузка фото пачками (до 15 фото на машину, до 5 МБ каждое)

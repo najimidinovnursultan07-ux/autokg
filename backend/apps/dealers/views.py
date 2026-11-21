@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.http import HttpResponse
 from django.db.models import Avg, Count, IntegerField, Max, OuterRef, Q, Subquery
 from django.db.models.functions import Coalesce
 from django.db.models.deletion import ProtectedError
@@ -29,6 +30,10 @@ from apps.cars.serializers import (
 )
 from apps.cars.views import public_cars_queryset
 
+from apps.subscriptions.services import current_plan_subquery, current_subscription, ensure_can_publish
+
+from .importer import ImportFileError, build_template, import_cars
+
 from .models import Dealer, DealerReview
 from .permissions import IsAdminRole, IsDealerOwnerOrAdmin, IsDealerRole
 from .serializers import (
@@ -42,8 +47,21 @@ from .serializers import (
     PasswordResetByAdminSerializer,
 )
 
-ACTIVE_CARS = Q(cars__status=Car.Status.ACTIVE)
 DEALER_PAGE_CARS_LIMIT = 24
+
+
+def with_public_info(queryset):
+    """Число видимых на сайте машин + бейдж и приоритет из текущего тарифа."""
+    public_count = (
+        public_cars_queryset().filter(dealer=OuterRef("pk")).order_by()
+        .values("dealer").annotate(n=Count("id")).values("n")[:1]
+    )
+    return with_rating(queryset).annotate(
+        car_count=Coalesce(Subquery(public_count, output_field=IntegerField()), 0),
+        is_verified=Coalesce(current_plan_subquery("has_badge"), False),
+        list_priority=Coalesce(current_plan_subquery("list_priority"), 0),
+        is_featured=Coalesce(current_plan_subquery("featured_on_home"), False),
+    ).select_related("city")
 
 
 def with_rating(queryset):
@@ -66,11 +84,11 @@ class PublicDealerListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        dealers = with_rating(
-            Dealer.objects.filter(is_active=True)
-            .annotate(car_count=Count("cars", filter=ACTIVE_CARS))
-            .select_related("city")
+        dealers = with_public_info(Dealer.objects.filter(is_active=True)).order_by(
+            "-list_priority", "name"
         )
+        if request.query_params.get("featured") in ("1", "true"):
+            dealers = dealers.filter(is_featured=True, car_count__gt=0)
         return Response(
             DealerPublicSerializer(dealers, many=True, context={"request": request}).data
         )
@@ -83,8 +101,7 @@ class PublicDealerDetailView(APIView):
 
     def get(self, request, slug):
         dealer = get_object_or_404(
-            with_rating(Dealer.objects.annotate(car_count=Count("cars", filter=ACTIVE_CARS)))
-            .select_related("city"),
+            with_public_info(Dealer.objects.all()),
             slug=slug,
             is_active=True,
         )
@@ -183,20 +200,78 @@ class DashboardCarViewSet(viewsets.ModelViewSet):
             .prefetch_related("images", "price_history")
         )
 
+    @transaction.atomic
     def perform_create(self, serializer):
         user = self.request.user
         car_status = serializer.validated_data.get("status", Car.Status.ACTIVE)
+        if car_status == Car.Status.ACTIVE:
+            ensure_can_publish(user.dealer)  # лимит тарифа
         serializer.save(
             owner=user,
             dealer=user.dealer,
             published_at=timezone.now() if car_status == Car.Status.ACTIVE else None,
         )
 
+    @transaction.atomic
     def perform_update(self, serializer):
+        instance = serializer.instance
+        new_status = serializer.validated_data.get("status", instance.status)
+        if new_status == Car.Status.ACTIVE and instance.status != Car.Status.ACTIVE:
+            ensure_can_publish(instance.dealer, exclude_car_id=instance.pk)
         car = serializer.save()
         if car.status == Car.Status.ACTIVE and car.published_at is None:
             car.published_at = timezone.now()
             car.save(update_fields=("published_at", "updated_at"))
+
+    # ── Загрузка из Excel (тарифы с has_excel_import) ──
+
+    def _require_excel_import(self):
+        subscription = current_subscription(self.request.user.dealer)
+        if not subscription or not subscription.plan.has_excel_import:
+            return Response(
+                {"detail": "Загрузка из Excel доступна на тарифах «Бизнес» и «Премиум»."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return None
+
+    @action(detail=False, methods=("get",), url_path="import-template")
+    def import_template(self, request):
+        denied = self._require_excel_import()
+        if denied:
+            return denied
+        response = HttpResponse(
+            build_template(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = 'attachment; filename="autobuy-import-template.xlsx"'
+        return response
+
+    @action(
+        detail=False,
+        methods=("post",),
+        url_path="import",
+        parser_classes=(MultiPartParser, FormParser),
+    )
+    def import_file(self, request):
+        denied = self._require_excel_import()
+        if denied:
+            return denied
+        upload = request.FILES.get("file")
+        if upload is None:
+            return Response({"detail": "Прикрепите файл .xlsx."}, status=status.HTTP_400_BAD_REQUEST)
+        publish = str(request.data.get("publish", "")).lower() in ("1", "true", "on")
+        try:
+            result, errors = import_cars(
+                upload, user=request.user, dealer=request.user.dealer, publish=publish
+            )
+        except ImportFileError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        if errors:
+            return Response(
+                {"detail": "Файл не загружен: исправьте ошибки и загрузите снова.", "errors": errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(result, status=status.HTTP_201_CREATED)
 
     def perform_destroy(self, instance):
         # Фото удаляются каскадом, файлы — из Cloudinary через сигнал post_delete

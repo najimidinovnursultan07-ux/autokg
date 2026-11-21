@@ -1478,3 +1478,79 @@ button.seller-whatsapp { gap: 8px; font-family: inherit; }
 .admin-review-top strong { color: var(--ink); font-size: 13px; }
 .admin-review p { margin: 10px 0 12px; color: #3d4b5c; font-size: 13px; line-height: 1.6; white-space: pre-line; }
 .admin-review .table-actions .button { min-height: 36px; font-size: 12px; }
+
+/* ── Тарифы ─────────────────────────────────────────────────────────────── */
+.dealer-blocked-alert, .form-alert--warning { display: flex; align-items: flex-start; gap: 9px; }
+.dealer-blocked-alert a, .form-alert--warning a { color: inherit; font-weight: 700; text-decoration: underline; }
+.form-alert--warning { border-color: #f3dfb0; background: #fffaf0; color: #8a6116; }
+.days-left--soon { color: #c2414f; font-weight: 700; }
+.verified-mark { display: inline-block; margin-left: 6px; color: var(--accent); vertical-align: -2px; }
+.tab-count { display: inline-flex; min-width: 18px; height: 18px; margin-left: 6px; padding: 0 5px; align-items: center; justify-content: center; border-radius: 9px; background: var(--accent); color: white; font-size: 10px; }
+.promote-active-label { display: inline-flex; align-items: center; gap: 4px; }
+.promote-card-price strong { font-size: 12px; font-weight: 700; color: var(--muted); }
+.promote-note a { color: var(--accent); font-weight: 600; }
+
+.period-switch { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-bottom: 26px; padding: 4px; border: 1px solid var(--line); border-radius: 11px; background: white; }
+.period-switch-btn { display: inline-flex; min-height: 38px; align-items: center; gap: 7px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; }
+.period-switch-btn small { color: #2f8a5a; font-size: 11px; font-weight: 700; }
+.period-switch-btn--active { background: var(--green-soft); color: var(--accent-dark); }
+
+.plan-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-bottom: 34px; }
+.plan-card { position: relative; display: flex; flex-direction: column; padding: 26px 24px 24px; border: 1px solid var(--line); border-radius: 16px; background: white; }
+.plan-card--popular { border: 2px solid var(--accent); box-shadow: var(--shadow); }
+.plan-card-tag { position: absolute; top: -12px; left: 24px; padding: 4px 10px; border-radius: 999px; background: var(--accent); color: white; font-size: 11px; font-weight: 700; }
+.plan-card h2 { margin-bottom: 12px; font-size: 22px; }
+.plan-card-price { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+.plan-card-price strong { font-family: Manrope, sans-serif; font-size: 30px; letter-spacing: -.03em; }
+.plan-card-price span { color: var(--muted); font-size: 13px; }
+.plan-card-total { min-height: 20px; margin-bottom: 18px; color: var(--muted); font-size: 12px; }
+.plan-card-features { flex: 1; margin: 0 0 22px; padding: 0; list-style: none; }
+.plan-card-features li { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; font-size: 13px; line-height: 1.45; }
+.plan-card-features svg { flex-shrink: 0; margin-top: 2px; color: #2f8a5a; }
+.plan-compare { margin-bottom: 26px; }
+.plan-compare td:not(:first-child), .plan-compare th:not(:first-child) { text-align: center; }
+.pricing-notes { display: grid; gap: 8px; padding: 20px 22px; border-radius: 12px; background: var(--green-soft); color: #3e5674; font-size: 13px; line-height: 1.6; }
+.pricing-notes p { margin: 0; }
+
+.subscription-summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+.subscription-summary h2 { margin: 6px 0 6px; font-size: 26px; }
+.subscription-summary p { margin: 0; color: var(--muted); font-size: 13px; }
+.usage-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 8px; }
+.usage-item { padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.usage-item-top { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 9px; font-size: 13px; }
+.usage-item-top span { color: var(--muted); }
+.usage-bar { height: 7px; overflow: hidden; border-radius: 4px; background: #edf1f6; }
+.usage-bar span { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
+.usage-bar span.usage-bar-full { background: #e08a2e; }
+.subscription-request { display: grid; gap: 14px; margin: 26px 0; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: white; }
+.subscription-request h2 { margin: 0; font-size: 20px; }
+.subscription-request .field-hint { margin: 0; }
+.subscription-request-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-size: 14px; }
+
+@media (max-width: 900px) {
+  .plan-cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .usage-grid { grid-template-columns: 1fr; }
+  .subscription-summary { flex-direction: column; align-items: flex-start; }
+}
+
+/* Excel-импорт */
+.page-title-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.import-modal h2 { display: flex; align-items: center; gap: 8px; }
+.import-steps { display: grid; gap: 12px; margin: 14px 0; padding-left: 20px; font-size: 13px; line-height: 1.55; }
+.import-steps li { display: grid; gap: 8px; justify-items: start; }
+.import-steps input[type="file"] { font-size: 13px; }
+.import-errors ul { max-height: 220px; margin: 8px 0 0; padding-left: 18px; overflow-y: auto; }
+.import-errors li { margin-bottom: 3px; }
+.import-result { font-size: 14px; line-height: 1.6; }
+
+/* Премиум-салоны на главной */
+.premium-block { margin: 8px 0 12px; padding: 26px 0 8px; background: linear-gradient(180deg, #fff8e8 0%, rgba(255,248,232,0) 100%); }
+.premium-block-head { margin-bottom: 6px; }
+.premium-block-head .eyebrow { color: #b07a12; }
+.premium-block-head h2 { margin: 6px 0 0; font-size: clamp(22px, 2.6vw, 28px); }
+.premium-shelf-meta { margin-left: 10px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0; }
+@media (max-width: 620px) {
+  .premium-shelf-meta { display: block; margin: 2px 0 0; }
+}

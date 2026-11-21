@@ -46,11 +46,18 @@ class ServicePricesView(APIView):
         return Response(data)
 
 
+ONLINE_PAYMENTS_DISABLED = {
+    "detail": "Оплата на сайте отключена. Продвижение — из бонусов тарифа: /api/dashboard/promote/."
+}
+
+
 class CreatePaymentView(APIView):
-    """Создаёт платёж и возвращает ссылку для оплаты."""
+    """Отключено: оплата на сайте не принимается, тарифы включает администратор."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        if not getattr(settings, "ONLINE_PAYMENTS_ENABLED", False):
+            return Response(ONLINE_PAYMENTS_DISABLED, status=status.HTTP_410_GONE)
         serializer = CreatePaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -124,6 +131,8 @@ class MockPaymentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        if not getattr(settings, "ONLINE_PAYMENTS_ENABLED", False):
+            return Response(ONLINE_PAYMENTS_DISABLED, status=status.HTTP_410_GONE)
         if getattr(settings, "PAYMENT_PROVIDER", "mock") != "mock":
             return Response(
                 {"detail": "Mock-платежи отключены в продакшене."},

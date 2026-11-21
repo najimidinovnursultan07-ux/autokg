@@ -23,9 +23,12 @@ from .serializers import (
 
 
 def public_cars_queryset():
-    """Публично видны только активные объявления активных салонов."""
+    """Публично видны только активные объявления активных салонов с оплаченным тарифом."""
+    from apps.subscriptions.services import active_subscription_exists
+
     return (
         Car.objects.filter(status=Car.Status.ACTIVE, dealer__is_active=True)
+        .filter(active_subscription_exists("dealer"))
         .select_related("owner", "dealer", "dealer__city", "model", "model__brand", "city")
         .prefetch_related("images", "price_history")
     )

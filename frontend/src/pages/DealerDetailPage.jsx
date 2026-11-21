@@ -132,7 +132,7 @@ export default function DealerDetailPage() {
             <div className="dealer-identity">
               <div className="dealer-title">
                 <h1>{dealer.name}</h1>
-                <span className="dealer-verified"><BadgeCheck size={16} /> Партнёр AutoBuy</span>
+                {dealer.is_verified && <span className="dealer-verified"><BadgeCheck size={16} /> Проверенный дилер</span>}
               </div>
               <a className="dealer-rating-link" href="#reviews">
                 <StarRating rating={dealer.rating} count={dealer.reviews_count} />

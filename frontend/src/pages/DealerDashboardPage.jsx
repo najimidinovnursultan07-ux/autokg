@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { BadgeCheck, ChevronLeft, ChevronRight, Edit3, Eye, EyeOff, Plus, Rocket, Search, Trash2 } from 'lucide-react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { BadgeCheck, ChevronLeft, ChevronRight, Edit3, Eye, EyeOff, FileSpreadsheet, Plus, Rocket, Search, Trash2 } from 'lucide-react'
+import { Link, useOutletContext, useSearchParams } from 'react-router-dom'
 import { deleteDashboardCar, listDashboardCars, setDashboardCarStatus } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
+import ImportCarsModal from '../components/cars/ImportCarsModal.jsx'
 import PromoteModal from '../components/cars/PromoteModal.jsx'
 import { EmptyState, ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -26,6 +27,11 @@ export default function DealerDashboardPage() {
   const [workingId, setWorkingId] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [promoteCar, setPromoteCar] = useState(null)
+  const [importOpen, setImportOpen] = useState(false)
+  const { subscription, reloadSubscription } = useOutletContext() || {}
+  const canImport = Boolean(subscription?.plan?.has_excel_import)
+  // На «Старте» видны только просмотры; звонки и WhatsApp — с «Бизнеса»
+  const showContactStats = subscription?.plan?.stats_level !== 'basic'
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -91,7 +97,16 @@ export default function DealerDashboardPage() {
         eyebrow="Кабинет салона"
         title="Объявления"
         description="Добавляйте, редактируйте, скрывайте и отмечайте проданные автомобили."
-        action={<Link className="button button--primary" to="/dashboard/cars/new"><Plus size={17} /> Добавить авто</Link>}
+        action={(
+          <div className="page-title-actions">
+            {canImport && (
+              <button type="button" className="button button--outline" onClick={() => setImportOpen(true)}>
+                <FileSpreadsheet size={17} /> Загрузить из Excel
+              </button>
+            )}
+            <Link className="button button--primary" to="/dashboard/cars/new"><Plus size={17} /> Добавить авто</Link>
+          </div>
+        )}
       />
 
       <div className="admin-toolbar">
@@ -116,7 +131,7 @@ export default function DealerDashboardPage() {
           <div className="admin-table-wrap">
             <table className="admin-table dealer-cars-table">
               <thead>
-                <tr><th>Автомобиль</th><th>Цена</th><th>Статус</th><th>Просмотры</th><th title="Сколько раз открыли номер / нажали WhatsApp">Номер / WhatsApp</th><th>Действия</th></tr>
+                <tr><th>Автомобиль</th><th>Цена</th><th>Статус</th><th>Просмотры</th>{showContactStats && <th title="Сколько раз открыли номер / нажали WhatsApp">Номер / WhatsApp</th>}<th>Действия</th></tr>
               </thead>
               <tbody>
                 {cars.map((car) => {
@@ -138,7 +153,7 @@ export default function DealerDashboardPage() {
                       <td>{formatPrice(car.price, car.currency)}</td>
                       <td><span className={`admin-status admin-status--${car.status}`}>{CAR_STATUS_LABELS[car.status] || car.status}</span></td>
                       <td>{car.views_count || 0}</td>
-                      <td>{car.phone_views || 0} / {car.whatsapp_clicks || 0}</td>
+                      {showContactStats && <td>{car.phone_views || 0} / {car.whatsapp_clicks || 0}</td>}
                       <td>
                         <div className="table-actions">
                           <Link className="icon-action" to={`/dashboard/cars/${car.id}/edit`} title="Изменить" aria-label="Изменить"><Edit3 size={16} /></Link>
@@ -201,11 +216,18 @@ export default function DealerDashboardPage() {
         </div>
       )}
 
+      {importOpen && (
+        <ImportCarsModal
+          onClose={() => setImportOpen(false)}
+          onImported={() => { load(); reloadSubscription?.() }}
+        />
+      )}
+
       {promoteCar && (
         <PromoteModal
           car={promoteCar}
           onClose={() => setPromoteCar(null)}
-          onPaymentCreated={(result) => { setPromoteCar(null); window.location.href = result.payment_url }}
+          onPromoted={load}
         />
       )}
     </section>

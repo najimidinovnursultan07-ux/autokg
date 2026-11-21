@@ -1,6 +1,7 @@
-import { AlertTriangle, Building2, CarFront, CreditCard, LogOut, Plus, Settings } from 'lucide-react'
-import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { AlertTriangle, Building2, CarFront, Gem, LogOut, Plus, Settings } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { getMySubscription } from '../../api/subscriptions.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 
 // Кабинет автосалона (role=dealer)
@@ -8,7 +9,7 @@ const navigation = [
   { label: 'Объявления', to: '/dashboard', icon: CarFront, end: true },
   { label: 'Добавить авто', to: '/dashboard/cars/new', icon: Plus },
   { label: 'Профиль салона', to: '/dashboard/profile', icon: Building2 },
-  { label: 'История платежей', to: '/dashboard/payments', icon: CreditCard },
+  { label: 'Мой тариф', to: '/dashboard/subscription', icon: Gem },
   { label: 'Настройки аккаунта', to: '/dashboard/account', icon: Settings },
 ]
 
@@ -16,6 +17,17 @@ export default function AccountLayout() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const [loggingOut, setLoggingOut] = useState(false)
+  const { pathname } = useLocation()
+  // undefined — ещё загружается, null — тарифа нет
+  const [subscription, setSubscription] = useState(undefined)
+
+  const reloadSubscription = useCallback(() => (
+    getMySubscription()
+      .then((data) => setSubscription(data.subscription))
+      .catch(() => {})
+  ), [])
+
+  useEffect(() => { reloadSubscription() }, [reloadSubscription, pathname])
 
   const logout = async () => {
     setLoggingOut(true)
@@ -58,7 +70,22 @@ export default function AccountLayout() {
             <span>Ваш автосалон отключён администратором: объявления скрыты с сайта, редактирование недоступно.</span>
           </div>
         )}
-        <Outlet />
+        {user?.dealer_is_active !== false && subscription === null && !pathname.startsWith('/dashboard/subscription') && (
+          <div className="form-alert dealer-blocked-alert" role="alert">
+            <AlertTriangle size={17} />
+            <span>Тариф не активен: объявления скрыты с сайта. <Link to="/dashboard/subscription">Продлить тариф</Link></span>
+          </div>
+        )}
+        {subscription && subscription.days_left <= 3 && !pathname.startsWith('/dashboard/subscription') && (
+          <div className="form-alert form-alert--warning" role="status">
+            <AlertTriangle size={17} />
+            <span>
+              {subscription.is_trial ? 'Пробный период' : `Тариф «${subscription.plan.name}»`} заканчивается через {subscription.days_left} дн.
+              {' '}<Link to="/dashboard/subscription">Продлить</Link>
+            </span>
+          </div>
+        )}
+        <Outlet context={{ subscription, reloadSubscription }} />
       </main>
     </div>
   )
