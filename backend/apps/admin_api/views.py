@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
@@ -20,6 +21,7 @@ from apps.cars.serializers import BrandSerializer, CitySerializer, ModelSerializ
 from apps.common.permissions import IsAutoBuyAdmin
 from apps.dealers.models import Dealer
 
+from .report import build_report, build_report_xlsx, parse_period
 from .serializers import AdminCarSerializer, AdminUserSerializer
 
 
@@ -63,6 +65,35 @@ class AdminStatsView(APIView):
             "managers": managers,
             "cars_by_dealer": by_dealer,
         })
+
+
+class AdminReportView(APIView):
+    """Сводный отчёт по всем салонам. ?from=&to= (ГГГГ-ММ-ДД), по умолчанию текущий месяц."""
+
+    permission_classes = (IsAutoBuyAdmin,)
+
+    def get(self, request):
+        start, end, start_dt, end_dt = parse_period(request.query_params)
+        report = build_report(start_dt, end_dt)
+        report["period"] = {"from": start, "to": end}
+        return Response(report)
+
+
+class AdminReportExportView(APIView):
+    """Тот же отчёт файлом Excel: лист «Сводка» и лист «Салоны»."""
+
+    permission_classes = (IsAutoBuyAdmin,)
+
+    def get(self, request):
+        start, end, start_dt, end_dt = parse_period(request.query_params)
+        content = build_report_xlsx(build_report(start_dt, end_dt), start, end)
+        response = HttpResponse(
+            content, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="autobuy-report-{start:%Y-%m-%d}_{end:%Y-%m-%d}.xlsx"'
+        )
+        return response
 
 
 class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):

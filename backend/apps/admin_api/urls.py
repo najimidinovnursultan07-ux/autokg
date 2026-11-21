@@ -6,6 +6,8 @@ from .views import (
     AdminCarViewSet,
     AdminCityViewSet,
     AdminModelViewSet,
+    AdminReportExportView,
+    AdminReportView,
     AdminStatsView,
     AdminUserViewSet,
 )
@@ -22,5 +24,7 @@ router.register("cities", AdminCityViewSet, basename="admin-city")
 
 urlpatterns = [
     path("stats/", AdminStatsView.as_view(), name="stats"),
+    path("report/", AdminReportView.as_view(), name="report"),
+    path("report/export/", AdminReportExportView.as_view(), name="report-export"),
     path("", include(router.urls)),
 ]

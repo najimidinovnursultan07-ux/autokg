@@ -1559,3 +1559,27 @@ button.seller-whatsapp { gap: 8px; font-family: inherit; }
 .listing-expiry { font-size: 12px; white-space: nowrap; color: var(--muted); }
 .listing-expiry--soon { color: #b7791f; font-weight: 700; }
 .listing-expiry--expired { color: #c2414f; font-weight: 700; }
+
+/* Отчёт по автосалонам */
+.report-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 14px; }
+.report-filters .field-label { min-width: 160px; }
+.report-period { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+.report-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.report-kpis .admin-stat-copy em { line-height: 1.4; }
+.report-plans { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+.report-plan-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; background: white; color: var(--ink); }
+.report-plan-chip strong { font-variant-numeric: tabular-nums; }
+.report-toolbar label.admin-search-form input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--ink); }
+.report-plan-filter { min-height: 45px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); }
+.report-table th, .report-table td { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.report-table td:first-child { white-space: normal; min-width: 180px; }
+.report-table tfoot td { border-top: 2px solid var(--line); background: var(--soft); font-weight: 700; }
+.report-sort { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: inherit; text-transform: inherit; letter-spacing: inherit; }
+.report-sort:hover { color: var(--accent-dark); }
+@media (max-width: 1000px) {
+  .report-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .report-kpis { grid-template-columns: 1fr; }
+  .report-filters .field-label { min-width: 0; flex: 1 1 140px; }
+}

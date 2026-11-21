@@ -1,9 +1,10 @@
-import { BarChart3, Building2, CarFront, ExternalLink, Gem, LayoutDashboard, LogOut, MapPinned, MessageSquareText, UserCheck } from 'lucide-react'
+import { BarChart3, Building2, CarFront, ExternalLink, FileBarChart, Gem, LayoutDashboard, LogOut, MapPinned, MessageSquareText, UserCheck } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 
 const navigation = [
   { to: '/admin', label: 'Обзор', icon: LayoutDashboard, end: true },
+  { to: '/admin/report', label: 'Отчёт по салонам', icon: FileBarChart },
   { to: '/admin/cars', label: 'Объявления', icon: CarFront },
   { to: '/admin/dealers', label: 'Автосалоны', icon: Building2 },
   { to: '/admin/subscriptions', label: 'Тарифы', icon: Gem },

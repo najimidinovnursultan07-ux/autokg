@@ -1,4 +1,16 @@
 import { api } from './client.js'
+import { downloadFile } from './download.js'
+
+// Сводный отчёт по салонам: params = { from, to } (ГГГГ-ММ-ДД)
+export async function getAdminReport(params = {}) {
+  const { data } = await api.get('/admin/report/', { params })
+  return data
+}
+
+export function downloadAdminReport({ from, to }) {
+  const query = new URLSearchParams({ from, to }).toString()
+  return downloadFile(`/admin/report/export/?${query}`, `autobuy-report-${from}_${to}.xlsx`)
+}
 
 export async function getAdminStats() {
   const { data } = await api.get('/admin/stats/')
