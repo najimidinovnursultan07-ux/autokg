@@ -221,6 +221,8 @@ class Car(models.Model):
     published_at = models.DateTimeField(null=True, blank=True, db_index=True)
     # Когда объявление само уйдёт с сайта; пусто — без срока
     expires_at = models.DateTimeField("Размещено до", null=True, blank=True, db_index=True)
+    # Когда отмечено «Продано» (для отчётов салона); сбрасывается, если продажу отменили
+    sold_at = models.DateTimeField("Продано", null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
 from apps.dealers.permissions import PublicReadOnly
+from apps.stats.services import record_contact, record_view
 
 from .filters import CarFilter
 from .models import Brand, Car, City, Model, not_expired_q
@@ -132,6 +133,7 @@ class CarViewSet(viewsets.ReadOnlyModelViewSet):
         instance = self.get_object()
         if not is_own_dealer_view(request, instance):
             Car.objects.filter(pk=instance.pk).update(views_count=F("views_count") + 1)
+            record_view(instance)
             instance.views_count = (instance.views_count or 0) + 1
         return Response(self.get_serializer(instance).data)
 
@@ -151,6 +153,7 @@ class CarViewSet(viewsets.ReadOnlyModelViewSet):
         if not is_own_dealer_view(request, car):
             counter = "phone_views" if serializer.validated_data["kind"] == "phone" else "whatsapp_clicks"
             Car.objects.filter(pk=car.pk).update(**{counter: F(counter) + 1})
+            record_contact(car, serializer.validated_data["kind"])
         phone = car.dealer.phone or car.contact_phone
         whatsapp = car.dealer.whatsapp or car.contact_phone
         return Response({"phone": phone or None, "whatsapp": whatsapp or None})

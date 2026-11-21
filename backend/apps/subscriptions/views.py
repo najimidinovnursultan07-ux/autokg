@@ -271,4 +271,8 @@ class SubscriptionRemindersView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         if not hmac.compare_digest(given.encode(), secret.encode()):
             return Response({"detail": "Неверный секрет."}, status=status.HTTP_403_FORBIDDEN)
-        return Response(send_subscription_reminders())
+        from apps.stats.services import purge_old_stats
+
+        result = send_subscription_reminders()
+        result["stats_removed"] = purge_old_stats()  # хранение статистики — 12 месяцев
+        return Response(result)

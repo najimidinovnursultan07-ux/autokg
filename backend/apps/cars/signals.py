@@ -10,6 +10,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 from .models import Car, CarImage, CarPriceHistory
 
@@ -39,11 +40,20 @@ def carimage_delete_file(sender, instance, **kwargs):
 @receiver(pre_save, sender=Car, dispatch_uid="car_remember_old_price")
 def car_remember_old_price(sender, instance, raw=False, **kwargs):
     instance._old_price = None
-    if raw or instance._state.adding:
+    instance._old_status = None
+    instance._old_sold_at = None
+    if raw:
         return
-    instance._old_price = (
-        Car.objects.filter(pk=instance.pk).values_list("price", "currency").first()
-    )
+    if not instance._state.adding:
+        row = Car.objects.filter(pk=instance.pk).values_list("price", "currency", "status", "sold_at").first()
+        if row:
+            instance._old_price = row[:2]
+            instance._old_status, instance._old_sold_at = row[2], row[3]
+    # Дата продажи: ставится при переходе в «Продано», снимается при отмене
+    if instance.status == Car.Status.SOLD and instance._old_status != Car.Status.SOLD:
+        instance.sold_at = timezone.now()
+    elif instance.status != Car.Status.SOLD:
+        instance.sold_at = None
 
 
 @receiver(post_save, sender=Car, dispatch_uid="car_record_price_history")

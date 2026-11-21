@@ -7,6 +7,7 @@ import GuestRoute from './components/routing/GuestRoute.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ComparePage from './pages/ComparePage.jsx'
 import MySubscriptionPage from './pages/MySubscriptionPage.jsx'
+import DealerReportPage from './pages/DealerReportPage.jsx'
 import PricingPage from './pages/PricingPage.jsx'
 import AdminSubscriptionsPage from './pages/AdminSubscriptionsPage.jsx'
 import AdminReportPage from './pages/AdminReportPage.jsx'
@@ -61,6 +62,7 @@ export default function App() {
             <Route path="dashboard/cars/:id/edit" element={<CarFormPage />} />
             <Route path="dashboard/profile" element={<DealerProfilePage />} />
             <Route path="dashboard/subscription" element={<MySubscriptionPage />} />
+            <Route path="dashboard/report" element={<DealerReportPage />} />
             <Route path="dashboard/payments" element={<PaymentHistoryPage />} />
             <Route path="dashboard/account" element={<AccountSettingsPage />} />
           </Route>

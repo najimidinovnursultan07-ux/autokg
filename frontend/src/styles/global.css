@@ -1583,3 +1583,13 @@ button.seller-whatsapp { gap: 8px; font-family: inherit; }
   .report-kpis { grid-template-columns: 1fr; }
   .report-filters .field-label { min-width: 0; flex: 1 1 140px; }
 }
+
+/* Отчёт салона */
+.report-warning { align-items: flex-start; font-size: 13px; line-height: 1.55; }
+.report-warning svg { flex-shrink: 0; margin-top: 2px; }
+.report-warning ul { margin: 4px 0 0; padding-left: 18px; }
+.report-month { min-width: 170px; }
+.report-delta { display: block; font-style: normal; font-size: 11px; font-weight: 700; }
+.report-delta--up { color: #2f8a5a; }
+.report-delta--down { color: #c2414f; }
+.dealer-report-page .admin-section-title { margin-top: 26px; }

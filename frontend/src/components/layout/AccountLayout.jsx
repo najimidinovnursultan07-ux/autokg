@@ -1,4 +1,4 @@
-import { AlertTriangle, Building2, CarFront, Gem, LogOut, Plus, Settings } from 'lucide-react'
+import { AlertTriangle, Building2, CarFront, FileBarChart, Gem, LogOut, Plus, Settings } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getMySubscription } from '../../api/subscriptions.js'
@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext.jsx'
 const navigation = [
   { label: 'Объявления', to: '/dashboard', icon: CarFront, end: true },
   { label: 'Добавить авто', to: '/dashboard/cars/new', icon: Plus },
+  { label: 'Отчёт', to: '/dashboard/report', icon: FileBarChart },
   { label: 'Профиль салона', to: '/dashboard/profile', icon: Building2 },
   { label: 'Мой тариф', to: '/dashboard/subscription', icon: Gem },
   { label: 'Настройки аккаунта', to: '/dashboard/account', icon: Settings },
