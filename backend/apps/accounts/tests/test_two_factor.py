@@ -141,3 +141,22 @@ class AdminSiteTwoFactorTests(TestCase):
     def test_session_login_without_code_has_no_access(self, mock_send):
         self.client.login(username="admin@test.kg", password=PASSWORD)
         self.assertEqual(self.client.get("/django-admin/").status_code, 302)
+
+
+class PasswordResetMailFailureTests(TestCase):
+    """Почта упала: ответ такой же, как для несуществующего email, админу — сигнал в Telegram."""
+
+    def setUp(self):
+        cache.clear()
+        User.objects.create_user(email="dealer@test.kg", password=PASSWORD, role=User.Role.DEALER)
+
+    @patch(SEND, return_value=True)
+    @patch("apps.accounts.views.send_mail", side_effect=OSError("Network is unreachable"))
+    def test_smtp_failure_returns_same_answer_and_alerts_admin(self, _mail, mock_telegram):
+        client = APIClient()
+        existing = client.post("/api/auth/password-reset/", {"email": "dealer@test.kg"}, format="json")
+        missing = client.post("/api/auth/password-reset/", {"email": "nobody@test.kg"}, format="json")
+        self.assertEqual(existing.status_code, 200)
+        self.assertEqual(existing.data, missing.data)
+        mock_telegram.assert_called_once()
+        self.assertIn("dealer@test.kg", mock_telegram.call_args[0][0])

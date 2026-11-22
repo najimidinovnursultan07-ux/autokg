@@ -218,6 +218,10 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
 EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
 EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+# Brevo HTTP API: если задан ключ — письма идут через API (Render блокирует SMTP на free)
+BREVO_API_KEY = env("BREVO_API_KEY", default="")
+if BREVO_API_KEY:
+    EMAIL_BACKEND = "apps.common.email_backends.BrevoEmailBackend"
 DEFAULT_FROM_EMAIL = env(
     "DEFAULT_FROM_EMAIL",
     default="no-reply@autobuy.local",

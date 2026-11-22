@@ -50,9 +50,11 @@ if not CSRF_TRUSTED_ORIGINS:
     raise ImproperlyConfigured(
         "Configure CSRF_TRUSTED_ORIGINS with the trusted frontend origins."
     )
-if EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend" or not EMAIL_HOST:
+if not BREVO_API_KEY and (
+    EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend" or not EMAIL_HOST
+):
     raise ImproperlyConfigured(
-        "Configure an SMTP email backend and EMAIL_HOST in production."
+        "Configure BREVO_API_KEY, or an SMTP email backend and EMAIL_HOST, in production."
     )
 
 # Render терминирует TLS на балансировщике и передаёт X-Forwarded-Proto

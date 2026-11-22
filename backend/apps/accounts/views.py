@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -33,6 +34,9 @@ from .tokens import (
     revoke_user_refresh_tokens,
     set_refresh_cookie,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 # Публичной регистрации нет: аккаунты менеджеров создаёт администратор
@@ -209,23 +213,36 @@ class PasswordResetRequestView(generics.GenericAPIView):
                 f"{settings.PASSWORD_RESET_URL}?"
                 f"{urlencode({'uid': uid, 'token': token})}"
             )
-            send_mail(
-                subject="Восстановление пароля AutoBuy",
-                message=(
-                    "Для установки нового пароля перейдите по ссылке. "
-                    f"Если вы не запрашивали восстановление, проигнорируйте письмо:\n\n"
-                    f"{reset_url}"
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
+            try:
+                send_mail(
+                    subject="Восстановление пароля AutoBuy",
+                    message=(
+                        "Для установки нового пароля перейдите по ссылке. "
+                        f"Если вы не запрашивали восстановление, проигнорируйте письмо:\n\n"
+                        f"{reset_url}"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as exc:
+                # Ответ тот же, что и для несуществующего email — иначе по ошибке
+                # можно узнать, какие адреса зарегистрированы. Админ узнаёт из лога и Telegram.
+                logger.error("Письмо восстановления пароля не отправлено (%s): %s", type(exc).__name__, exc)
+                from apps.subscriptions.notifications import send_telegram
+
+                send_telegram(
+                    f"⚠️ Не удалось отправить письмо восстановления пароля для {user.email} "
+                    f"({type(exc).__name__}). Проверьте настройки почты (EMAIL_*) на Render "
+                    "или смените пароль менеджеру вручную в админке."
+                )
 
         return Response(
             {
                 "detail": (
                     "Если аккаунт с таким адресом существует, "
-                    "инструкция отправлена на электронную почту."
+                    "инструкция отправлена на электронную почту. "
+                    "Письмо не пришло за 10 минут — проверьте «Спам» или обратитесь к администратору."
                 )
             },
             status=status.HTTP_200_OK,
