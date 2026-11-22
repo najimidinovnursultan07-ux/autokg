@@ -8,6 +8,8 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { FavoritesProvider } from './context/FavoritesContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
 import './styles/global.css'
+// Ловим beforeinstallprompt сразу при загрузке — для кнопки «Скачать приложение»
+import './utils/pwaInstall.js'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

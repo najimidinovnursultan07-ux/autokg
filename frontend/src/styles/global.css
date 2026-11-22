@@ -754,6 +754,17 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .footer-bottom { border-top-color: rgba(255,255,255,.14); color: #a7b8ce; }
 .footer-bottom-right { display: inline-flex; align-items: center; gap: 20px; }
 .footer-login { color: inherit; font-weight: 600; text-decoration: none; }
+/* «Скачать приложение» (PWA) */
+.footer-install { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; margin-top: 18px; padding: 0 16px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; background: rgba(255,255,255,.08); color: white; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .18s, border-color .18s; }
+.footer-install:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.45); }
+.install-help-backdrop { position: fixed; z-index: 70; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(17,34,54,.5); }
+.install-help { position: relative; width: min(100%, 400px); padding: 24px 22px 20px; border-radius: 14px; background: white; color: var(--ink); box-shadow: 0 20px 50px rgba(15,23,42,.25); }
+.install-help h2 { margin: 0 0 8px; font-size: 18px; }
+.install-help p { margin: 0 0 14px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.install-help ol { display: grid; gap: 10px; margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.5; }
+.install-help ol svg { vertical-align: -2px; color: var(--accent); }
+.install-help-close { position: absolute; top: 10px; right: 10px; display: grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.install-help-close:hover { background: #f1f5f9; color: var(--ink); }
 .footer-login:hover { color: #fff; text-decoration: underline; }
 .brand--footer .brand-mark { background: #fff; color: var(--accent); }
 .button--outline:hover:not(:disabled) { border-color: #b8cce6; background: #f7faff; }

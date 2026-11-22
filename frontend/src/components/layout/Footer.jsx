@@ -2,6 +2,7 @@ import { ArrowUpRight, Mail, MapPin } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { versionDetails, versionLabel } from '../../utils/version.js'
+import InstallAppButton from './InstallAppButton.jsx'
 
 const currentYear = new Date().getFullYear()
 
@@ -16,6 +17,7 @@ export default function Footer() {
             <span className="brand-name">Auto<span>Buy</span></span>
           </Link>
           <p>Платформа, которая соединяет людей и автомобили по всему Кыргызстану.</p>
+          <InstallAppButton />
         </div>
         <div className="footer-column">
           <h3>Покупателям</h3>
