@@ -1,10 +1,10 @@
 Django==5.2.19
-djangorestframework==3.17.2
+djangorestframework==3.18.2
 djangorestframework-simplejwt==5.5.1
 django-cors-headers==4.9.0
 django-environ==0.14.0
 django-filter==25.2
-Pillow==12.3.0
+Pillow==13.0.0
 openpyxl==3.1.5
 reportlab==4.2.5
 psycopg[binary]==3.3.9

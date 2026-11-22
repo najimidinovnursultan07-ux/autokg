@@ -39,6 +39,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "apps.common.middleware.ClientIPMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -163,6 +164,7 @@ REST_FRAMEWORK = {
         "anon": "100/hour",
         "user": "1000/hour",
         "auth": "5/minute",
+        "auth_account": "20/hour",
         "auth_refresh": "30/minute",
         "contacts": "60/hour",
         "rates": "120/hour",
@@ -181,6 +183,10 @@ SIMPLE_JWT = {
     "CHECK_REVOKE_TOKEN": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+# Заголовок с настоящим IP посетителя от доверенного прокси (см. ClientIPMiddleware).
+# Пусто — берётся IP соединения. В production: CF-Connecting-IP (Cloudflare перед Render).
+CLIENT_IP_HEADER = env("CLIENT_IP_HEADER", default="")
 
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",

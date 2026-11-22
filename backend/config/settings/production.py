@@ -8,6 +8,8 @@ MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 INSTALLED_APPS += ["cloudinary_storage", "cloudinary"]
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Render стоит за Cloudflare: CF-Connecting-IP подделать нельзя, X-Forwarded-For — можно
+CLIENT_IP_HEADER = env("CLIENT_IP_HEADER", default="CF-Connecting-IP")
 
 # Фронтенд переехал на autobuy-kg.vercel.app. Новый домен разрешён всегда,
 # старый autokg-ten.vercel.app отключён — даже если он остался в переменных Render.

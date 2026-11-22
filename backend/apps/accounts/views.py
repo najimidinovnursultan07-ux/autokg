@@ -25,6 +25,7 @@ from .serializers import (
     PasswordResetRequestSerializer,
     UserSerializer,
 )
+from .throttles import LoginAccountRateThrottle
 from .tokens import (
     revoke_user_refresh_tokens,
     set_refresh_cookie,
@@ -38,7 +39,7 @@ from .tokens import (
 class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
     permission_classes = [AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [ScopedRateThrottle, LoginAccountRateThrottle]
     throttle_scope = "auth"
 
     def post(self, request, *args, **kwargs):
