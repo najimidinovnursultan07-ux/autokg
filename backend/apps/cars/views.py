@@ -154,6 +154,7 @@ class CarViewSet(viewsets.ReadOnlyModelViewSet):
             counter = "phone_views" if serializer.validated_data["kind"] == "phone" else "whatsapp_clicks"
             Car.objects.filter(pk=car.pk).update(**{counter: F(counter) + 1})
             record_contact(car, serializer.validated_data["kind"])
-        phone = car.dealer.phone or car.contact_phone
-        whatsapp = car.dealer.whatsapp or car.contact_phone
+        # Номер из объявления — главный (прямо владельцу), телефон салона — запасной
+        phone = car.contact_phone or car.dealer.phone
+        whatsapp = car.contact_phone or car.dealer.whatsapp or car.dealer.phone
         return Response({"phone": phone or None, "whatsapp": whatsapp or None})

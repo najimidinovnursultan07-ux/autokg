@@ -46,9 +46,15 @@ class ContactRevealTests(MarketplaceTestCase):
         self.client.post(url, {"kind": "whatsapp"}, format="json")
 
         self.assertEqual(phone.status_code, 200)
-        self.assertEqual(phone.data, {"phone": "+996700111111", "whatsapp": "+996700111112"})
+        # Номер из объявления важнее номеров салона
+        self.assertEqual(phone.data, {"phone": "+996700000002", "whatsapp": "+996700000002"})
         self.car.refresh_from_db()
         self.assertEqual((self.car.phone_views, self.car.whatsapp_clicks), (1, 2))
+
+    def test_reveal_falls_back_to_dealer_contacts(self):
+        Car.objects.filter(pk=self.car.pk).update(contact_phone="")
+        data = self.client.post(f"/api/cars/{self.car.pk}/contacts/", {"kind": "phone"}, format="json").data
+        self.assertEqual(data, {"phone": "+996700111111", "whatsapp": "+996700111112"})
 
     def test_own_dealer_clicks_are_not_counted_and_stats_visible_in_dashboard(self):
         self.client.force_authenticate(self.manager_a)

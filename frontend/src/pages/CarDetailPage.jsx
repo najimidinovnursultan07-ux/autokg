@@ -64,7 +64,7 @@ function SellerContacts({ car }) {
     <>
       {car.has_whatsapp && (
         <button type="button" className="seller-whatsapp" onClick={openWhatsapp}>
-          <MessageCircle size={16} /> Написать в WhatsApp
+          <MessageCircle size={16} /> Написать владельцу в WhatsApp
         </button>
       )}
       {car.has_phone && (contacts?.phone ? (
@@ -73,7 +73,7 @@ function SellerContacts({ car }) {
         </a>
       ) : (
         <button type="button" className="button button--outline seller-show-phone" onClick={showPhone} disabled={loading}>
-          <Phone size={15} /> {loading ? 'Загружаем…' : 'Показать номер'}
+          <Phone size={15} /> {loading ? 'Загружаем…' : 'Показать номер владельца'}
         </button>
       ))}
       {error && <p className="seller-contact-error" role="alert">{error}</p>}

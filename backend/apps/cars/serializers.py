@@ -413,10 +413,10 @@ class PublicCarSerializer(CarSerializer):
         read_only_fields = fields
 
     def get_has_phone(self, obj):
-        return bool(obj.dealer.phone or obj.contact_phone)
+        return bool(obj.contact_phone or obj.dealer.phone)
 
     def get_has_whatsapp(self, obj):
-        return bool(obj.dealer.whatsapp or obj.contact_phone)
+        return bool(obj.contact_phone or obj.dealer.whatsapp or obj.dealer.phone)
 
 
 class ContactRevealSerializer(serializers.Serializer):
