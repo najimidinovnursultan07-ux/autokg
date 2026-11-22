@@ -10,6 +10,7 @@ import { ToastProvider } from './context/ToastContext.jsx'
 import './styles/global.css'
 // Ловим beforeinstallprompt сразу при загрузке — для кнопки «Скачать приложение»
 import './utils/pwaInstall.js'
+import { reloadForFreshVersion } from './utils/chunkReload.js'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -36,16 +37,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   })
 }
 
-// После нового деплоя старые файлы страниц удаляются. Если вкладка была открыта до деплоя
-// и пытается загрузить такую страницу — один раз перезагружаемся, чтобы получить свежую версию.
+// Старые файлы страниц после деплоя — тихая перезагрузка (см. utils/chunkReload.js)
 window.addEventListener('vite:preloadError', (event) => {
-  const key = 'autobuy:chunk-reload'
-  let reloadedRecently = false
-  try {
-    reloadedRecently = Date.now() - Number(sessionStorage.getItem(key) || 0) < 10000
-    sessionStorage.setItem(key, String(Date.now()))
-  } catch { /* sessionStorage недоступен — просто перезагружаемся */ }
-  if (reloadedRecently) return
-  event.preventDefault()
-  window.location.reload()
+  if (reloadForFreshVersion()) event.preventDefault()
 })
