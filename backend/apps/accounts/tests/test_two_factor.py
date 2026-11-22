@@ -94,6 +94,18 @@ class AdminTwoFactorApiTests(TestCase):
         self.assertIn("access", resp.data)
         mock_send.assert_not_called()
 
+    @override_settings(TELEGRAM_BOT_ADMIN_TOKEN="admin-bot", TELEGRAM_ADMIN_2FA_CHAT_ID="777")
+    @patch(SEND, return_value=True)
+    def test_separate_admin_bot_is_used(self, mock_send):
+        self.login()
+        self.assertEqual(mock_send.call_args[0][1:], ("admin-bot", "777"))
+
+    @override_settings(TELEGRAM_BOT_TOKEN="", TELEGRAM_BOT_ADMIN_TOKEN="admin-bot")
+    @patch(SEND, return_value=True)
+    def test_admin_bot_alone_enables_2fa(self, mock_send):
+        self.assertTrue(self.login().data["two_factor_required"])
+        self.assertEqual(mock_send.call_args[0][1:], ("admin-bot", "42"))
+
     @override_settings(ADMIN_2FA_ENABLED=False)
     @patch(SEND, return_value=True)
     def test_can_be_disabled(self, mock_send):

@@ -27,8 +27,9 @@ def frontend_url(path):
     return f"{settings.FRONTEND_URL.rstrip('/')}{path}"
 
 
-def send_telegram(text):
-    token, chat_id = settings.TELEGRAM_BOT_TOKEN, settings.TELEGRAM_ADMIN_CHAT_ID
+def send_telegram(text, token=None, chat_id=None):
+    token = token or settings.TELEGRAM_BOT_TOKEN
+    chat_id = chat_id or settings.TELEGRAM_ADMIN_CHAT_ID
     if not token or not chat_id:
         return False
     body = json.dumps({"chat_id": chat_id, "text": text, "disable_web_page_preview": True}).encode()

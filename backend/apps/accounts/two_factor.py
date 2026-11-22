@@ -32,15 +32,22 @@ class TwoFactorError(Exception):
         self.restart = restart  # код больше не годится — нужно заново ввести пароль
 
 
+def telegram_credentials():
+    """Бот и чат для кодов: отдельные (TELEGRAM_BOT_ADMIN_TOKEN / TELEGRAM_ADMIN_2FA_CHAT_ID) или общие."""
+    token = getattr(settings, "TELEGRAM_BOT_ADMIN_TOKEN", "") or settings.TELEGRAM_BOT_TOKEN
+    chat_id = getattr(settings, "TELEGRAM_ADMIN_2FA_CHAT_ID", "") or settings.TELEGRAM_ADMIN_CHAT_ID
+    return token, chat_id
+
+
 def telegram_configured():
-    return bool(settings.TELEGRAM_BOT_TOKEN and settings.TELEGRAM_ADMIN_CHAT_ID)
+    return all(telegram_credentials())
 
 
 def requires_two_factor(user):
     if not getattr(settings, "ADMIN_2FA_ENABLED", True) or user.role != User.Role.ADMIN:
         return False
     if not telegram_configured():
-        logger.warning("2FA для админа пропущен: Telegram-бот не настроен (TELEGRAM_BOT_TOKEN / TELEGRAM_ADMIN_CHAT_ID)")
+        logger.warning("2FA для админа пропущен: Telegram-бот не настроен (TELEGRAM_BOT_ADMIN_TOKEN или TELEGRAM_BOT_TOKEN + чат)")
         return False
     return True
 
@@ -67,7 +74,8 @@ def start_challenge(user, ip=""):
         f"🔐 Код входа в админку AutoBuy: {code}\n"
         f"Действует 5 минут. Аккаунт: {user.email}"
         + (f", IP: {ip}" if ip else "")
-        + "\n\nЕсли это не вы — никому не сообщайте код и срочно смените пароль."
+        + "\n\nЕсли это не вы — никому не сообщайте код и срочно смените пароль.",
+        *telegram_credentials(),
     )
     if not sent:
         challenge.delete()
