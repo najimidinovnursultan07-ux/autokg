@@ -5,7 +5,7 @@ import { versionDetails } from '../../utils/version.js'
 
 const navigation = [
   { to: '/admin', label: 'Обзор', icon: LayoutDashboard, end: true },
-  { to: '/admin/report', label: 'Отчёт по салонам', icon: FileBarChart },
+  { to: '/admin/report', label: 'Отчёт по салонам', short: 'Отчёт', icon: FileBarChart },
   { to: '/admin/cars', label: 'Объявления', icon: CarFront },
   { to: '/admin/dealers', label: 'Автосалоны', icon: Building2 },
   { to: '/admin/subscriptions', label: 'Тарифы', icon: Gem },
@@ -32,14 +32,14 @@ export default function AdminLayout() {
           <span><strong>AutoBuy</strong><small>Панель администратора</small></span>
         </div>
         <nav className="admin-navigation" aria-label="Административная панель">
-          {navigation.map(({ to, label, icon: Icon, end }) => (
+          {navigation.map(({ to, label, short, icon: Icon, end }) => (
             <NavLink
               to={to}
               key={to}
               end={end}
               className={({ isActive }) => `admin-nav-link ${isActive ? 'admin-nav-link--active' : ''}`}
             >
-              <Icon size={18} /><span>{label}</span>
+              <Icon size={18} /><span className="admin-nav-label">{label}</span>{short && <span className="admin-nav-label-short">{short}</span>}
             </NavLink>
           ))}
         </nav>

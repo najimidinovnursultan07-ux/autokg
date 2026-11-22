@@ -1665,3 +1665,17 @@ body:has(.floating-whatsapp) .footer-bottom { padding-bottom: calc(90px + env(sa
   .admin-table--cards .table-actions { gap: 10px; }
   .admin-table--cards .icon-action { width: 40px; height: 40px; }
 }
+
+/* Навигация админки: на телефоне все разделы плиткой 3×3, без прокрутки вбок */
+.admin-nav-label-short { display: none; }
+@media (max-width: 760px) {
+  .admin-navigation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; overflow: visible; padding-top: 10px; }
+  .admin-nav-link { min-height: 62px; flex-direction: column; justify-content: center; gap: 5px; padding: 8px 4px; border: 1px solid var(--line); border-radius: 10px; font-size: 11px; line-height: 1.2; text-align: center; }
+  .admin-nav-link--active { border-color: #b9d3f5; }
+  .admin-nav-link .admin-nav-label { overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (max-width: 760px) {
+  .admin-navigation .admin-nav-link:has(.admin-nav-label-short) .admin-nav-label { display: none; }
+  .admin-navigation .admin-nav-label-short { display: inline; }
+  .admin-sidebar-footer .admin-nav-link { min-height: 37px; flex-direction: row; padding: 0 9px; border: 0; font-size: 11px; }
+}
