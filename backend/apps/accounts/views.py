@@ -13,8 +13,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.models import update_last_login
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenObtainSerializer
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -26,6 +28,7 @@ from .serializers import (
     UserSerializer,
 )
 from .throttles import LoginAccountRateThrottle
+from .two_factor import CODE_TTL, TwoFactorError, requires_two_factor, start_challenge, verify_challenge
 from .tokens import (
     revoke_user_refresh_tokens,
     set_refresh_cookie,
@@ -36,18 +39,76 @@ from .tokens import (
 # через /api/admin/managers/.
 
 
+class LoginSerializer(TokenObtainPairSerializer):
+    """Как обычный вход, но админу вместо токенов — второй шаг (код из Telegram)."""
+
+    def validate(self, attrs):
+        TokenObtainSerializer.validate(self, attrs)  # проверка пароля, ставит self.user
+        if requires_two_factor(self.user):
+            return {"two_factor_user": self.user}
+        refresh = self.get_token(self.user)
+        if jwt_settings.UPDATE_LAST_LOGIN:
+            update_last_login(None, self.user)
+        return {"refresh": str(refresh), "access": str(refresh.access_token)}
+
+
+def issue_tokens_response(user):
+    refresh = RefreshToken.for_user(user)
+    if jwt_settings.UPDATE_LAST_LOGIN:
+        update_last_login(None, user)
+    response = Response({"access": str(refresh.access_token)}, status=status.HTTP_200_OK)
+    set_refresh_cookie(response, str(refresh))
+    return response
+
+
 class CookieTokenObtainPairView(TokenObtainPairView):
-    serializer_class = TokenObtainPairSerializer
+    serializer_class = LoginSerializer
     permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle, LoginAccountRateThrottle]
     throttle_scope = "auth"
 
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == status.HTTP_200_OK:
-            refresh = response.data.pop("refresh")
-            set_refresh_cookie(response, refresh)
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as exc:
+            raise InvalidToken(exc.args[0]) from exc
+        data = serializer.validated_data
+
+        user = data.get("two_factor_user")
+        if user is not None:
+            try:
+                challenge = start_challenge(user, ip=request.META.get("REMOTE_ADDR", ""))
+            except TwoFactorError as exc:
+                return Response({"detail": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response(
+                {
+                    "two_factor_required": True,
+                    "challenge_id": str(challenge.id),
+                    "expires_in": int(CODE_TTL.total_seconds()),
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        response = Response({"access": data["access"]}, status=status.HTTP_200_OK)
+        set_refresh_cookie(response, data["refresh"])
         return response
+
+
+class TwoFactorVerifyView(APIView):
+    """Второй шаг входа админа: код из Telegram → токены."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth_2fa"
+
+    def post(self, request):
+        try:
+            user = verify_challenge(request.data.get("challenge_id"), request.data.get("code"))
+        except TwoFactorError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return issue_tokens_response(user)
 
 
 class CookieTokenRefreshView(TokenRefreshView):

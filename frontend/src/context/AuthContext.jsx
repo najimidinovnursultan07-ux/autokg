@@ -71,9 +71,8 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('autobuy:session-expired', expireSession)
   }, [])
 
-  const signIn = useCallback(
-    async (credentials) => {
-      const data = await authApi.login(credentials)
+  const finishSignIn = useCallback(
+    async (data) => {
       setAccessToken(data.access)
       try {
         const currentUser = await authApi.getCurrentUser()
@@ -85,6 +84,23 @@ export function AuthProvider({ children }) {
       }
     },
     [acceptSession],
+  )
+
+  // Админу сервер вместо токенов отвечает two_factor_required — нужен код из Telegram
+  const verifyLoginCode = useCallback(
+    async (challengeId, code) => finishSignIn(await authApi.verifyLoginCode(challengeId, code)),
+    [finishSignIn],
+  )
+
+  const signIn = useCallback(
+    async (credentials) => {
+      const data = await authApi.login(credentials)
+      if (data.two_factor_required) {
+        return { twoFactor: { challengeId: data.challenge_id, expiresIn: data.expires_in } }
+      }
+      return finishSignIn(data)
+    },
+    [finishSignIn],
   )
 
   const signOut = useCallback(async () => {
@@ -113,11 +129,12 @@ export function AuthProvider({ children }) {
       loading,
       isAuthenticated: Boolean(user),
       signIn,
+      verifyLoginCode,
       signOut,
       refreshUser,
       setUser,
     }),
-    [user, loading, signIn, signOut, refreshUser],
+    [user, loading, signIn, verifyLoginCode, signOut, refreshUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

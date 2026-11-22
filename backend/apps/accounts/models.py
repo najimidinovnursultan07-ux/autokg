@@ -95,3 +95,19 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class LoginChallenge(models.Model):
+    """Одноразовый код второго шага входа (2FA через Telegram), см. two_factor.py."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="login_challenges")
+    code_hash = models.CharField(max_length=64)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Код входа (2FA)"
+        verbose_name_plural = "Коды входа (2FA)"

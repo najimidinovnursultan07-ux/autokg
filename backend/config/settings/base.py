@@ -165,6 +165,7 @@ REST_FRAMEWORK = {
         "user": "1000/hour",
         "auth": "5/minute",
         "auth_account": "20/hour",
+        "auth_2fa": "10/minute",
         "auth_refresh": "30/minute",
         "contacts": "60/hour",
         "rates": "120/hour",
@@ -233,6 +234,9 @@ FINIK_API_URL = env("FINIK_API_URL", default="https://api.finik.kg/v1")
 # Уведомления о тарифах: Telegram-бот пишет администратору площадки
 TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="")
 TELEGRAM_ADMIN_CHAT_ID = env("TELEGRAM_ADMIN_CHAT_ID", default="")
+# 2FA для администраторов: код входа приходит в Telegram (TELEGRAM_ADMIN_CHAT_ID).
+# Аварийно отключить (например, Telegram недоступен): ADMIN_2FA_ENABLED=false
+ADMIN_2FA_ENABLED = env.bool("ADMIN_2FA_ENABLED", default=True)
 # Секрет для ежедневного запуска напоминаний по HTTP (GitHub Actions / внешний cron)
 CRON_SECRET = env("CRON_SECRET", default="")
 

@@ -6,6 +6,11 @@ export async function login(credentials) {
   return data
 }
 
+export async function verifyLoginCode(challengeId, code) {
+  const { data } = await api.post('/auth/login/verify/', { challenge_id: challengeId, code })
+  return data
+}
+
 export async function logout() {
   await api.post('/auth/logout/')
 }

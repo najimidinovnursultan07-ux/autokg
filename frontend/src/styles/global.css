@@ -195,6 +195,7 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .form-stack { display: flex; flex-direction: column; gap: 15px; }
 .form-inline-link { display: flex; justify-content: flex-end; margin-top: -6px; }
 .form-inline-link a, .auth-bottom a { color: var(--accent); font-size: 11px; font-weight: 700; }
+.form-inline-link .link-button { background: none; border: 0; padding: 0; cursor: pointer; color: var(--accent); font: inherit; font-size: 11px; font-weight: 700; }
 .password-field { display: flex; align-items: center; padding: 0 10px 0 0; }
 .password-field input { min-height: 39px; border: 0; box-shadow: none !important; }
 .password-field button { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border: 0; background: transparent; color: #819087; }
