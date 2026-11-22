@@ -20,9 +20,10 @@ CSRF_TRUSTED_ORIGINS = list(
         [*LOCAL_FRONTEND_ORIGINS, *env.list("CSRF_TRUSTED_ORIGINS", default=[])]
     )
 )
-EMAIL_BACKEND = env(
-    "EMAIL_BACKEND",
-    default="django.core.mail.backends.console.EmailBackend",
+EMAIL_BACKEND = (
+    "apps.common.email_backends.BrevoEmailBackend"
+    if BREVO_API_KEY
+    else env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 )
 PASSWORD_RESET_URL = env(
     "PASSWORD_RESET_URL",
