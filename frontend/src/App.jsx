@@ -1,37 +1,41 @@
+import { lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout.jsx'
-import AccountLayout from './components/layout/AccountLayout.jsx'
-import AdminLayout from './components/layout/AdminLayout.jsx'
 import ProtectedRoute from './components/routing/ProtectedRoute.jsx'
 import GuestRoute from './components/routing/GuestRoute.jsx'
-import AboutPage from './pages/AboutPage.jsx'
-import ComparePage from './pages/ComparePage.jsx'
-import MySubscriptionPage from './pages/MySubscriptionPage.jsx'
-import DealerReportPage from './pages/DealerReportPage.jsx'
-import PricingPage from './pages/PricingPage.jsx'
-import AdminSubscriptionsPage from './pages/AdminSubscriptionsPage.jsx'
-import AdminReportPage from './pages/AdminReportPage.jsx'
-import AdminAdsPage from './pages/AdminAdsPage.jsx'
-import PaymentHistoryPage from './pages/PaymentHistoryPage.jsx'
-import DealersPage from './pages/DealersPage.jsx'
-import DealerDetailPage from './pages/DealerDetailPage.jsx'
-import DealerDashboardPage from './pages/DealerDashboardPage.jsx'
-import DealerProfilePage from './pages/DealerProfilePage.jsx'
-import AdminDealersPage from './pages/AdminDealersPage.jsx'
-import AdminManagersPage from './pages/AdminManagersPage.jsx'
-import AdminReviewsPage from './pages/AdminReviewsPage.jsx'
-import AccountSettingsPage from './pages/AccountSettingsPage.jsx'
-import AdminCarsPage from './pages/AdminCarsPage.jsx'
-import AdminCatalogPage from './pages/AdminCatalogPage.jsx'
-import AdminDashboardPage from './pages/AdminDashboardPage.jsx'
-import CarDetailPage from './pages/CarDetailPage.jsx'
-import CarFormPage from './pages/CarFormPage.jsx'
-import CatalogPage from './pages/CatalogPage.jsx'
-import ContactsPage from './pages/ContactsPage.jsx'
 import HomePage from './pages/HomePage.jsx'
-import LoginPage from './pages/LoginPage.jsx'
-import NotFoundPage from './pages/NotFoundPage.jsx'
-import PasswordResetPage from './pages/PasswordResetPage.jsx'
+
+// Главная грузится сразу; остальные страницы — отдельными файлами, только когда их открывают.
+// Так покупатель не скачивает код админки и кабинета салона.
+const AccountLayout = lazy(() => import('./components/layout/AccountLayout.jsx'))
+const AdminLayout = lazy(() => import('./components/layout/AdminLayout.jsx'))
+const AboutPage = lazy(() => import('./pages/AboutPage.jsx'))
+const ComparePage = lazy(() => import('./pages/ComparePage.jsx'))
+const MySubscriptionPage = lazy(() => import('./pages/MySubscriptionPage.jsx'))
+const DealerReportPage = lazy(() => import('./pages/DealerReportPage.jsx'))
+const PricingPage = lazy(() => import('./pages/PricingPage.jsx'))
+const AdminSubscriptionsPage = lazy(() => import('./pages/AdminSubscriptionsPage.jsx'))
+const AdminReportPage = lazy(() => import('./pages/AdminReportPage.jsx'))
+const AdminAdsPage = lazy(() => import('./pages/AdminAdsPage.jsx'))
+const PaymentHistoryPage = lazy(() => import('./pages/PaymentHistoryPage.jsx'))
+const DealersPage = lazy(() => import('./pages/DealersPage.jsx'))
+const DealerDetailPage = lazy(() => import('./pages/DealerDetailPage.jsx'))
+const DealerDashboardPage = lazy(() => import('./pages/DealerDashboardPage.jsx'))
+const DealerProfilePage = lazy(() => import('./pages/DealerProfilePage.jsx'))
+const AdminDealersPage = lazy(() => import('./pages/AdminDealersPage.jsx'))
+const AdminManagersPage = lazy(() => import('./pages/AdminManagersPage.jsx'))
+const AdminReviewsPage = lazy(() => import('./pages/AdminReviewsPage.jsx'))
+const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage.jsx'))
+const AdminCarsPage = lazy(() => import('./pages/AdminCarsPage.jsx'))
+const AdminCatalogPage = lazy(() => import('./pages/AdminCatalogPage.jsx'))
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage.jsx'))
+const CarDetailPage = lazy(() => import('./pages/CarDetailPage.jsx'))
+const CarFormPage = lazy(() => import('./pages/CarFormPage.jsx'))
+const CatalogPage = lazy(() => import('./pages/CatalogPage.jsx'))
+const ContactsPage = lazy(() => import('./pages/ContactsPage.jsx'))
+const LoginPage = lazy(() => import('./pages/LoginPage.jsx'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'))
+const PasswordResetPage = lazy(() => import('./pages/PasswordResetPage.jsx'))
 
 export default function App() {
   return (

@@ -3,20 +3,12 @@ import { downloadFile } from './download.js'
 
 // ---- Сайт ----
 
-const CACHE_MS = 2 * 60 * 1000
-let cached = null // { at, promise }
-
-// Все баннеры, которые показываются сегодня. Один запрос на несколько минут для всех мест показа.
+// Все баннеры, которые показываются сегодня. Без кэша: новый или запущенный баннер виден сразу.
+// Одновременные запросы с разных мест показа всё равно склеиваются в один (см. api.get в client.js).
 export function getAds() {
-  if (cached && Date.now() - cached.at < CACHE_MS) return cached.promise
-  const promise = api.get('/ads/')
+  return api.get('/ads/')
     .then(({ data }) => (Array.isArray(data) ? data : []))
-    .catch(() => {
-      cached = null
-      return []
-    })
-  cached = { at: Date.now(), promise }
-  return promise
+    .catch(() => [])
 }
 
 // Переход по баннеру идёт через API: там считается клик и делается редирект на сайт рекламодателя

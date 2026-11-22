@@ -33,3 +33,17 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     })
   })
 }
+
+// После нового деплоя старые файлы страниц удаляются. Если вкладка была открыта до деплоя
+// и пытается загрузить такую страницу — один раз перезагружаемся, чтобы получить свежую версию.
+window.addEventListener('vite:preloadError', (event) => {
+  const key = 'autobuy:chunk-reload'
+  let reloadedRecently = false
+  try {
+    reloadedRecently = Date.now() - Number(sessionStorage.getItem(key) || 0) < 10000
+    sessionStorage.setItem(key, String(Date.now()))
+  } catch { /* sessionStorage недоступен — просто перезагружаемся */ }
+  if (reloadedRecently) return
+  event.preventDefault()
+  window.location.reload()
+})

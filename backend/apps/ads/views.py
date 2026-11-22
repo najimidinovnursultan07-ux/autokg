@@ -41,7 +41,7 @@ class AdListView(PublicAdView):
     def get(self, request):
         banners = AdBanner.objects.live().order_by("placement", "-priority", "id")
         response = Response(PublicAdSerializer(banners, many=True, context={"request": request}).data)
-        response["Cache-Control"] = "public, max-age=60"
+        response["Cache-Control"] = "no-cache"  # браузер всегда спрашивает свежие баннеры
         return response
 
 

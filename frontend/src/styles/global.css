@@ -1700,3 +1700,8 @@ body:has(.floating-whatsapp) .footer-bottom { padding-bottom: calc(90px + env(sa
   .ads-table .ad-status-cell small, .ads-table .ad-launch-button { font-size: 12px; }
   .ads-table .ads-actions { flex-wrap: wrap; justify-content: flex-end; }
 }
+
+/* «Потяните вниз — обновить» в установленном приложении */
+.pull-refresh { position: fixed; z-index: 100; top: env(safe-area-inset-top, 0px); left: 50%; display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: white; box-shadow: 0 4px 16px rgba(15, 35, 70, .18); color: var(--accent); pointer-events: none; }
+.pull-refresh-icon { display: grid; place-items: center; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

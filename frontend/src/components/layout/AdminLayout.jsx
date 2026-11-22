@@ -1,5 +1,7 @@
 import { BarChart3, Building2, CarFront, ExternalLink, FileBarChart, Gem, LayoutDashboard, LogOut, MapPinned, Megaphone, MessageSquareText, UserCheck } from 'lucide-react'
+import { Suspense } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { LoadingState } from '../common/States.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { versionDetails } from '../../utils/version.js'
 
@@ -52,7 +54,7 @@ export default function AdminLayout() {
           <span className="app-version app-version--admin">Версия {versionDetails}</span>
         </div>
       </aside>
-      <main className="admin-main"><Outlet /></main>
+      <main className="admin-main"><Suspense fallback={<LoadingState label="Загружаем раздел…" />}><Outlet /></Suspense></main>
     </div>
   )
 }

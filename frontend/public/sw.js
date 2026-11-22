@@ -2,7 +2,7 @@
 // Кэширует только статику самого сайта (same-origin). Запросы к API и медиа бэкенда
 // идут мимо service worker, чтобы данные (цены, объявления, авторизация) всегда были свежими.
 
-const VERSION = 'v1'
+const VERSION = 'v2'
 const SHELL_CACHE = `autobuy-shell-${VERSION}`
 const STATIC_CACHE = `autobuy-static-${VERSION}`
 const SHELL_URL = '/index.html'
@@ -43,6 +43,8 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
+  // Данные и файлы бэкенда (когда он на том же домене) — всегда из сети, без кэша
+  if (/^\/(api|media|static|django-admin)\//.test(url.pathname)) return
 
   // Навигация по SPA: сначала сеть, офлайн — закэшированная оболочка.
   if (request.mode === 'navigate') {

@@ -1,6 +1,7 @@
 import { AlertTriangle, Building2, CarFront, FileBarChart, Gem, LogOut, Plus, Settings } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { LoadingState } from '../common/States.jsx'
 import { getMySubscription } from '../../api/subscriptions.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 
@@ -86,7 +87,9 @@ export default function AccountLayout() {
             </span>
           </div>
         )}
-        <Outlet context={{ subscription, reloadSubscription }} />
+        <Suspense fallback={<LoadingState label="Загружаем раздел…" />}>
+          <Outlet context={{ subscription, reloadSubscription }} />
+        </Suspense>
       </main>
     </div>
   )
