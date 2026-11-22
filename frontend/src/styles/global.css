@@ -1688,3 +1688,15 @@ body:has(.floating-whatsapp) .footer-bottom { padding-bottom: calc(90px + env(sa
   .detail-layout > .seller-panel { order: 2; }
   .detail-main > :not(.gallery) { order: 3; margin-top: 0; }
 }
+
+/* Реклама: аккуратные действия в одну строку и статус с подсказкой */
+.ads-actions { flex-wrap: nowrap; gap: 4px; }
+.ad-status-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.ad-status-cell small { color: var(--muted); font-size: 10px; }
+.ad-launch-button { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border: 1px solid #b9d3f5; border-radius: 999px; background: #eef5ff; color: var(--accent-dark); font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.ad-launch-button:hover { background: #e0edff; }
+@media (max-width: 640px) {
+  .ads-table .ad-status-cell { align-items: flex-end; }
+  .ads-table .ad-status-cell small, .ads-table .ad-launch-button { font-size: 12px; }
+  .ads-table .ads-actions { flex-wrap: wrap; justify-content: flex-end; }
+}

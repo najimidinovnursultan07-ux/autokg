@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BarChart3, Download, Edit3, ExternalLink, ImagePlus, Megaphone, Plus, Power, Trash2 } from 'lucide-react'
+import { BarChart3, Download, Edit3, ExternalLink, ImagePlus, Megaphone, Play, Plus, Power, Trash2 } from 'lucide-react'
 import {
   AD_PLACEMENTS, createAdminAd, deleteAdminAd, downloadAdminAdStats,
   getAdminAdStats, getAdminAds, updateAdminAd,
@@ -20,9 +20,13 @@ const placementLabel = Object.fromEntries(AD_PLACEMENTS.map((p) => [p.value, p.l
 const formatDay = (value) => (value ? new Date(`${value}T00:00:00`).toLocaleDateString('ru-RU') : '')
 const formatNumber = (value) => new Intl.NumberFormat('ru-RU').format(value || 0)
 
-function bannerStatus(ad) {
+function todayIso() {
   const now = new Date()
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
+function bannerStatus(ad) {
+  const today = todayIso()
   if (!ad.is_active) return ['Выключен', 'inactive']
   if (ad.ends_on && ad.ends_on < today) return ['Завершён', 'sold']
   if (ad.starts_on && ad.starts_on > today) return ['Запланирован', 'pending']
@@ -106,6 +110,16 @@ export default function AdminAdsPage() {
     }
   }
 
+  const launchNow = async (ad) => {
+    try {
+      await updateAdminAd(ad.id, { starts_on: todayIso(), is_active: true })
+      notify('Баннер запущен — он уже показывается на сайте.', 'success')
+      await load()
+    } catch (err) {
+      notify(getErrorMessage(err, 'Не удалось запустить баннер.'), 'error')
+    }
+  }
+
   const toggle = async (ad) => {
     try {
       await updateAdminAd(ad.id, { is_active: !ad.is_active })
@@ -151,27 +165,37 @@ export default function AdminAdsPage() {
 
       {loading ? <LoadingState label="Загружаем рекламу…" /> : error ? <ErrorState message={error} onRetry={load} /> : (
         <div className="admin-table-wrap">
-          <table className="admin-table">
+          <table className="admin-table admin-table--cards ads-table">
             <thead><tr><th>Баннер</th><th>Место</th><th>Период</th><th>Статус</th><th>Показы</th><th>Клики</th><th>CTR</th><th>Действия</th></tr></thead>
             <tbody>
               {visible.map((ad) => {
                 const [label, tone] = bannerStatus(ad)
                 return (
                   <tr key={ad.id}>
-                    <td>
+                    <td className="admin-card-head">
                       <div className="dealer-car-cell">
                         <span className="ad-thumb"><img src={resolveMediaUrl(ad.image_url)} alt="" /></span>
                         <span><strong>{ad.title}</strong><small>{ad.advertiser}{ad.advertiser_contact ? ` · ${ad.advertiser_contact}` : ''}</small></span>
                       </div>
                     </td>
-                    <td>{placementLabel[ad.placement] || ad.placement}</td>
-                    <td>{ad.starts_on || ad.ends_on ? `${formatDay(ad.starts_on) || '…'} — ${formatDay(ad.ends_on) || 'без срока'}` : 'Без срока'}</td>
-                    <td><span className={`admin-status admin-status--${tone}`}>{label}</span></td>
-                    <td>{formatNumber(ad.impressions)}</td>
-                    <td>{formatNumber(ad.clicks)}</td>
-                    <td>{ad.ctr}%</td>
-                    <td>
-                      <div className="table-actions">
+                    <td data-label="Место">{placementLabel[ad.placement] || ad.placement}</td>
+                    <td data-label="Период">{ad.starts_on || ad.ends_on ? `${formatDay(ad.starts_on) || '…'} — ${formatDay(ad.ends_on) || 'без срока'}` : 'Без срока'}</td>
+                    <td data-label="Статус">
+                      <div className="ad-status-cell">
+                        <span className={`admin-status admin-status--${tone}`}>{label}</span>
+                        {label === 'Запланирован' && (
+                          <>
+                            <small>Начнётся {formatDay(ad.starts_on)}</small>
+                            <button type="button" className="ad-launch-button" onClick={() => launchNow(ad)}><Play size={13} /> Запустить сейчас</button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td data-label="Показы">{formatNumber(ad.impressions)}</td>
+                    <td data-label="Клики">{formatNumber(ad.clicks)}</td>
+                    <td data-label="CTR">{ad.ctr}%</td>
+                    <td data-label="Действия">
+                      <div className="table-actions ads-actions">
                         <button className="icon-action" type="button" onClick={() => setStatsFor(ad)} title="Статистика" aria-label="Статистика"><BarChart3 size={16} /></button>
                         <a className="icon-action" href={ad.link_url} target="_blank" rel="noopener noreferrer" title="Открыть ссылку" aria-label="Открыть ссылку"><ExternalLink size={16} /></a>
                         <button className="icon-action" type="button" onClick={() => open(ad)} title="Изменить" aria-label="Изменить"><Edit3 size={16} /></button>
