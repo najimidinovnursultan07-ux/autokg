@@ -8,6 +8,7 @@
 import json
 import logging
 import math
+import urllib.error
 import urllib.request
 from datetime import timedelta
 
@@ -41,8 +42,17 @@ def send_telegram(text, token=None, chat_id=None):
     try:
         with urllib.request.urlopen(request, timeout=10) as response:
             return response.status == 200
-    except Exception:
-        logger.exception("Не удалось отправить сообщение в Telegram")
+    except urllib.error.HTTPError as exc:
+        # Telegram объясняет причину в теле ответа, например «chat not found» —
+        # бот ещё не получил /start от этого чата. Токен в лог не пишем.
+        try:
+            reason = json.load(exc).get("description", "")
+        except Exception:
+            reason = ""
+        logger.error("Telegram отклонил сообщение (HTTP %s): %s", exc.code, reason or "без описания")
+        return False
+    except Exception as exc:
+        logger.error("Не удалось отправить сообщение в Telegram: %s", type(exc).__name__)
         return False
 
 
