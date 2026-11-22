@@ -1,6 +1,7 @@
 import { ArrowUpRight, Mail, MapPin } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { versionDetails, versionLabel } from '../../utils/version.js'
 
 const currentYear = new Date().getFullYear()
 
@@ -39,7 +40,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>© {currentYear} AutoBuy. Все права защищены.</span>
+        <span>© {currentYear} AutoBuy. Все права защищены. <span className="app-version" title={versionDetails}>{versionLabel}</span></span>
         <span className="footer-bottom-right">
           <span>Сделано с заботой об автолюбителях Кыргызстана</span>
           {isAuthenticated && user?.role === 'admin' ? (

@@ -1,6 +1,7 @@
 import { BarChart3, Building2, CarFront, ExternalLink, FileBarChart, Gem, LayoutDashboard, LogOut, MapPinned, Megaphone, MessageSquareText, UserCheck } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { versionDetails } from '../../utils/version.js'
 
 const navigation = [
   { to: '/admin', label: 'Обзор', icon: LayoutDashboard, end: true },
@@ -48,6 +49,7 @@ export default function AdminLayout() {
           <button type="button" className="admin-nav-link admin-logout" onClick={logout}>
             <LogOut size={17} /><span>Выйти</span>
           </button>
+          <span className="app-version app-version--admin">Версия {versionDetails}</span>
         </div>
       </aside>
       <main className="admin-main"><Outlet /></main>

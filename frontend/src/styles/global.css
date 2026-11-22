@@ -1638,3 +1638,5 @@ button.seller-whatsapp { gap: 8px; font-family: inherit; }
   .ad-stats-totals strong { font-size: 18px; }
 }
 .auth-home-button { margin-top: 12px; }
+.app-version { margin-left: 6px; opacity: .7; }
+.app-version--admin { display: block; margin: 8px 0 0; padding: 0 12px; font-size: 11px; color: #8a97a8; opacity: 1; }
