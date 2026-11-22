@@ -68,7 +68,13 @@ function SellerContacts({ car }) {
         </button>
       )}
       {car.has_phone && (contacts?.phone ? (
-        <a className="seller-phone seller-phone--revealed" href={`tel:${contacts.phone}`}>
+        <a
+          className="seller-phone seller-phone--revealed"
+          href={whatsappLink(contacts.whatsapp || contacts.phone, message) || `tel:${contacts.phone}`}
+          target="_blank"
+          rel="noreferrer"
+          title="Написать в WhatsApp"
+        >
           <Phone size={14} /> {contacts.phone}
         </a>
       ) : (
