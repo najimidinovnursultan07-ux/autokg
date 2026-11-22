@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, Building2, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Building2, Eye, EyeOff } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -62,6 +62,7 @@ export default function LoginPage() {
           <div className="form-inline-link"><Link to="/password-reset">Забыли пароль?</Link></div>
           <button className="button button--primary button--wide" type="submit" disabled={loading}>{loading ? 'Входим…' : 'Войти'} <ArrowRight size={17} /></button>
         </form>
+        <Link className="button button--outline button--wide auth-home-button" to="/"><ArrowLeft size={17} /> На сайт</Link>
         <p className="auth-bottom">Хотите разместить свой автосалон? <Link to="/contacts">Свяжитесь с нами</Link></p>
       </div>
     </section>
