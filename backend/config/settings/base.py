@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "apps.dealers.apps.DealersConfig",
     "apps.subscriptions.apps.SubscriptionsConfig",
     "apps.stats.apps.StatsConfig",
+    "apps.ads.apps.AdsConfig",
 ]
 
 MIDDLEWARE = [
@@ -166,6 +167,8 @@ REST_FRAMEWORK = {
         "contacts": "60/hour",
         "rates": "120/hour",
         "reviews": "5/day",
+        "ads": "300/hour",
+        "ad_events": "600/hour",
     },
 }
 

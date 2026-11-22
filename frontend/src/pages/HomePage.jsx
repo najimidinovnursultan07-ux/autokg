@@ -20,6 +20,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getLookups, listCars } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
 import { getDealers } from '../api/dealers.js'
+import AdBanner from '../components/ads/AdBanner.jsx'
 import CarCard from '../components/cars/CarCard.jsx'
 import { EmptyState, ErrorState } from '../components/common/States.jsx'
 import Shelf, { ShelfSkeleton } from '../components/home/Shelf.jsx'
@@ -168,6 +169,8 @@ export default function HomePage() {
         ))}
       </div>
 
+      <AdBanner placement="home_top" className="container" />
+
       {error ? (
         <div className="container"><ErrorState message={error} onRetry={load} /></div>
       ) : (
@@ -227,6 +230,8 @@ export default function HomePage() {
               </Link>
             ))}
           </Shelf>
+
+          <AdBanner placement="home_middle" className="container" />
 
           {/* Продвигаемые объявления */}
           {!loading && topCars.length > 0 && (

@@ -11,6 +11,7 @@ import DealerReportPage from './pages/DealerReportPage.jsx'
 import PricingPage from './pages/PricingPage.jsx'
 import AdminSubscriptionsPage from './pages/AdminSubscriptionsPage.jsx'
 import AdminReportPage from './pages/AdminReportPage.jsx'
+import AdminAdsPage from './pages/AdminAdsPage.jsx'
 import PaymentHistoryPage from './pages/PaymentHistoryPage.jsx'
 import DealersPage from './pages/DealersPage.jsx'
 import DealerDetailPage from './pages/DealerDetailPage.jsx'
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="admin/reviews" element={<AdminReviewsPage />} />
             <Route path="admin/subscriptions" element={<AdminSubscriptionsPage />} />
             <Route path="admin/report" element={<AdminReportPage />} />
+            <Route path="admin/ads" element={<AdminAdsPage />} />
             <Route path="admin/cars" element={<AdminCarsPage />} />
             <Route path="admin/catalog" element={<AdminCatalogPage />} />
           </Route>

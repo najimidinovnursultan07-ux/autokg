@@ -3,6 +3,7 @@ import { ArrowLeft, Building2, ChevronLeft, ChevronRight, Eye, Fuel, Gauge, GitC
 import { Link, useParams } from 'react-router-dom'
 import { getCar, revealCarContacts } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
+import AdBanner from '../components/ads/AdBanner.jsx'
 import FavoriteButton from '../components/cars/FavoriteButton.jsx'
 import ShareButtons from '../components/cars/ShareButtons.jsx'
 import { ErrorState, LoadingState } from '../components/common/States.jsx'
@@ -282,6 +283,7 @@ export default function CarDetailPage() {
             title={getCarTitle(car)}
             text={`${getCarTitle(car)} — ${formatPrice(car.price, car.currency)} на AutoBuy`}
           />
+          <AdBanner placement="car_detail" />
           <div className="seller-facts">
             <span><Gauge size={16} />{formatMileage(car.mileage)}</span>
             <span><Fuel size={16} />{labels.engine_type[car.engine_type] || '—'}</span>

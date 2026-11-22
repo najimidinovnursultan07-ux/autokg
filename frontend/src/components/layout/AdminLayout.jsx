@@ -1,4 +1,4 @@
-import { BarChart3, Building2, CarFront, ExternalLink, FileBarChart, Gem, LayoutDashboard, LogOut, MapPinned, MessageSquareText, UserCheck } from 'lucide-react'
+import { BarChart3, Building2, CarFront, ExternalLink, FileBarChart, Gem, LayoutDashboard, LogOut, MapPinned, Megaphone, MessageSquareText, UserCheck } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 
@@ -9,6 +9,7 @@ const navigation = [
   { to: '/admin/dealers', label: 'Автосалоны', icon: Building2 },
   { to: '/admin/subscriptions', label: 'Тарифы', icon: Gem },
   { to: '/admin/managers', label: 'Менеджеры', icon: UserCheck },
+  { to: '/admin/ads', label: 'Реклама', icon: Megaphone },
   { to: '/admin/reviews', label: 'Отзывы', icon: MessageSquareText },
   { to: '/admin/catalog', label: 'Справочники', icon: MapPinned },
 ]

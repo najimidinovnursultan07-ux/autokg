@@ -1,6 +1,8 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
+from apps.ads.views import AdminAdViewSet
+
 from .views import (
     AdminBrandViewSet,
     AdminCarViewSet,
@@ -22,6 +24,7 @@ router.register("cars", AdminCarViewSet, basename="admin-car")
 router.register("brands", AdminBrandViewSet, basename="admin-brand")
 router.register("models", AdminModelViewSet, basename="admin-model")
 router.register("cities", AdminCityViewSet, basename="admin-city")
+router.register("ads", AdminAdViewSet, basename="admin-ad")
 
 urlpatterns = [
     path("stats/", AdminStatsView.as_view(), name="stats"),

@@ -3,6 +3,7 @@ import { Clock, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { getLookups, listCars } from '../api/cars.js'
 import { getDealers } from '../api/dealers.js'
+import AdBanner from '../components/ads/AdBanner.jsx'
 import CarGrid from '../components/cars/CarGrid.jsx'
 import { EmptyState, ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
@@ -238,7 +239,7 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
           </div>
           {loading ? <LoadingState label="Ищем подходящие автомобили…" /> : error ? <ErrorState message={error} onRetry={() => loadCars(page)} /> : cars.length ? (
             <>
-              <CarGrid cars={cars} />
+              <CarGrid cars={cars} ad={<AdBanner placement="catalog_feed" />} />
               <div className="pagination">
                 <button className="button button--outline" type="button" disabled={!previous} onClick={() => changePage(Math.max(1, page - 1))}>Назад</button>
                 <span>Страница {page}</span>
