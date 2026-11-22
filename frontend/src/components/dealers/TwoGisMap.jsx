@@ -13,6 +13,7 @@ export default function TwoGisMap({ markers = [], center, zoom = 13, onMapClick,
   const clickRef = useRef(onMapClick)
   const [status, setStatus] = useState('loading')
   const [attempt, setAttempt] = useState(0)
+  const [errorText, setErrorText] = useState('')
 
   useEffect(() => {
     clickRef.current = onMapClick
@@ -38,7 +39,12 @@ export default function TwoGisMap({ markers = [], center, zoom = 13, onMapClick,
         mapRef.current = map
         setStatus('ready')
       })
-      .catch(() => { if (!cancelled) setStatus('error') })
+      .catch((error) => {
+        console.error('[2ГИС]', error)
+        if (cancelled) return
+        setErrorText(error?.message || String(error))
+        setStatus('error')
+      })
     return () => {
       cancelled = true
       mapRef.current?.remove()
@@ -75,6 +81,7 @@ export default function TwoGisMap({ markers = [], center, zoom = 13, onMapClick,
       {status === 'error' && (
         <div className="twogis-map-overlay">
           <span>Карта 2ГИС не загрузилась. Проверьте интернет или отключите блокировщик рекламы для этого сайта.</span>
+          {errorText && <small className="twogis-map-error">Причина: {errorText}</small>}
           <button type="button" className="button button--outline" onClick={() => setAttempt((n) => n + 1)}>Повторить</button>
         </div>
       )}

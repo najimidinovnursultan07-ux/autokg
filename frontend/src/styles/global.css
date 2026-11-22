@@ -1429,6 +1429,7 @@ button.seller-whatsapp { gap: 8px; font-family: inherit; }
 .twogis-map-overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 20px; color: var(--muted); font-size: 13px; text-align: center; pointer-events: none; }
 .twogis-map-overlay:has(button) { place-content: center; gap: 12px; }
 .twogis-map-overlay button { pointer-events: auto; justify-self: center; }
+.twogis-map-error { font-size: 11px; opacity: .75; word-break: break-word; }
 .map-popup { display: flex; min-width: 180px; flex-direction: column; gap: 4px; font-family: inherit; }
 .map-popup strong { color: var(--ink); font-size: 14px; }
 .map-popup span { color: var(--muted); font-size: 12px; }
