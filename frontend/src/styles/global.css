@@ -408,6 +408,7 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
   .footer-main { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 30px 20px; padding-top: 38px; }
   .footer-brand-column { grid-column: 1 / -1; }
   .footer-bottom { flex-direction: column; gap: 8px; font-size: 9px; }
+  .footer-bottom-right { flex-wrap: wrap; gap: 12px; }
   .page-title-row { align-items: flex-start; flex-direction: column; margin-bottom: 25px; }
   .page-title-row h1 { font-size: 33px; }
   .page-title-row > .button { align-self: flex-start; }
@@ -748,6 +749,9 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .site-footer { background: #142b49; }
 .footer-brand-column p, .footer-column a, .footer-column span { color: #b7c5d8; }
 .footer-bottom { border-top-color: rgba(255,255,255,.14); color: #a7b8ce; }
+.footer-bottom-right { display: inline-flex; align-items: center; gap: 20px; }
+.footer-login { color: inherit; font-weight: 600; text-decoration: none; }
+.footer-login:hover { color: #fff; text-decoration: underline; }
 .brand--footer .brand-mark { background: #fff; color: var(--accent); }
 .button--outline:hover:not(:disabled) { border-color: #b8cce6; background: #f7faff; }
 .icon-button:hover { background: #edf3fa; }

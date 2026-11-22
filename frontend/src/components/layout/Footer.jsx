@@ -1,9 +1,11 @@
 import { ArrowUpRight, Mail, MapPin } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext.jsx'
 
 const currentYear = new Date().getFullYear()
 
 export default function Footer() {
+  const { user, isAuthenticated } = useAuth()
   const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL
   return (
     <footer className="site-footer">
@@ -38,7 +40,16 @@ export default function Footer() {
       </div>
       <div className="container footer-bottom">
         <span>© {currentYear} AutoBuy. Все права защищены.</span>
-        <span>Сделано с заботой об автолюбителях Кыргызстана</span>
+        <span className="footer-bottom-right">
+          <span>Сделано с заботой об автолюбителях Кыргызстана</span>
+          {isAuthenticated && user?.role === 'admin' ? (
+            <Link className="footer-login" to="/admin">Админка</Link>
+          ) : isAuthenticated && user?.role === 'dealer' ? (
+            <Link className="footer-login" to="/dashboard">Кабинет</Link>
+          ) : (
+            <Link className="footer-login" to="/login">Войти</Link>
+          )}
+        </span>
       </div>
     </footer>
   )
