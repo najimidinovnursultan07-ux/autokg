@@ -337,6 +337,7 @@ Production Compose использует Django production settings и Gunicorn, 
 Напоминания об окончании тарифа (письма менеджерам салона за 3 дня, за 1 день и в день окончания + сводка админу в Telegram) отправляются раз в день:
 
 - переменные бэкенда: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID` (необязательно), `CRON_SECRET`, настроенный SMTP (`EMAIL_*`);
+- если `TELEGRAM_BOT_TOKEN` не задан, уведомления отправляет бот кодов входа (`TELEGRAM_BOT_ADMIN_TOKEN`) — достаточно одного бота;
 - запуск — GitHub Actions `.github/workflows/subscription-reminders.yml` (секреты репозитория `BACKEND_URL` и `CRON_SECRET`), либо вручную / Render Cron Job: `python manage.py send_subscription_reminders`.
 
 О каждой новой заявке на тариф администратор сразу получает сообщение в Telegram.

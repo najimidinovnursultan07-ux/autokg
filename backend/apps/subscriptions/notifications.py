@@ -29,8 +29,9 @@ def frontend_url(path):
 
 
 def send_telegram(text, token=None, chat_id=None):
-    token = token or settings.TELEGRAM_BOT_TOKEN
-    chat_id = chat_id or settings.TELEGRAM_ADMIN_CHAT_ID
+    # Отдельного бота для уведомлений нет — пишет бот кодов входа (TELEGRAM_BOT_ADMIN_TOKEN)
+    token = token or settings.TELEGRAM_BOT_TOKEN or getattr(settings, "TELEGRAM_BOT_ADMIN_TOKEN", "")
+    chat_id = chat_id or settings.TELEGRAM_ADMIN_CHAT_ID or getattr(settings, "TELEGRAM_ADMIN_2FA_CHAT_ID", "")
     if not token or not chat_id:
         return False
     body = json.dumps({"chat_id": chat_id, "text": text, "disable_web_page_preview": True}).encode()

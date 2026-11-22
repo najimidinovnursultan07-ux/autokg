@@ -198,3 +198,14 @@ class ReminderTests(MarketplaceTestCase):
         out = StringIO()
         call_command("send_subscription_reminders", stdout=out)
         self.assertIn("новых заявок: 1", out.getvalue())
+
+
+class TelegramFallbackTests(MarketplaceTestCase):
+    @override_settings(TELEGRAM_BOT_TOKEN="", TELEGRAM_BOT_ADMIN_TOKEN="admin-bot", TELEGRAM_ADMIN_CHAT_ID="42")
+    def test_notifications_use_admin_bot_when_main_bot_missing(self):
+        from apps.subscriptions import notifications
+
+        with patch("apps.subscriptions.notifications.urllib.request.urlopen") as urlopen:
+            urlopen.return_value.__enter__.return_value.status = 200
+            self.assertTrue(notifications.send_telegram("тест"))
+        self.assertIn("/botadmin-bot/sendMessage", urlopen.call_args[0][0].full_url)
