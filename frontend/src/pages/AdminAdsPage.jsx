@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BarChart3, Download, Edit3, ExternalLink, ImagePlus, Megaphone, Play, Plus, Power, Trash2 } from 'lucide-react'
+import { BarChart3, Calculator, Download, Edit3, ExternalLink, ImagePlus, Megaphone, Play, Plus, Power, Tags, Trash2 } from 'lucide-react'
 import {
-  AD_PLACEMENTS, createAdminAd, deleteAdminAd, downloadAdminAdStats,
-  getAdminAdStats, getAdminAds, updateAdminAd,
+  AD_PLACEMENTS, calcAdPrice, createAdminAd, deleteAdminAd, downloadAdminAdStats,
+  getAdPrices, getAdminAdStats, getAdminAds, saveAdPrices, updateAdminAd,
 } from '../api/ads.js'
 import { resolveMediaUrl } from '../api/client.js'
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
@@ -13,12 +13,13 @@ const MAX_IMAGE = 5 * 1024 * 1024
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const emptyForm = {
   title: '', advertiser: '', advertiser_contact: '', placement: 'home_top', link_url: '',
-  starts_on: '', ends_on: '', priority: 1, is_active: true,
+  starts_on: '', ends_on: '', priority: 1, is_active: true, price: '', is_paid: false,
 }
 
 const placementLabel = Object.fromEntries(AD_PLACEMENTS.map((p) => [p.value, p.label]))
 const formatDay = (value) => (value ? new Date(`${value}T00:00:00`).toLocaleDateString('ru-RU') : '')
 const formatNumber = (value) => new Intl.NumberFormat('ru-RU').format(value || 0)
+const formatSom = (value) => `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Number(value) || 0)} сом`
 
 function todayIso() {
   const now = new Date()
@@ -53,6 +54,8 @@ export default function AdminAdsPage() {
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [statsFor, setStatsFor] = useState(null)
+  const [prices, setPrices] = useState([])
+  const [pricesOpen, setPricesOpen] = useState(false)
 
   const imagePreview = useObjectUrl(imageFile)
   const mobilePreview = useObjectUrl(mobileFile)
@@ -71,12 +74,16 @@ export default function AdminAdsPage() {
 
   useEffect(() => { load() }, [load])
 
+  const loadPrices = useCallback(() => getAdPrices().then(setPrices).catch(() => {}), [])
+  useEffect(() => { loadPrices() }, [loadPrices])
+
   const open = (ad) => {
     setEditing(ad || {})
     setImageFile(null)
     setMobileFile(null)
     setRemoveMobile(false)
     setForm(ad ? Object.fromEntries(Object.keys(emptyForm).map((k) => [k, ad[k] ?? emptyForm[k]])) : emptyForm)
+    loadPrices()
   }
 
   const pickImage = (setter) => (event) => {
@@ -146,12 +153,21 @@ export default function AdminAdsPage() {
   const sizeHint = AD_PLACEMENTS.find((p) => p.value === form.placement)?.size
   const currentImage = imagePreview || resolveMediaUrl(editing?.image_url)
   const currentMobile = mobilePreview || (removeMobile ? '' : resolveMediaUrl(editing?.mobile_image_url))
+  const placementPrice = prices.find((p) => p.placement === form.placement)
+  const estimate = calcAdPrice(placementPrice, form.starts_on, form.ends_on)
+  const paidTotal = visible.reduce((sum, ad) => sum + (ad.is_paid ? Number(ad.price) || 0 : 0), 0)
+  const unpaidTotal = visible.reduce((sum, ad) => sum + (!ad.is_paid ? Number(ad.price) || 0 : 0), 0)
 
   return (
     <section className="admin-page">
       <PageTitle eyebrow="Администрирование" title="Реклама"
         description="Баннеры партнёров: банки, страховые, автосервисы и другие компании. Показы и клики считаются автоматически."
-        action={<button className="button button--primary" type="button" onClick={() => open(null)}><Plus size={17} /> Добавить баннер</button>}
+        action={(
+          <div className="ads-title-actions">
+            <button className="button button--outline" type="button" onClick={() => setPricesOpen(true)}><Tags size={17} /> Цены</button>
+            <button className="button button--primary" type="button" onClick={() => open(null)}><Plus size={17} /> Добавить баннер</button>
+          </div>
+        )}
       />
 
       <div className="admin-toolbar">
@@ -161,12 +177,18 @@ export default function AdminAdsPage() {
             {AD_PLACEMENTS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
         </label>
+        {(paidTotal > 0 || unpaidTotal > 0) && (
+          <div className="ads-money-summary">
+            <span>Оплачено: <strong>{formatSom(paidTotal)}</strong></span>
+            <span>Ожидает оплаты: <strong className={unpaidTotal ? 'ads-money-unpaid' : ''}>{formatSom(unpaidTotal)}</strong></span>
+          </div>
+        )}
       </div>
 
       {loading ? <LoadingState label="Загружаем рекламу…" /> : error ? <ErrorState message={error} onRetry={load} /> : (
         <div className="admin-table-wrap">
           <table className="admin-table admin-table--cards ads-table">
-            <thead><tr><th>Баннер</th><th>Место</th><th>Период</th><th>Статус</th><th>Показы</th><th>Клики</th><th>CTR</th><th>Действия</th></tr></thead>
+            <thead><tr><th>Баннер</th><th>Место</th><th>Период</th><th>Сумма</th><th>Статус</th><th>Показы</th><th>Клики</th><th>CTR</th><th>Действия</th></tr></thead>
             <tbody>
               {visible.map((ad) => {
                 const [label, tone] = bannerStatus(ad)
@@ -180,6 +202,14 @@ export default function AdminAdsPage() {
                     </td>
                     <td data-label="Место">{placementLabel[ad.placement] || ad.placement}</td>
                     <td data-label="Период">{ad.starts_on || ad.ends_on ? `${formatDay(ad.starts_on) || '…'} — ${formatDay(ad.ends_on) || 'без срока'}` : 'Без срока'}</td>
+                    <td data-label="Сумма">
+                      {ad.price != null && ad.price !== '' ? (
+                        <div className="ad-price-cell">
+                          <strong>{formatSom(ad.price)}</strong>
+                          <span className={`admin-status admin-status--${ad.is_paid ? 'active' : 'pending'}`}>{ad.is_paid ? 'Оплачено' : 'Не оплачено'}</span>
+                        </div>
+                      ) : <span className="ad-price-empty">—</span>}
+                    </td>
                     <td data-label="Статус">
                       <div className="ad-status-cell">
                         <span className={`admin-status admin-status--${tone}`}>{label}</span>
@@ -235,6 +265,24 @@ export default function AdminAdsPage() {
               <label className="field-label">Показывать с<input type="date" value={form.starts_on || ''} onChange={set('starts_on')} /></label>
               <label className="field-label">Показывать по<input type="date" min={form.starts_on || undefined} value={form.ends_on || ''} onChange={set('ends_on')} /></label>
             </div>
+            <div className="ad-price-row">
+              <label className="field-label">Сумма по договору, сом
+                <input type="number" min="0" step="1" inputMode="numeric" value={form.price ?? ''} onChange={set('price')} placeholder={estimate ? String(estimate.total) : 'Например, 15000'} />
+              </label>
+              <div className="ad-price-estimate">
+                {estimate ? (
+                  <>
+                    <span>По прайсу за {estimate.days} дн.: <strong>{formatSom(estimate.total)}</strong></span>
+                    <button type="button" className="ad-launch-button" onClick={() => setForm({ ...form, price: String(estimate.total) })}><Calculator size={13} /> Подставить</button>
+                  </>
+                ) : (
+                  <span>{placementPrice && (Number(placementPrice.price_week) || Number(placementPrice.price_month))
+                    ? `Прайс места: ${formatSom(placementPrice.price_week)} за 7 дн., ${formatSom(placementPrice.price_month)} за 30 дн. Укажите даты — посчитаем сумму.`
+                    : 'Цены для этого места не заданы — кнопка «Цены» вверху страницы.'}</span>
+                )}
+              </div>
+              <label className="checkbox-label"><input type="checkbox" checked={Boolean(form.is_paid)} onChange={(e) => setForm({ ...form, is_paid: e.target.checked })} /> Оплачено</label>
+            </div>
             <p className="field-hint">Рекомендуемый размер картинки: {sizeHint}. Пустые даты — без ограничения. Если в одном месте несколько баннеров, они чередуются; приоритет 3 показывается в 3 раза чаще, чем 1.</p>
 
             <div className="ad-upload-row">
@@ -261,6 +309,8 @@ export default function AdminAdsPage() {
       )}
 
       {statsFor && <AdStatsModal ad={statsFor} onClose={() => setStatsFor(null)} />}
+
+      {pricesOpen && <AdPricesModal prices={prices} onClose={() => setPricesOpen(false)} onSaved={setPrices} />}
 
       {confirmDelete && (
         <div className="admin-modal-backdrop" role="presentation">
@@ -347,6 +397,65 @@ function AdStatsModal({ ad, onClose }) {
           <button type="button" className="button button--secondary" onClick={onClose}>Закрыть</button>
         </div>
       </div>
+    </div>
+  )
+}
+
+function AdPricesModal({ prices, onClose, onSaved }) {
+  const { notify } = useToast()
+  const [rows, setRows] = useState(() => AD_PLACEMENTS.map((p) => {
+    const row = prices.find((item) => item.placement === p.value)
+    return {
+      placement: p.value,
+      label: p.label,
+      price_week: row ? String(Math.round(Number(row.price_week))) : '0',
+      price_month: row ? String(Math.round(Number(row.price_month))) : '0',
+    }
+  }))
+  const [saving, setSaving] = useState(false)
+
+  const change = (index, key) => (event) => {
+    const next = [...rows]
+    next[index] = { ...next[index], [key]: event.target.value }
+    setRows(next)
+  }
+
+  const save = async (event) => {
+    event.preventDefault()
+    setSaving(true)
+    try {
+      const saved = await saveAdPrices(rows.map(({ placement, price_week, price_month }) => ({
+        placement, price_week: price_week || '0', price_month: price_month || '0',
+      })))
+      onSaved(saved)
+      notify('Цены на рекламу сохранены.', 'success')
+      onClose()
+    } catch (err) {
+      notify(getErrorMessage(err, 'Не удалось сохранить цены.'), 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="admin-modal-backdrop" role="presentation">
+      <form className="admin-modal admin-modal--wide" role="dialog" aria-modal="true" aria-labelledby="ad-prices-title" onSubmit={save}>
+        <h2 id="ad-prices-title">Цены на рекламу</h2>
+        <p className="field-hint">Прайс по местам показа. При добавлении баннера сумма за период считается по этим ценам: целые 30 дней — по месячной цене, остаток — неделями.</p>
+        <div className="ad-prices-list">
+          {rows.map((row, index) => (
+            <fieldset className="ad-prices-row" key={row.placement}>
+              <legend>{row.label}</legend>
+              <label className="field-label">За 7 дней, сом<input type="number" min="0" step="1" inputMode="numeric" required value={row.price_week} onChange={change(index, 'price_week')} /></label>
+              <label className="field-label">За 30 дней, сом<input type="number" min="0" step="1" inputMode="numeric" required value={row.price_month} onChange={change(index, 'price_month')} /></label>
+            </fieldset>
+          ))}
+        </div>
+        <div className="admin-modal-actions">
+          <button type="button" className="button button--secondary" onClick={onClose}>Отмена</button>
+          <button type="submit" className="button button--primary" disabled={saving}>{saving ? 'Сохраняем…' : 'Сохранить цены'}</button>
+        </div>
+      </form>
     </div>
   )
 }

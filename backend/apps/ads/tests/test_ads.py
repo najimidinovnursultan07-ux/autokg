@@ -151,3 +151,51 @@ class AdminAdTests(AdTestCase):
 
         bad = self.client.get(f"{self.url}{banner.pk}/stats/?from=2026-02-10&to=2026-02-01")
         self.assertEqual(bad.status_code, 400)
+
+
+class AdPricingTests(AdTestCase):
+    prices_url = "/api/admin/ad-prices/"
+
+    def setUp(self):
+        super().setUp()
+        self.client.force_authenticate(self.admin)
+
+    def test_prices_list_has_all_placements(self):
+        response = self.client.get(self.prices_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([row["placement"] for row in response.data], list(AdBanner.Placement.values))
+        self.assertEqual(response.data[0]["price_week"], "0.00")
+
+    def test_admin_updates_prices(self):
+        response = self.client.put(
+            self.prices_url,
+            [
+                {"placement": "home_top", "price_week": "5000", "price_month": "15000"},
+                {"placement": "car_detail", "price_week": "2000", "price_month": "6000"},
+            ],
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        prices = {row["placement"]: row for row in response.data}
+        self.assertEqual(prices["home_top"]["price_month"], "15000.00")
+        self.assertEqual(prices["car_detail"]["price_week"], "2000.00")
+        self.assertEqual(prices["home_middle"]["price_week"], "0.00")
+
+    def test_negative_or_unknown_rejected(self):
+        bad = self.client.put(self.prices_url, [{"placement": "home_top", "price_week": "-1", "price_month": "1"}], format="json")
+        self.assertEqual(bad.status_code, 400)
+        unknown = self.client.put(self.prices_url, [{"placement": "nope", "price_week": "1", "price_month": "1"}], format="json")
+        self.assertEqual(unknown.status_code, 400)
+
+    def test_dealer_cannot_see_prices(self):
+        self.client.force_authenticate(self.manager_a)
+        self.assertEqual(self.client.get(self.prices_url).status_code, 403)
+
+    def test_banner_price_and_paid_flag(self):
+        banner = self.make_banner()
+        response = self.client.patch(f"/api/admin/ads/{banner.pk}/", {"price": "12000", "is_paid": "true"}, format="multipart")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual((response.data["price"], response.data["is_paid"]), ("12000.00", True))
+        response = self.client.patch(f"/api/admin/ads/{banner.pk}/", {"price": ""}, format="multipart")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertIsNone(response.data["price"])

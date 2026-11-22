@@ -61,6 +61,11 @@ class AdBanner(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(10)],
         help_text="1–10: чем больше, тем чаще показывается среди баннеров того же места.",
     )
+    price = models.DecimalField(
+        "Сумма по договору, сом", max_digits=12, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(0)],
+    )
+    is_paid = models.BooleanField("Оплачено", default=False)
     impressions = models.PositiveIntegerField("Показы", default=0)
     clicks = models.PositiveIntegerField("Клики", default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -94,6 +99,35 @@ class AdBanner(models.Model):
             and (self.starts_on is None or self.starts_on <= today)
             and (self.ends_on is None or self.ends_on >= today)
         )
+
+
+class AdPlacementPrice(models.Model):
+    """Прайс на рекламу: цена места показа за 7 и за 30 дней (меняет админ)."""
+
+    placement = models.CharField("Место показа", max_length=20, choices=AdPlacement.choices, unique=True)
+    price_week = models.DecimalField(
+        "Цена за 7 дней, сом", max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(0)]
+    )
+    price_month = models.DecimalField(
+        "Цена за 30 дней, сом", max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(0)]
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Цена рекламного места"
+        verbose_name_plural = "Цены на рекламу"
+
+    def __str__(self):
+        return f"{self.get_placement_display()}: {self.price_week} / {self.price_month} сом"
+
+    @classmethod
+    def all_placements(cls):
+        """Строки для всех мест показа (недостающие создаются с нулевой ценой)."""
+        existing = {p.placement: p for p in cls.objects.all()}
+        for value in AdPlacement.values:
+            if value not in existing:
+                existing[value] = cls.objects.create(placement=value)
+        return [existing[value] for value in AdPlacement.values]
 
 
 class AdDailyStat(models.Model):

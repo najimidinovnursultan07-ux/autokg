@@ -1698,6 +1698,25 @@ body:has(.floating-whatsapp) .footer-bottom { padding-bottom: calc(90px + env(sa
 .ad-status-cell small { color: var(--muted); font-size: 10px; }
 .ad-launch-button { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border: 1px solid #b9d3f5; border-radius: 999px; background: #eef5ff; color: var(--accent-dark); font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .ad-launch-button:hover { background: #e0edff; }
+/* Цены на рекламу */
+.ads-title-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ads-money-summary { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-left: auto; color: var(--muted); font-size: 11px; }
+.ads-money-summary strong { color: var(--ink); }
+.ads-money-summary .ads-money-unpaid { color: #b45309; }
+.ad-price-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; white-space: nowrap; }
+.ad-price-empty { color: var(--muted); }
+.ad-price-row { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); align-items: end; gap: 10px 14px; margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: #f8fafc; }
+.ad-price-row .checkbox-label { grid-column: 1 / -1; }
+.ad-price-estimate { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 45px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.ad-price-estimate strong { color: var(--ink); }
+.ad-prices-list { display: grid; gap: 10px; margin: 12px 0 4px; }
+.ad-prices-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 10px 12px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.ad-prices-row legend { padding: 0 4px; font-size: 12px; font-weight: 700; }
+@media (max-width: 640px) {
+  .ads-money-summary { margin-left: 0; }
+  .ad-price-row { grid-template-columns: 1fr; }
+  .ad-prices-row { grid-template-columns: 1fr; }
+}
 @media (max-width: 640px) {
   .ads-table .ad-status-cell { align-items: flex-end; }
   .ads-table .ad-status-cell small, .ads-table .ad-launch-button { font-size: 12px; }

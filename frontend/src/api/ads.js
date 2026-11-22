@@ -78,3 +78,28 @@ export function downloadAdminAdStats(id, { from, to } = {}) {
   const query = new URLSearchParams(Object.entries({ from, to }).filter(([, v]) => v)).toString()
   return downloadFile(`/admin/ads/${id}/stats/export/${query ? `?${query}` : ''}`, `autobuy-ad-${id}.xlsx`)
 }
+
+// Прайс на рекламу: цена места показа за 7 и 30 дней
+export async function getAdPrices() {
+  const { data } = await api.get('/admin/ad-prices/')
+  return data
+}
+
+export async function saveAdPrices(rows) {
+  const { data } = await api.put('/admin/ad-prices/', rows)
+  return data
+}
+
+// Сумма за период по прайсу: целые 30 дни — по месячной цене, остаток — неделями
+// (но не дороже месяца). Пример: 45 дней = 1 месяц + 3 недели.
+export function calcAdPrice(price, startsOn, endsOn) {
+  if (!price || !startsOn || !endsOn) return null
+  const days = Math.round((new Date(`${endsOn}T00:00:00`) - new Date(`${startsOn}T00:00:00`)) / 86400000) + 1
+  if (!(days > 0)) return null
+  const week = Number(price.price_week) || 0
+  const month = Number(price.price_month) || 0
+  const months = Math.floor(days / 30)
+  const weeks = Math.ceil((days % 30) / 7)
+  const rest = month ? Math.min(weeks * week, month) : weeks * week
+  return { days, months, weeks, total: months * month + rest }
+}

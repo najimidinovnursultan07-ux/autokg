@@ -3,7 +3,7 @@ from rest_framework import serializers
 from apps.common.media import FULL_TRANSFORM, cloudinary_variant, file_url
 from apps.common.serializers import MAX_UPLOAD_PHOTO_BYTES, ValidatedImageField
 
-from .models import AdBanner
+from .models import AdBanner, AdPlacementPrice
 from .services import ctr
 
 
@@ -29,7 +29,20 @@ class PublicAdSerializer(ImageUrlsMixin, serializers.ModelSerializer):
         fields = ("id", "placement", "title", "advertiser", "image_url", "mobile_image_url", "priority")
 
 
+class BlankableDecimalField(serializers.DecimalField):
+    """В multipart пустое поле приходит как '' — считаем это «суммы нет»."""
+
+    def to_internal_value(self, data):
+        if isinstance(data, str) and not data.strip():
+            return None
+        return super().to_internal_value(data)
+
+
 class AdminAdSerializer(ImageUrlsMixin, serializers.ModelSerializer):
+    price = BlankableDecimalField(
+        max_digits=12, decimal_places=2, min_value=0, required=False, allow_null=True
+    )
+    is_paid = serializers.BooleanField(required=False, default=False)
     image = ValidatedImageField(max_size=MAX_UPLOAD_PHOTO_BYTES, required=False, write_only=True)
     mobile_image = ValidatedImageField(
         max_size=MAX_UPLOAD_PHOTO_BYTES, required=False, allow_null=True, write_only=True
@@ -47,7 +60,7 @@ class AdminAdSerializer(ImageUrlsMixin, serializers.ModelSerializer):
             "id", "title", "advertiser", "advertiser_contact", "placement", "placement_label",
             "image", "mobile_image", "remove_mobile_image", "image_url", "mobile_image_url",
             "link_url", "starts_on", "ends_on", "is_active", "priority", "is_live",
-            "impressions", "clicks", "ctr", "created_at", "updated_at",
+            "price", "is_paid", "impressions", "clicks", "ctr", "created_at", "updated_at",
         )
         read_only_fields = ("id", "impressions", "clicks", "created_at", "updated_at")
 
@@ -64,3 +77,14 @@ class AdminAdSerializer(ImageUrlsMixin, serializers.ModelSerializer):
         if attrs.pop("remove_mobile_image", False) and not attrs.get("mobile_image"):
             attrs["mobile_image"] = None
         return attrs
+
+
+class AdPlacementPriceSerializer(serializers.ModelSerializer):
+    placement_label = serializers.CharField(source="get_placement_display", read_only=True)
+    price_week = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0)
+    price_month = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0)
+
+    class Meta:
+        model = AdPlacementPrice
+        fields = ("placement", "placement_label", "price_week", "price_month", "updated_at")
+        read_only_fields = ("placement", "updated_at")

@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from apps.ads.views import AdminAdViewSet
+from apps.ads.views import AdminAdPricesView, AdminAdViewSet
 
 from .views import (
     AdminBrandViewSet,
@@ -31,5 +31,6 @@ urlpatterns = [
     path("report/", AdminReportView.as_view(), name="report"),
     path("report/export/", AdminReportExportView.as_view(), name="report-export"),
     path("report/pdf/", AdminReportPdfView.as_view(), name="report-pdf"),
+    path("ad-prices/", AdminAdPricesView.as_view(), name="ad-prices"),
     path("", include(router.urls)),
 ]

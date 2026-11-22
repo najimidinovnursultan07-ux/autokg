@@ -11,8 +11,8 @@ from rest_framework.views import APIView
 
 from apps.common.permissions import IsAutoBuyAdmin
 
-from .models import AdBanner
-from .serializers import AdminAdSerializer, PublicAdSerializer
+from .models import AdBanner, AdPlacement, AdPlacementPrice
+from .serializers import AdminAdSerializer, AdPlacementPriceSerializer, PublicAdSerializer
 from .services import (
     banner_stats,
     banner_stats_xlsx,
@@ -122,3 +122,36 @@ class AdminAdViewSet(viewsets.ModelViewSet):
             f'attachment; filename="autobuy-ad-{banner.pk}-{start:%Y-%m-%d}_{end:%Y-%m-%d}.xlsx"'
         )
         return response
+
+
+class AdminAdPricesView(APIView):
+    """
+    Прайс на рекламу по местам показа.
+    GET — цены всех мест; PUT — [{placement, price_week, price_month}, ...].
+    """
+
+    permission_classes = (IsAutoBuyAdmin,)
+
+    def get(self, request):
+        return Response(AdPlacementPriceSerializer(AdPlacementPrice.all_placements(), many=True).data)
+
+    def put(self, request):
+        rows = request.data if isinstance(request.data, list) else []
+        by_placement = {p.placement: p for p in AdPlacementPrice.all_placements()}
+        errors = {}
+        valid = []
+        for row in rows:
+            placement = row.get("placement") if isinstance(row, dict) else None
+            if placement not in AdPlacement.values:
+                errors[str(placement)] = ["Неизвестное место показа."]
+                continue
+            serializer = AdPlacementPriceSerializer(by_placement[placement], data=row)
+            if serializer.is_valid():
+                valid.append(serializer)
+            else:
+                errors[placement] = serializer.errors
+        if errors or not rows:
+            return Response(errors or {"detail": "Передайте список цен."}, status=400)
+        for serializer in valid:
+            serializer.save()
+        return self.get(request)
