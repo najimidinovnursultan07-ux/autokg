@@ -1,6 +1,9 @@
 // Бесплатный JS API карт 2ГИС 2.0 (без ключа): https://api.2gis.ru/doc/maps/ru/manual/
 const LOADER_URL = 'https://maps.api.2gis.ru/2.0/loader.js?pkg=full'
 
+// Ключ Raster JS API (platform.2gis.ru). Без него 2ГИС не отдаёт тайлы — карта пустая.
+export const TWOGIS_KEY = import.meta.env.VITE_TWOGIS_KEY || ''
+
 // Центр Бишкека — точка по умолчанию для карты и выбора места
 export const DEFAULT_CENTER = [42.8746, 74.5698]
 
@@ -18,16 +21,23 @@ function withTimeout(promise) {
   })
 }
 
+// ВАЖНО: у объекта DG есть свой метод then, поэтому промис нельзя резолвить самим DG —
+// Promise примет его за thenable и вернёт undefined. Резолвим без значения и берём window.DG.
+function waitReady(resolve, reject) {
+  window.DG.then(() => resolve(), () => reject(new Error('Не удалось загрузить карту 2ГИС')))
+}
+
+/** Загружает API 2ГИС. Промис резолвится без значения — используйте window.DG. */
 export function loadTwoGis() {
   if (typeof window === 'undefined') return Promise.reject(new Error('no window'))
-  if (window.DG?.ready && window.DG.map) return Promise.resolve(window.DG)
-  if (window.DG?.then) return withTimeout(new Promise((resolve) => window.DG.then(() => resolve(window.DG))))
+  if (window.DG?.ready && window.DG.map) return Promise.resolve()
+  if (window.DG?.then) return withTimeout(new Promise(waitReady))
   if (!loadPromise) {
     loadPromise = new Promise((resolve, reject) => {
       const script = document.createElement('script')
       script.src = LOADER_URL
       script.async = true
-      script.onload = () => window.DG.then(() => resolve(window.DG))
+      script.onload = () => waitReady(resolve, reject)
       script.onerror = () => {
         loadPromise = null
         script.remove()

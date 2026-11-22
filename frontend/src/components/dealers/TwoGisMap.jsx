@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { DEFAULT_CENTER, loadTwoGis } from '../../utils/twoGis.js'
+import { DEFAULT_CENTER, TWOGIS_KEY, loadTwoGis } from '../../utils/twoGis.js'
 
 /**
  * Карта 2ГИС.
@@ -23,9 +23,11 @@ export default function TwoGisMap({ markers = [], center, zoom = 13, onMapClick,
     let cancelled = false
     setStatus('loading')
     loadTwoGis()
-      .then((DG) => {
+      .then(() => {
+        const DG = window.DG
         if (cancelled || !containerRef.current) return
         const map = DG.map(containerRef.current, {
+          ...(TWOGIS_KEY ? { key: TWOGIS_KEY } : {}),
           center: center || DEFAULT_CENTER,
           zoom,
           fullscreenControl: false,
