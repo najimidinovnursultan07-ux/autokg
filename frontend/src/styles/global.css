@@ -1640,3 +1640,5 @@ button.seller-whatsapp { gap: 8px; font-family: inherit; }
 .auth-home-button { margin-top: 12px; }
 .app-version { margin-left: 6px; opacity: .7; }
 .app-version--admin { display: block; margin: 8px 0 0; padding: 0 12px; font-size: 11px; color: #8a97a8; opacity: 1; }
+/* Плавающая кнопка WhatsApp не должна перекрывать нижнюю строку подвала («Войти», версия) */
+body:has(.floating-whatsapp) .footer-bottom { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
