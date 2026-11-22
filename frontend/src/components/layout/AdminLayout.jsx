@@ -1,4 +1,4 @@
-import { BarChart3, Building2, CarFront, ExternalLink, FileBarChart, Gem, LayoutDashboard, LogOut, MapPinned, Megaphone, MessageSquareText, UserCheck } from 'lucide-react'
+import { BarChart3, Building2, CarFront, ExternalLink, FileBarChart, Gem, LayoutDashboard, LogOut, MapPinned, Megaphone, MessageSquareText, Settings, UserCheck } from 'lucide-react'
 import { Suspense } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { LoadingState } from '../common/States.jsx'
@@ -47,6 +47,7 @@ export default function AdminLayout() {
         </nav>
         <div className="admin-sidebar-footer">
           <span className="admin-signed-in">{user?.email}</span>
+          <NavLink className={({ isActive }) => `admin-nav-link ${isActive ? 'admin-nav-link--active' : ''}`} to="/admin/account"><Settings size={17} /><span>Настройки</span></NavLink>
           <NavLink className="admin-nav-link" to="/"><ExternalLink size={17} /><span>На сайт</span></NavLink>
           <button type="button" className="admin-nav-link admin-logout" onClick={logout}>
             <LogOut size={17} /><span>Выйти</span>

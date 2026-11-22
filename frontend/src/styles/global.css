@@ -552,6 +552,8 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 .settings-form h2 { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 16px; }
 .settings-form h2 svg { color: var(--accent); }
 .settings-form .button { align-self: flex-start; }
+.settings-forms { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.settings-form-hint { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
 
 @media (max-width: 1000px) {
   .account-layout { grid-template-columns: 220px minmax(0, 1fr); gap: 19px; }

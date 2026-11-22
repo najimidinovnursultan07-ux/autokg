@@ -160,3 +160,53 @@ class PasswordResetMailFailureTests(TestCase):
         self.assertEqual(existing.data, missing.data)
         mock_telegram.assert_called_once()
         self.assertIn("dealer@test.kg", mock_telegram.call_args[0][0])
+
+
+class AdminEmailChangeTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.admin = User.objects.create_user(
+            email="admin@test.kg", password=PASSWORD, role=User.Role.ADMIN, is_staff=True
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.admin)
+
+    def change(self, **data):
+        return self.client.post("/api/auth/email-change/", data, format="json")
+
+    @patch(SEND, return_value=True)
+    def test_admin_changes_email_with_password(self, mock_telegram):
+        from django.core import mail
+
+        resp = self.change(current_password=PASSWORD, new_email="New.Admin@Gmail.com")
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.email, "new.admin@gmail.com")
+        self.assertEqual(mail.outbox[0].to, ["admin@test.kg"])
+        mock_telegram.assert_called_once()
+        login = APIClient().post("/api/auth/login/", {"email": "new.admin@gmail.com", "password": PASSWORD}, format="json")
+        self.assertEqual(login.status_code, 200)
+
+    def test_wrong_password_rejected(self):
+        self.assertEqual(self.change(current_password="wrong", new_email="x@gmail.com").status_code, 400)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.email, "admin@test.kg")
+
+    def test_taken_email_rejected(self):
+        User.objects.create_user(email="taken@test.kg", password=PASSWORD)
+        self.assertEqual(self.change(current_password=PASSWORD, new_email="TAKEN@test.kg").status_code, 400)
+
+    def test_dealer_cannot_change_email(self):
+        dealer = User.objects.create_user(email="d@test.kg", password=PASSWORD, role=User.Role.DEALER)
+        client = APIClient()
+        client.force_authenticate(dealer)
+        resp = client.post("/api/auth/email-change/", {"current_password": PASSWORD, "new_email": "z@gmail.com"}, format="json")
+        self.assertEqual(resp.status_code, 403)
+
+    def test_admin_can_change_password(self):
+        resp = self.client.post(
+            "/api/auth/password-change/",
+            {"current_password": PASSWORD, "new_password": "Another-strong-pass-91!", "new_password_confirmation": "Another-strong-pass-91!"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200, resp.data)

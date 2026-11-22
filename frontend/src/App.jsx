@@ -85,6 +85,7 @@ export default function App() {
             <Route path="admin/ads" element={<AdminAdsPage />} />
             <Route path="admin/cars" element={<AdminCarsPage />} />
             <Route path="admin/catalog" element={<AdminCatalogPage />} />
+            <Route path="admin/account" element={<AccountSettingsPage />} />
           </Route>
         </Route>
 

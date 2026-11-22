@@ -22,7 +22,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .models import User
+from apps.common.permissions import IsAutoBuyAdmin
+
 from .serializers import (
+    EmailChangeSerializer,
     PasswordChangeSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
@@ -272,6 +275,40 @@ class PasswordResetConfirmView(generics.GenericAPIView):
             samesite=settings.AUTH_COOKIE_SAMESITE,
         )
         return response
+
+
+class EmailChangeView(generics.GenericAPIView):
+    """
+    Смена email (логина) администратором платформы. Нужен текущий пароль.
+    Старый адрес и Telegram получают уведомление — если это не вы, сразу видно.
+    Менеджерам салонов email меняет администратор.
+    """
+
+    serializer_class = EmailChangeSerializer
+    permission_classes = [IsAuthenticated, IsAutoBuyAdmin]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        old_email, new_email = user.email, serializer.validated_data["new_email"]
+        user.email = new_email
+        user.save(update_fields=("email", "updated_at"))
+
+        notice = (
+            f"Email для входа в админку AutoBuy изменён: {old_email} → {new_email}. "
+            "Если это сделали не вы — срочно восстановите доступ и смените пароль."
+        )
+        try:
+            send_mail("AutoBuy: email аккаунта изменён", notice, settings.DEFAULT_FROM_EMAIL, [old_email])
+        except Exception as exc:
+            logger.error("Уведомление о смене email не отправлено (%s): %s", type(exc).__name__, exc)
+        from apps.subscriptions.notifications import send_telegram
+
+        send_telegram(f"🔐 {notice}")
+        return Response(UserSerializer(user, context={"request": request}).data, status=status.HTTP_200_OK)
 
 
 class PasswordChangeView(generics.GenericAPIView):

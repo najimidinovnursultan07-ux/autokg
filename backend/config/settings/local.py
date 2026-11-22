@@ -1,3 +1,5 @@
+import sys
+
 from .base import *
 
 
@@ -29,3 +31,10 @@ PASSWORD_RESET_URL = env(
     "PASSWORD_RESET_URL",
     default="http://localhost:5173/password-reset",
 )
+
+# Тесты (manage.py test) не должны слать настоящие письма и сообщения в Telegram,
+# даже если в .env лежат боевые ключи.
+if sys.argv[1:2] == ["test"]:
+    TELEGRAM_BOT_TOKEN = TELEGRAM_BOT_ADMIN_TOKEN = TELEGRAM_ADMIN_CHAT_ID = TELEGRAM_ADMIN_2FA_CHAT_ID = ""
+    BREVO_API_KEY = ""
+    EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"

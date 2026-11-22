@@ -118,3 +118,22 @@ class PasswordChangeSerializer(serializers.Serializer):
             )
         validate_password(attrs["new_password"], user=user)
         return attrs
+
+
+class EmailChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    new_email = serializers.EmailField()
+
+    def validate_new_email(self, value):
+        value = User.objects.normalize_email(value.strip()).lower()
+        user = self.context["request"].user
+        if value == user.email.lower():
+            raise serializers.ValidationError("Это ваш текущий адрес.")
+        if User.objects.filter(email__iexact=value).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError("Этот адрес уже используется другим аккаунтом.")
+        return value
+
+    def validate(self, attrs):
+        if not self.context["request"].user.check_password(attrs["current_password"]):
+            raise serializers.ValidationError({"current_password": "Текущий пароль указан неверно."})
+        return attrs

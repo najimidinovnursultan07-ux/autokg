@@ -6,6 +6,7 @@ from .views import (
     CookieTokenRefreshView,
     CsrfCookieView,
     CurrentUserView,
+    EmailChangeView,
     LogoutView,
     PasswordChangeView,
     PasswordResetConfirmView,
@@ -30,5 +31,6 @@ urlpatterns = [
         csrf_exempt(PasswordResetConfirmView.as_view()),
         name="password-reset-confirm",
     ),
+    path("email-change/", EmailChangeView.as_view(), name="email-change"),
     path("password-change/", csrf_exempt(PasswordChangeView.as_view()), name="password-change"),
 ]

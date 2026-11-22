@@ -30,6 +30,11 @@ export async function changePassword(details) {
   return data
 }
 
+export async function changeEmail(details) {
+  const { data } = await api.post('/auth/email-change/', details)
+  return data
+}
+
 export async function requestPasswordReset(email) {
   await ensureCsrfCookie()
   const { data } = await api.post('/auth/password-reset/', { email })
