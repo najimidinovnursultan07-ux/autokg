@@ -12,14 +12,16 @@ export default function TwoGisMap({ markers = [], center, zoom = 13, onMapClick,
   const layerRef = useRef(null)
   const clickRef = useRef(onMapClick)
   const [status, setStatus] = useState('loading')
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     clickRef.current = onMapClick
   }, [onMapClick])
 
-  // Создание карты — один раз
+  // Создание карты — один раз (и заново по кнопке «Повторить»)
   useEffect(() => {
     let cancelled = false
+    setStatus('loading')
     loadTwoGis()
       .then((DG) => {
         if (cancelled || !containerRef.current) return
@@ -42,7 +44,7 @@ export default function TwoGisMap({ markers = [], center, zoom = 13, onMapClick,
       layerRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [attempt])
 
   // Маркеры и границы
   useEffect(() => {
@@ -68,7 +70,12 @@ export default function TwoGisMap({ markers = [], center, zoom = 13, onMapClick,
     <div className={`twogis-map ${className}`} style={{ height }}>
       <div ref={containerRef} className="twogis-map-canvas" />
       {status === 'loading' && <div className="twogis-map-overlay">Загружаем карту 2ГИС…</div>}
-      {status === 'error' && <div className="twogis-map-overlay">Карта не загрузилась. Проверьте интернет и обновите страницу.</div>}
+      {status === 'error' && (
+        <div className="twogis-map-overlay">
+          <span>Карта 2ГИС не загрузилась. Проверьте интернет или отключите блокировщик рекламы для этого сайта.</span>
+          <button type="button" className="button button--outline" onClick={() => setAttempt((n) => n + 1)}>Повторить</button>
+        </div>
+      )}
     </div>
   )
 }
