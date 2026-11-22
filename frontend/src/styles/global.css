@@ -1642,3 +1642,26 @@ button.seller-whatsapp { gap: 8px; font-family: inherit; }
 .app-version--admin { display: block; margin: 8px 0 0; padding: 0 12px; font-size: 11px; color: #8a97a8; opacity: 1; }
 /* Плавающая кнопка WhatsApp не должна перекрывать нижнюю строку подвала («Войти», версия) */
 body:has(.floating-whatsapp) .footer-bottom { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+
+/* ── Админка на телефоне ── */
+@media (max-width: 760px) {
+  .admin-sidebar-footer { flex-wrap: wrap; }
+  .admin-signed-in { flex: 0 0 100%; padding: 0 5px 2px; font-size: 11px; }
+  .app-version--admin { flex: 0 0 100%; margin: 2px 0 0; padding: 0 5px; font-size: 10px; }
+}
+
+/* Таблица превращается в карточки: одна строка = одна карточка */
+@media (max-width: 640px) {
+  .admin-table-wrap:has(.admin-table--cards) { overflow: visible; border: 0; background: transparent; }
+  .admin-table--cards thead { display: none; }
+  .admin-table--cards, .admin-table--cards tbody, .admin-table--cards tr, .admin-table--cards td { display: block; width: 100%; }
+  .admin-table--cards tr { margin-bottom: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+  .admin-table--cards td { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: 7px 0; border: 0; color: var(--ink); font-size: 14px; white-space: normal; }
+  .admin-table--cards td[data-label]::before { content: attr(data-label); color: var(--muted); font-size: 13px; }
+  .admin-table--cards td.admin-card-head { margin-bottom: 4px; padding: 0 0 12px; border-bottom: 1px solid #edf1f5; }
+  .admin-table--cards .dealer-car-cell { min-width: 0; font-size: 14px; }
+  .admin-table--cards select { flex: 0 1 60%; max-width: 60%; min-height: 38px; font-size: 14px; }
+  .admin-table--cards td > small { flex: 0 0 100%; text-align: right; }
+  .admin-table--cards .table-actions { gap: 10px; }
+  .admin-table--cards .icon-action { width: 40px; height: 40px; }
+}

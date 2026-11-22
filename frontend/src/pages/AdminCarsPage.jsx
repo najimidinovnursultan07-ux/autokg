@@ -111,20 +111,20 @@ export default function AdminCarsPage() {
       {loading ? <LoadingState label="Загружаем объявления…" /> : error ? <ErrorState message={error} onRetry={load} /> : cars.length ? (
         <>
           <div className="admin-table-wrap">
-            <table className="admin-table">
+            <table className="admin-table admin-table--cards">
               <thead><tr><th>Автомобиль</th><th>Салон</th><th>Цена</th><th>Статус</th><th>Действия</th></tr></thead>
               <tbody>
                 {cars.map((car) => {
                   const busy = workingId === car.id
                   return (
                     <tr key={car.id}>
-                      <td>
+                      <td className="admin-card-head">
                         <div className="dealer-car-cell">
                           <span className="dealer-car-thumb">{car.thumb ? <img src={resolveMediaUrl(car.thumb)} alt="" loading="lazy" /> : <span>Нет фото</span>}</span>
                           <span><strong>{car.brand} {car.model_name} · {car.year}</strong><small>{car.city_name} · {new Date(car.created_at).toLocaleDateString('ru-RU')}</small></span>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Салон">
                         <select value={car.dealer} disabled={busy} aria-label="Перенести в салон"
                           onChange={(e) => patch(car, { dealer: Number(e.target.value) }, 'Объявление перенесено в другой салон.')}>
                           {!dealers.some((d) => d.id === car.dealer) && <option value={car.dealer}>{car.dealer_name}</option>}
@@ -132,14 +132,14 @@ export default function AdminCarsPage() {
                         </select>
                         {car.dealer_is_active === false && <small className="text-danger">салон отключён</small>}
                       </td>
-                      <td>{formatPrice(car.price, car.currency)}</td>
-                      <td>
+                      <td data-label="Цена">{formatPrice(car.price, car.currency)}</td>
+                      <td data-label="Статус">
                         <select value={car.status} disabled={busy} aria-label="Статус"
                           onChange={(e) => patch(car, { status: e.target.value }, 'Статус изменён.')}>
                           {Object.entries(CAR_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                         </select>
                       </td>
-                      <td>
+                      <td data-label="Действия">
                         <div className="table-actions">
                           {car.status === 'active' && car.dealer_is_active && (
                             <Link className="icon-action" to={`/cars/${car.id}`} target="_blank" title="Открыть на сайте" aria-label="Открыть на сайте"><ExternalLink size={16} /></Link>
