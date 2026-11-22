@@ -428,7 +428,7 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
   .detail-layout { grid-template-columns: 1fr; }
   .detail-heading { align-items: flex-start; }
   .gallery-main { height: 63vw; min-height: 250px; }
-  .seller-panel { position: static; grid-row: 1; }
+  .seller-panel { position: static; }
   .seller-facts { display: grid; grid-template-columns: repeat(3, 1fr); }
   .dashboard-grid { gap: 11px; }
   .dashboard-tile { min-height: 135px; padding: 16px; }
@@ -1678,4 +1678,13 @@ body:has(.floating-whatsapp) .footer-bottom { padding-bottom: calc(90px + env(sa
   .admin-navigation .admin-nav-link:has(.admin-nav-label-short) .admin-nav-label { display: none; }
   .admin-navigation .admin-nav-label-short { display: inline; }
   .admin-sidebar-footer .admin-nav-link { min-height: 37px; flex-direction: row; padding: 0 9px; border: 0; font-size: 11px; }
+}
+
+/* Страница автомобиля на телефоне: сначала фото, затем цена и продавец, потом характеристики */
+@media (max-width: 760px) {
+  .detail-layout { gap: 16px; }
+  .detail-main { display: contents; }
+  .detail-main > .gallery { order: 1; }
+  .detail-layout > .seller-panel { order: 2; }
+  .detail-main > :not(.gallery) { order: 3; margin-top: 0; }
 }
