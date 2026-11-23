@@ -3,7 +3,7 @@ from rest_framework import serializers
 from apps.common.media import FULL_TRANSFORM, cloudinary_variant, file_url
 from apps.common.serializers import MAX_UPLOAD_PHOTO_BYTES, ValidatedImageField
 
-from .models import AdBanner, AdPlacementPrice
+from .models import MAX_BANNERS_PER_PLACEMENT, PLACEMENT_FULL_MESSAGE, AdBanner, AdPlacementPrice
 from .services import ctr
 
 
@@ -74,6 +74,15 @@ class AdminAdSerializer(ImageUrlsMixin, serializers.ModelSerializer):
         ends_on = attrs.get("ends_on", getattr(self.instance, "ends_on", None))
         if starts_on and ends_on and ends_on < starts_on:
             raise serializers.ValidationError({"ends_on": "Дата окончания раньше даты начала."})
+        is_active = attrs.get("is_active", getattr(self.instance, "is_active", True))
+        placement = attrs.get("placement", getattr(self.instance, "placement", None))
+        if is_active and placement and (
+            AdBanner.objects.overlapping(
+                placement, starts_on, ends_on, exclude_pk=getattr(self.instance, "pk", None)
+            ).count()
+            >= MAX_BANNERS_PER_PLACEMENT
+        ):
+            raise serializers.ValidationError({"placement": PLACEMENT_FULL_MESSAGE})
         if attrs.pop("remove_mobile_image", False) and not attrs.get("mobile_image"):
             attrs["mobile_image"] = None
         return attrs

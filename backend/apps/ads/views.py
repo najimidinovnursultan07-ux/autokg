@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from apps.common.permissions import IsAutoBuyAdmin
 
-from .models import AdBanner, AdPlacement, AdPlacementPrice
+from .models import MAX_BANNERS_PER_PLACEMENT, AdBanner, AdPlacement, AdPlacementPrice
 from .serializers import AdminAdSerializer, AdPlacementPriceSerializer, PublicAdSerializer
 from .services import (
     banner_stats,
@@ -39,7 +39,12 @@ class AdListView(PublicAdView):
     throttle_scope = "ads"
 
     def get(self, request):
-        banners = AdBanner.objects.live().order_by("placement", "-priority", "id")
+        banners, per_placement = [], {}
+        for banner in AdBanner.objects.live().order_by("placement", "-priority", "id"):
+            # в слайдере места — не больше трёх баннеров (с наибольшим приоритетом)
+            if per_placement.get(banner.placement, 0) < MAX_BANNERS_PER_PLACEMENT:
+                per_placement[banner.placement] = per_placement.get(banner.placement, 0) + 1
+                banners.append(banner)
         response = Response(PublicAdSerializer(banners, many=True, context={"request": request}).data)
         response["Cache-Control"] = "no-cache"  # браузер всегда спрашивает свежие баннеры
         return response

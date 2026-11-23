@@ -39,6 +39,13 @@ class PublicAdTests(AdTestCase):
         self.assertNotIn("link_url", response.data[0])
         self.assertTrue(response.data[0]["image_url"])
 
+    def test_list_returns_at_most_three_banners_per_placement(self):
+        for priority in (1, 2, 3, 4):
+            self.make_banner(title=f"p{priority}", priority=priority)
+        self.make_banner(title="другое место", placement=AdBanner.Placement.CAR_DETAIL)
+        titles = [item["title"] for item in self.client.get("/api/ads/").data]
+        self.assertEqual(sorted(titles), sorted(["p4", "p3", "p2", "другое место"]))
+
     def test_impressions_count_only_live_banners(self):
         live = self.make_banner()
         off = self.make_banner(is_active=False)
@@ -126,6 +133,30 @@ class AdminAdTests(AdTestCase):
         self.assertIn("link_url", self.errors(self.client.post(self.url, bad_link, format="multipart")))
         bad_period = self.payload(starts_on="2026-05-10", ends_on="2026-05-01")
         self.assertIn("ends_on", self.errors(self.client.post(self.url, bad_period, format="multipart")))
+
+    def test_max_three_active_banners_per_placement(self):
+        self.client.force_authenticate(self.admin)
+        today = timezone.localdate()
+        for _ in range(3):
+            self.make_banner(placement="catalog_feed")
+        self.make_banner(placement="catalog_feed", is_active=False)
+        self.make_banner(placement="catalog_feed", ends_on=today - timedelta(days=1))
+        self.assertIn("placement", self.errors(self.client.post(self.url, self.payload(), format="multipart")))
+        # выключенный баннер и другое место — можно
+        off = self.client.post(self.url, self.payload(is_active=False), format="multipart")
+        self.assertEqual(off.status_code, 201, off.data)
+        self.assertIn("placement", self.errors(
+            self.client.patch(f"{self.url}{off.data['id']}/", {"is_active": True}, format="multipart")
+        ))
+        other = self.client.post(self.url, self.payload(placement="home_top"), format="multipart")
+        self.assertEqual(other.status_code, 201, other.data)
+        # период, который начинается после окончания занятых, — тоже можно
+        later = today + timedelta(days=40)
+        for banner in AdBanner.objects.filter(placement="catalog_feed", is_active=True, ends_on__isnull=True):
+            banner.ends_on = today + timedelta(days=30)
+            banner.save(update_fields=["ends_on"])
+        future = self.client.post(self.url, self.payload(starts_on=later.isoformat()), format="multipart")
+        self.assertEqual(future.status_code, 201, future.data)
 
     def test_remove_mobile_image(self):
         banner = self.make_banner(mobile_image=make_image("m.jpg"))

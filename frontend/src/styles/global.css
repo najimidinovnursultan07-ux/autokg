@@ -1609,20 +1609,27 @@ button.seller-whatsapp { gap: 8px; font-family: inherit; }
 .dealer-report-page .admin-section-title { margin-top: 26px; }
 
 /* ---- Реклама партнёров ---- */
-.ad-banner { display: block; margin-block: 18px; }
-.ad-banner-link { position: relative; display: block; overflow: hidden; border-radius: 18px; background: var(--soft); box-shadow: 0 8px 24px rgba(24, 49, 82, .07); transition: transform .2s ease, box-shadow .2s ease; }
-.ad-banner-link:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-.ad-banner-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.ad-banner { position: relative; display: block; margin-block: 18px; }
+.ad-banner-viewport { overflow: hidden; border-radius: 18px; background: var(--soft); box-shadow: 0 8px 24px rgba(24, 49, 82, .07); transition: box-shadow .2s ease; touch-action: pan-y; }
+.ad-banner-viewport:hover { box-shadow: var(--shadow); }
+.ad-banner-track { display: flex; transition: transform .45s ease; }
+.ad-banner-link { position: relative; display: block; flex: 0 0 100%; min-width: 0; }
+.ad-banner-link:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.ad-banner-dots { position: absolute; left: 50%; bottom: 10px; display: flex; gap: 6px; padding: 5px 8px; border-radius: 999px; background: rgba(17, 34, 54, .45); transform: translateX(-50%); }
+.ad-banner-dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .55); cursor: pointer; transition: width .2s ease, background .2s ease; }
+.ad-banner-dot.is-active { width: 20px; background: #fff; }
+.ad-banner-dot:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .ad-banner-track { transition: none; } }
 .ad-banner-link img { width: 100%; height: auto; aspect-ratio: 4 / 1; object-fit: cover; }
 .ad-banner-label { position: absolute; top: 10px; right: 10px; max-width: calc(100% - 20px); overflow: hidden; padding: 3px 9px; border-radius: 999px; background: rgba(17, 34, 54, .62); color: #fff; font-size: 11px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
 .ad-banner--car_detail { margin: 18px 0 4px; }
-.ad-banner--car_detail .ad-banner-link { border-radius: 14px; }
+.ad-banner--car_detail .ad-banner-viewport { border-radius: 14px; }
 .ad-banner--car_detail .ad-banner-link img { aspect-ratio: 3 / 2; }
 .car-grid-ad { grid-column: 1 / -1; }
 .car-grid-ad .ad-banner { margin: 0; }
 @media (max-width: 640px) {
   .ad-banner { margin-block: 14px; }
-  .ad-banner-link { border-radius: 14px; }
+  .ad-banner-viewport { border-radius: 14px; }
   .ad-banner-link img { aspect-ratio: 2 / 1; }
   .ad-banner--car_detail .ad-banner-link img { aspect-ratio: 3 / 2; }
 }

@@ -27,7 +27,27 @@ class AdPlacement(models.TextChoices):
     CAR_DETAIL = "car_detail", "Страница авто — рядом с контактами"
 
 
+# Сколько баннеров одновременно крутится в слайдере одного места показа
+MAX_BANNERS_PER_PLACEMENT = 3
+PLACEMENT_FULL_MESSAGE = (
+    f"На этом месте в эти даты уже {MAX_BANNERS_PER_PLACEMENT} включённых баннера — "
+    "выключите один из них или выберите другие даты."
+)
+
+
 class AdBannerQuerySet(models.QuerySet):
+    def overlapping(self, placement, starts_on, ends_on, exclude_pk=None):
+        """Включённые баннеры места placement, чей период пересекается с [starts_on, ends_on]."""
+        today = timezone.localdate()
+        qs = self.filter(placement=placement, is_active=True).filter(
+            Q(ends_on__isnull=True) | Q(ends_on__gte=max(starts_on or today, today))
+        )
+        if ends_on:
+            qs = qs.filter(Q(starts_on__isnull=True) | Q(starts_on__lte=ends_on))
+        if exclude_pk:
+            qs = qs.exclude(pk=exclude_pk)
+        return qs
+
     def live(self, today=None):
         """Включённые баннеры, у которых сегодняшний день попадает в период показа."""
         today = today or timezone.localdate()
@@ -90,6 +110,11 @@ class AdBanner(models.Model):
     def clean(self):
         if self.starts_on and self.ends_on and self.ends_on < self.starts_on:
             raise ValidationError({"ends_on": "Дата окончания раньше даты начала."})
+        if self.is_active and self.placement and (
+            AdBanner.objects.overlapping(self.placement, self.starts_on, self.ends_on, exclude_pk=self.pk).count()
+            >= MAX_BANNERS_PER_PLACEMENT
+        ):
+            raise ValidationError({"placement": PLACEMENT_FULL_MESSAGE})
 
     @property
     def is_live(self):
