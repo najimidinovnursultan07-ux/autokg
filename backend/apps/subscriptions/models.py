@@ -7,7 +7,7 @@ from django.db import models
 from django.utils import timezone
 
 TRIAL_PLAN_CODE = "business"
-TRIAL_DAYS = 14
+TRIAL_DAYS = 7
 PROMOTION_DAYS = 7
 PERIOD_MONTHS = (1, 3, 12)
 

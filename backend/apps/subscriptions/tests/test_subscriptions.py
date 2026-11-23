@@ -29,12 +29,12 @@ class SubscriptionTests(MarketplaceTestCase):
         )
 
     # ── пробный период и видимость ──
-    def test_new_dealer_gets_14_day_business_trial(self):
+    def test_new_dealer_gets_7_day_business_trial(self):
         dealer = Dealer.objects.create(name="Новый салон")
         sub = current_subscription(dealer)
         self.assertEqual(sub.plan, self.business)
         self.assertTrue(sub.is_trial)
-        self.assertAlmostEqual((sub.expires_at - sub.starts_at).days, 14)
+        self.assertAlmostEqual((sub.expires_at - sub.starts_at).days, 7)
 
     def test_cars_hidden_without_subscription_and_return_after_renewal(self):
         car = self.make_car(self.dealer_a)
