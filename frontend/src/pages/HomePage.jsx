@@ -25,7 +25,6 @@ import CarCard from '../components/cars/CarCard.jsx'
 import { EmptyState, ErrorState } from '../components/common/States.jsx'
 import Shelf, { ShelfSkeleton } from '../components/home/Shelf.jsx'
 import { getErrorMessage } from '../utils/errors.js'
-import herofon from '../assets/herofon.png'
 import coupeImg from '../assets/body-types/coupe.webp'
 import hatchbackImg from '../assets/body-types/hatchback.webp'
 import minivanImg from '../assets/body-types/minivan.webp'
@@ -148,18 +147,6 @@ export default function HomePage() {
           {search && <button type="submit" className="home-search-go">Найти</button>}
         </form>
       </div>
-
-      {/* Герой — только на больших экранах */}
-      <section className="home-hero-compact">
-        <div className="container home-hero-inner">
-          <div>
-            <span className="eyebrow">Автосалоны Кыргызстана</span>
-            <h1>Автомобили от проверенных салонов</h1>
-            <p>Все объявления — только от автосалонов-партнёров AutoBuy. Звоните и пишите в WhatsApp напрямую.</p>
-          </div>
-          <img src={herofon} alt="" aria-hidden="true" />
-        </div>
-      </section>
 
       {/* Быстрые фильтры */}
       <div className="chip-row container">
