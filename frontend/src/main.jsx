@@ -8,9 +8,13 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { FavoritesProvider } from './context/FavoritesContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
 import './styles/global.css'
+import { initLanguage } from './i18n/index.js'
 // Ловим beforeinstallprompt сразу при загрузке — для кнопки «Скачать приложение»
 import './utils/pwaInstall.js'
 import { reloadForFreshVersion } from './utils/chunkReload.js'
+
+// Кыргызча тандалса — React чийгенге чейин которгуч иштей баштайт
+initLanguage()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

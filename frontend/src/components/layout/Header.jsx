@@ -3,6 +3,7 @@ import { Building2, GitCompareArrows, LogOut, Menu, Plus, X } from 'lucide-react
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { getCompareList } from '../../utils/compare.js'
+import LanguageSwitcher from './LanguageSwitcher.jsx'
 
 const links = [
   { to: '/catalog', label: 'Каталог' },
@@ -66,6 +67,7 @@ export default function Header() {
         </nav>
 
         <div className="header-actions">
+          <LanguageSwitcher />
           {compareCount > 0 && (
             <Link className="header-compare" to="/compare" aria-label="Сравнение">
               <GitCompareArrows size={20} />

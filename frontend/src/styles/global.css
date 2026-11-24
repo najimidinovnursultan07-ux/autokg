@@ -1741,3 +1741,10 @@ body:has(.floating-whatsapp) .footer-bottom { padding-bottom: calc(90px + env(sa
 .pull-refresh { position: fixed; z-index: 100; top: env(safe-area-inset-top, 0px); left: 50%; display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: white; box-shadow: 0 4px 16px rgba(15, 35, 70, .18); color: var(--accent); pointer-events: none; }
 .pull-refresh-icon { display: grid; place-items: center; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Тил которгуч (РУ / КЫ) */
+.lang-switcher { display: inline-flex; flex-shrink: 0; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); }
+.lang-switcher-option { min-width: 34px; height: 28px; padding: 0 8px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .02em; cursor: pointer; transition: background .15s, color .15s; }
+.lang-switcher-option:hover { color: var(--ink); }
+.lang-switcher-option--active, .lang-switcher-option--active:hover { background: var(--accent); color: #fff; }
+.lang-switcher-option:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
