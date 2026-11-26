@@ -984,7 +984,7 @@ h1, h2, h3 { font-family: Manrope, 'DM Sans', sans-serif; letter-spacing: -.035e
 
 /* ── Car Badges ── */
 .car-badges { display: flex; flex-wrap: wrap; gap: 4px; }
-.car-badges--sm { position: absolute; top: 8px; left: 8px; z-index: 2; }
+.car-badges--sm { position: absolute; bottom: 12px; left: 12px; right: 76px; z-index: 2; flex-wrap: wrap-reverse; }
 .car-badges--md { margin-bottom: 10px; }
 .car-badge--top {
   display: inline-flex; align-items: center; gap: 4px;
