@@ -71,3 +71,60 @@ class ExchangeRatesView(APIView):
         response = Response(data)
         response["Cache-Control"] = "public, max-age=3600"
         return response
+
+
+class AssistantChatView(APIView):
+    """
+    POST /api/assistant/chat/ — ИИ-помощник (Gemini).
+    Тело: {"messages": [{"role": "user"|"model", "text": "..."}]} — история диалога,
+    последнее сообщение от пользователя. Ответ: {"reply": "...", "cars": [...]}.
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "assistant"
+
+    MAX_MESSAGES = 16
+    MAX_TEXT = 1000
+
+    def post(self, request):
+        from .assistant import AssistantUnavailable, car_summary, chat
+        from .media import cloudinary_variant, file_url
+
+        messages = request.data.get("messages") if isinstance(request.data, dict) else None
+        if not isinstance(messages, list) or not messages:
+            return Response({"detail": "Напишите сообщение."}, status=400)
+        history = []
+        for item in messages[-self.MAX_MESSAGES:]:
+            if not isinstance(item, dict):
+                return Response({"detail": "Неверный формат сообщений."}, status=400)
+            role = item.get("role")
+            text = item.get("text")
+            if role not in ("user", "model") or not isinstance(text, str) or not text.strip():
+                return Response({"detail": "Неверный формат сообщений."}, status=400)
+            history.append({"role": role, "text": text.strip()[: self.MAX_TEXT]})
+        while history and history[0]["role"] != "user":
+            history.pop(0)  # Gemini ждёт, что диалог начинается с пользователя
+        if not history or history[-1]["role"] != "user":
+            return Response({"detail": "Напишите сообщение."}, status=400)
+
+        try:
+            reply, cars = chat(history)
+        except AssistantUnavailable:
+            return Response(
+                {"detail": "Помощник временно недоступен. Попробуйте позже или напишите нам в WhatsApp."},
+                status=HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        cards = []
+        for car in cars:
+            summary = car_summary(car)
+            image = summary.pop("image")
+            summary["image"] = cloudinary_variant(
+                file_url(image.image, request), "f_auto,q_auto,c_limit,w_400"
+            ) if image else None
+            cards.append(summary)
+        if not reply:
+            reply = "Вот что нашлось в каталоге:" if cards else "Не получилось ответить. Переформулируйте вопрос, пожалуйста."
+        return Response({"reply": reply, "cars": cards})

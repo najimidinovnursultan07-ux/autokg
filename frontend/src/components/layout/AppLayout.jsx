@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { Outlet } from 'react-router-dom'
 import PullToRefresh from '../common/PullToRefresh.jsx'
 import { LoadingState } from '../common/States.jsx'
-import FloatingWhatsApp from './FloatingWhatsApp.jsx'
+import AssistantChat from './AssistantChat.jsx'
 import Footer from './Footer.jsx'
 import Header from './Header.jsx'
 
@@ -17,7 +17,7 @@ export default function AppLayout() {
         </Suspense>
       </main>
       <Footer />
-      <FloatingWhatsApp />
+      <AssistantChat />
     </div>
   )
 }

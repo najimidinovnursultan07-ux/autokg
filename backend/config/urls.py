@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from apps.common.views import ApiRootView, ExchangeRatesView, HealthCheckView, ReadinessCheckView
+from apps.common.views import ApiRootView, AssistantChatView, ExchangeRatesView, HealthCheckView, ReadinessCheckView
 
 urlpatterns = [
     path("", ApiRootView.as_view(), name="api-root"),
@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/health/", HealthCheckView.as_view(), name="health"),
     path("api/health/ready/", ReadinessCheckView.as_view(), name="readiness"),
     path("api/rates/", ExchangeRatesView.as_view(), name="rates"),
+    path("api/assistant/chat/", AssistantChatView.as_view(), name="assistant-chat"),
     path("api/auth/", include("apps.accounts.urls")),
     path("api/admin/", include("apps.admin_api.urls")),
     path("api/payments/", include("apps.payments.urls")),

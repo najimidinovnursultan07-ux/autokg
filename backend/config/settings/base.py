@@ -172,6 +172,7 @@ REST_FRAMEWORK = {
         "reviews": "5/day",
         "ads": "300/hour",
         "ad_events": "600/hour",
+        "assistant": "40/hour",
     },
 }
 
@@ -268,3 +269,9 @@ LOGGING = {
         },
     },
 }
+
+# ИИ-помощник (Gemini). Пустой ключ — чат отвечает «временно недоступен».
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
+GEMINI_MODEL = env("GEMINI_MODEL", default="gemini-2.5-flash")
+# Запасные модели, если основная перегружена (через запятую)
+GEMINI_FALLBACK_MODELS = env.list("GEMINI_FALLBACK_MODELS", default=["gemini-flash-latest", "gemini-flash-lite-latest"])
