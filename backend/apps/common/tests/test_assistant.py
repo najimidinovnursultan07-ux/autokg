@@ -123,6 +123,18 @@ class AssistantTests(MarketplaceTestCase):
         response = self.ask("Какие машины у салона?")
         self.assertEqual([car["id"] for car in response.data["cars"]], [str(own.pk)])
 
+    def test_brand_name_is_not_transliterated(self):
+        from apps.common.assistant import fix_brand
+
+        for text in ("АвтоБуй сайтына кош келиңиз", "Автобуй", "Авто-бай", "АвтоБай"):
+            self.assertTrue(fix_brand(text).startswith("AutoBuy"), text)
+        self.assertEqual(fix_brand("Автобус и автобусы"), "Автобус и автобусы")
+
+    @mock.patch("apps.common.assistant._call_gemini")
+    def test_reply_brand_fixed(self, gemini):
+        gemini.return_value = text_reply("Саламатсызбы! АвтоБуй сайтына кош келиңиз.")
+        self.assertEqual(self.ask("сууу").data["reply"], "Саламатсызбы! AutoBuy сайтына кош келиңиз.")
+
     def test_kyrgyz_detection(self):
         from apps.common.assistant import looks_kyrgyz
 

@@ -39,6 +39,7 @@ SYSTEM_PROMPT = """Ты — ИИ-помощник сайта AutoBuy, площа
 
 Как отвечать:
 - Язык: смотри на ПОСЛЕДНЕЕ сообщение пользователя. Написано по-кыргызски — отвечай только по-кыргызски, по-русски — только по-русски. Признаки кыргызского, даже если слова русские: буквы ң, ө, ү; окончания -лар/-лер/-дар/-тар, -ды/-ди/-ну/-нү, -бы/-би; слова «бер», «барбы», «кандай», «канча», «керек», «жок», «эмне». Например, «рекламаларды бер» — это кыргызский. Коротко и по делу (2–5 предложений).
+- Название сайта всегда пиши латиницей ровно так: AutoBuy — на любом языке. Не переводи и не пиши его кириллицей (никаких «АвтоБуй», «Автобай», «АвтоБай»).
 - Пиши обычным текстом: без markdown, звёздочек, решёток и таблиц. Для списка — строки, начинающиеся с «• ».
 - Помогай подобрать автомобиль. Когда пользователь ищет машину, ВСЕГДА вызывай search_cars и предлагай только найденные объявления. Никогда не выдумывай автомобили, цены и салоны.
 - Если ничего не нашлось — скажи об этом и предложи смягчить условия (бюджет, год, марку).
@@ -245,6 +246,14 @@ def car_summary(car):
     }
 
 
+# Модель иногда пишет название сайта кириллицей — возвращаем «AutoBuy»
+BRAND_MISSPELLING = re.compile(r"\b[АA]вто[\s-]?(?:буй|бай|бuy|баю|бую)\b", re.IGNORECASE)
+
+
+def fix_brand(text):
+    return BRAND_MISSPELLING.sub("AutoBuy", text)
+
+
 KYRGYZ_LETTERS = re.compile(r"[ңөүҢӨҮ]")
 KYRGYZ_WORDS = re.compile(
     r"(?:\w(?:лар|лер|дар|дер|тар|тер)(?:ды|ди|ду|дү|ны|ни|ну|нү|га|ге|да|де)?"
@@ -319,7 +328,7 @@ def _chat_with_model(contents, model, extra_rule=""):
         parts = (candidate.get("content") or {}).get("parts") or []
         calls = [p["functionCall"] for p in parts if "functionCall" in p]
         if not calls:
-            text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+            text = fix_brand("".join(p.get("text", "") for p in parts if not p.get("thought")).strip())
             return text, list(found.values()), list(ads.values()), list(dealers.values())
 
         contents.append({"role": "model", "parts": parts})
