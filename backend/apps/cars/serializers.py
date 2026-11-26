@@ -20,9 +20,11 @@ from .models import (
     LISTING_DURATIONS,
     Brand,
     Car,
+    CarEngineType,
     CarImage,
     City,
     Model,
+    VehicleType,
     listing_expiry,
 )
 
@@ -45,6 +47,16 @@ PHONE_RE = re.compile(r"^\+?[0-9]{7,15}$")
 MAX_IMAGE_BATCH_SIZE_BYTES = 30 * 1024 * 1024
 
 
+# Какие характеристики нужны для каждого вида транспорта
+VEHICLE_SPEC_RULES = {
+    VehicleType.CAR: {"required": ("engine_type", "transmission", "drive_type", "body_type"), "cleared": ()},
+    VehicleType.MOTO: {"required": ("engine_type",), "cleared": ("drive_type", "body_type")},
+    VehicleType.MURAVEY: {"required": ("engine_type",), "cleared": ("drive_type", "body_type")},
+    VehicleType.BICYCLE: {"required": (), "cleared": ("transmission", "drive_type", "body_type")},
+    VehicleType.SCOOTER: {"required": (), "cleared": ("transmission", "drive_type", "body_type")},
+}
+
+
 class BrandSerializer(serializers.ModelSerializer):
     class Meta:
         model = Brand
@@ -60,11 +72,19 @@ class ModelSerializer(serializers.ModelSerializer):
             "brand",
             "name",
             "slug",
+            "vehicle_type",
             "is_active",
             "created_at",
             "updated_at",
         )
         read_only_fields = ("id", "created_at", "updated_at")
+
+    def validate_vehicle_type(self, value):
+        if self.instance and value != self.instance.vehicle_type and self.instance.cars.exists():
+            raise serializers.ValidationError(
+                "По этой модели уже есть объявления — вид транспорта менять нельзя."
+            )
+        return value
 
 
 class CitySerializer(serializers.ModelSerializer):
@@ -293,6 +313,7 @@ class CarSerializer(serializers.ModelSerializer):
             "body_type",
             "condition",
             "color",
+            "vehicle_type",
             "murabaha_available",
             "murabaha",
             "description",
@@ -351,6 +372,39 @@ class CarSerializer(serializers.ModelSerializer):
                 "Нельзя создать объявление для неактивной марки."
             )
         return value
+
+    def validate(self, attrs):
+        """Вид транспорта берётся из модели; лишние для него характеристики очищаются."""
+        attrs = super().validate(attrs)
+        instance = self.instance
+        model = attrs.get("model") or getattr(instance, "model", None)
+        vehicle_type = model.vehicle_type if model else (
+            attrs.get("vehicle_type") or getattr(instance, "vehicle_type", VehicleType.CAR)
+        )
+        if attrs.get("vehicle_type") and attrs["vehicle_type"] != vehicle_type:
+            raise serializers.ValidationError(
+                {"model": "Эта модель относится к другому виду транспорта."}
+            )
+        attrs["vehicle_type"] = vehicle_type
+
+        def current(field):
+            return attrs[field] if field in attrs else getattr(instance, field, "")
+
+        rules = VEHICLE_SPEC_RULES[vehicle_type]
+        errors = {}
+        for field in rules["required"]:
+            if not current(field):
+                errors[field] = "Обязательное поле."
+        for field in rules["cleared"]:
+            attrs[field] = ""
+        if vehicle_type in (VehicleType.BICYCLE, VehicleType.SCOOTER):
+            if current("engine_type") not in ("", CarEngineType.ELECTRIC):
+                attrs["engine_type"] = ""
+            if "engine_volume" in attrs or getattr(instance, "engine_volume", None):
+                attrs["engine_volume"] = None
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
 
     def validate_price(self, value):
         if value is None or value <= 0:

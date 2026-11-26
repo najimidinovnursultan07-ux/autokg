@@ -5,6 +5,7 @@ import useRates from '../../hooks/useRates.js'
 import { formatConvertedPrice, formatMileage, formatPrice, getCarCover, getCarTitle } from '../../utils/format.js'
 import FavoriteButton from './FavoriteButton.jsx'
 import CarBadges from './CarBadges.jsx'
+import { VEHICLE_LABELS, vehicleSpecs } from '../../utils/vehicles.js'
 
 const transmissionLabels = {
   manual: 'Механика',
@@ -50,8 +51,12 @@ export default function CarCard({ car, featured = false }) {
         </div>
         {converted && <small className="car-card-converted">{converted}</small>}
         <div className="car-card-meta">
-          <span><Gauge size={15} />{formatMileage(car.mileage)}</span>
-          <span><Settings2 size={15} />{transmissionLabels[car.transmission] || '—'}</span>
+          {vehicleSpecs(car.vehicle_type).mileage
+            ? <span><Gauge size={15} />{formatMileage(car.mileage)}</span>
+            : <span><Gauge size={15} />{car.year}</span>}
+          {(car.vehicle_type || 'car') === 'car'
+            ? <span><Settings2 size={15} />{transmissionLabels[car.transmission] || '—'}</span>
+            : <span><Settings2 size={15} />{VEHICLE_LABELS[car.vehicle_type]}</span>}
           <span><MapPin size={15} />{car.city_name || 'Кыргызстан'}</span>
         </div>
         {car.dealer_detail && (

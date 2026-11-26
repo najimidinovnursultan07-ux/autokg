@@ -9,7 +9,8 @@ import MurabahaCalculator from '../components/cars/MurabahaCalculator.jsx'
 import ShareButtons from '../components/cars/ShareButtons.jsx'
 import { ErrorState, LoadingState } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
-import { formatConvertedPrice, formatDate, formatMileage, formatPrice, getCarTitle } from '../utils/format.js'
+import { formatConvertedPrice, formatDate, formatEngineVolume, formatMileage, formatPrice, getCarTitle } from '../utils/format.js'
+import { VEHICLE_LABELS, vehicleSpecs } from '../utils/vehicles.js'
 import { whatsappLink } from '../utils/contacts.js'
 import useRates from '../hooks/useRates.js'
 import { addToCompare, isInCompare, removeFromCompare } from '../utils/compare.js'
@@ -175,14 +176,21 @@ export default function CarDetailPage() {
 
   const images = car.images || []
   const currentImage = images[activeImage]?.url || images[activeImage]?.image
+  // Показываем только характеристики, которые есть у этого вида транспорта
+  const specs = vehicleSpecs(car.vehicle_type)
+  const isCar = (car.vehicle_type || 'car') === 'car'
+  const engineLabel = specs.electricOnly
+    ? (car.engine_type === 'electric' ? 'Электро' : 'Без мотора')
+    : labels.engine_type[car.engine_type] || '—'
   const features = [
+    ...(!isCar ? [['Вид транспорта', VEHICLE_LABELS[car.vehicle_type]]] : []),
     ['Год выпуска', car.year],
-    ['Пробег', formatMileage(car.mileage)],
-    ['Двигатель', labels.engine_type[car.engine_type] || car.engine_type],
-    ['Объём двигателя', car.engine_volume ? `${car.engine_volume} л` : '—'],
-    ['Коробка передач', labels.transmission[car.transmission] || car.transmission],
-    ['Привод', labels.drive_type[car.drive_type] || car.drive_type],
-    ['Кузов', labels.body_type[car.body_type] || car.body_type],
+    ...(specs.mileage ? [['Пробег', formatMileage(car.mileage)]] : []),
+    [specs.electricOnly ? 'Мотор' : 'Двигатель', engineLabel],
+    ...(specs.engineVolume ? [['Объём двигателя', formatEngineVolume(car.engine_volume)]] : []),
+    ...(specs.transmission && (isCar || car.transmission) ? [['Коробка передач', labels.transmission[car.transmission] || '—']] : []),
+    ...(specs.drive ? [['Привод', labels.drive_type[car.drive_type] || '—']] : []),
+    ...(specs.body ? [['Кузов', labels.body_type[car.body_type] || '—']] : []),
     ['Состояние', labels.condition[car.condition] || car.condition],
     ...(car.color ? [['Цвет', car.color]] : []),
   ]
@@ -295,9 +303,11 @@ export default function CarDetailPage() {
           />
           <AdBanner placement="car_detail" />
           <div className="seller-facts">
-            <span><Gauge size={16} />{formatMileage(car.mileage)}</span>
-            <span><Fuel size={16} />{labels.engine_type[car.engine_type] || '—'}</span>
-            <span><Settings2 size={16} />{labels.transmission[car.transmission] || '—'}</span>
+            {specs.mileage && <span><Gauge size={16} />{formatMileage(car.mileage)}</span>}
+            <span><Fuel size={16} />{engineLabel}</span>
+            {car.transmission
+              ? <span><Settings2 size={16} />{labels.transmission[car.transmission]}</span>
+              : !isCar && <span><Settings2 size={16} />{VEHICLE_LABELS[car.vehicle_type]}</span>}
           </div>
         </aside>
       </div>

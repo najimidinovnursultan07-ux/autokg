@@ -7,9 +7,11 @@ import AdBanner from '../components/ads/AdBanner.jsx'
 import CarGrid from '../components/cars/CarGrid.jsx'
 import { EmptyState, ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
+import { VEHICLE_TYPES, vehicleSpecs } from '../utils/vehicles.js'
 import { addSearchHistory, getSearchHistory, removeSearchHistory } from '../utils/searchHistory.js'
 
 const emptyFilters = {
+  vehicle_type: '',
   search: '',
   brand: '',
   model: '',
@@ -61,6 +63,29 @@ const filtersOptions = {
   condition: [['new', 'Новый'], ['used', 'С пробегом'], ['damaged', 'Требует ремонта']],
 }
 
+// Заголовок каталога по выбранной вкладке
+const CATALOG_TITLES = {
+  '': 'Каталог транспорта',
+  car: 'Каталог автомобилей',
+  moto: 'Мотоциклы и мопеды',
+  muravey: 'Муравьи',
+  bicycle: 'Велосипеды',
+  scooter: 'Самокаты',
+}
+
+// Фильтры, которые есть у выбранного вида транспорта
+function filterApplies(field, vehicleType) {
+  if (!vehicleType) return true
+  const specs = vehicleSpecs(vehicleType)
+  return {
+    engine_type: specs.engine && !specs.electricOnly,
+    transmission: specs.transmission,
+    drive_type: specs.drive,
+    body_type: specs.body,
+    condition: true,
+  }[field]
+}
+
 export default function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [lookups, setLookups] = useState({ brands: [], models: [], cities: [], dealers: [] })
@@ -97,10 +122,20 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
   const [searchHistory, setSearchHistory] = useState(() => getSearchHistory())
   const [showHistory, setShowHistory] = useState(false)
 
-  const visibleModels = useMemo(
-    () => lookups.models.filter((model) => !filters.brand || String(model.brand) === filters.brand),
-    [filters.brand, lookups.models],
+  const typeModels = useMemo(
+    () => lookups.models.filter((model) => !filters.vehicle_type || model.vehicle_type === filters.vehicle_type),
+    [filters.vehicle_type, lookups.models],
   )
+  const visibleBrands = useMemo(() => {
+    if (!filters.vehicle_type) return lookups.brands
+    const ids = new Set(typeModels.map((model) => model.brand))
+    return lookups.brands.filter((brand) => ids.has(brand.id))
+  }, [filters.vehicle_type, lookups.brands, typeModels])
+  const visibleModels = useMemo(
+    () => typeModels.filter((model) => !filters.brand || String(model.brand) === filters.brand),
+    [filters.brand, typeModels],
+  )
+  const specs = filters.vehicle_type ? vehicleSpecs(filters.vehicle_type) : null
 
   const loadCars = useCallback(async (targetPage = page, activeFilters = appliedFilters) => {
     setLoading(true)
@@ -147,6 +182,22 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
     setShowHistory(false)
   }
 
+  // Вкладка вида транспорта применяется сразу; несовместимые фильтры сбрасываются
+  const selectVehicleType = (vehicleType) => {
+    const next = { ...filters, vehicle_type: vehicleType, brand: '', model: '' }
+    Object.keys(filtersOptions).forEach((field) => {
+      if (!filterApplies(field, vehicleType)) next[field] = ''
+    })
+    if (vehicleType && !vehicleSpecs(vehicleType).mileage) {
+      next.mileage_min = ''
+      next.mileage_max = ''
+    }
+    setFilters(next)
+    setPage(1)
+    setAppliedFilters(next)
+    setSearchParams(createUrlParams(next))
+  }
+
   const clearFilters = () => {
     setFilters(emptyFilters)
     setAppliedFilters(emptyFilters)
@@ -170,11 +221,25 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
   return (
     <section className="container page-section">
       <PageTitle
-        eyebrow="Подберите автомобиль"
-        title="Каталог автомобилей"
+        eyebrow="Подберите транспорт"
+        title={CATALOG_TITLES[filters.vehicle_type] || CATALOG_TITLES['']}
         description="Сравнивайте объявления и находите автомобиль под свои задачи."
       />
       {lookupsError && <p className="inline-warning">{lookupsError}</p>}
+      <div className="vehicle-tabs" role="tablist" aria-label="Вид транспорта">
+        {[{ value: '', label: 'Все' }, ...VEHICLE_TYPES].map(({ value, label, icon: Icon }) => (
+          <button
+            key={value || 'all'}
+            type="button"
+            role="tab"
+            aria-selected={filters.vehicle_type === value}
+            className={`vehicle-tab ${filters.vehicle_type === value ? 'vehicle-tab--active' : ''}`}
+            onClick={() => selectVehicleType(value)}
+          >
+            {Icon && <Icon size={17} />} {label}
+          </button>
+        ))}
+      </div>
       <button
         className="button button--outline filter-mobile-toggle"
         type="button"
@@ -211,14 +276,14 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
                 )}
               </div>
             </label>
-            <label className="field-label">Марка<select value={filters.brand} onChange={(e) => update('brand', e.target.value)}><option value="">Любая марка</option>{lookups.brands.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+            <label className="field-label">Марка<select value={filters.brand} onChange={(e) => update('brand', e.target.value)}><option value="">Любая марка</option>{visibleBrands.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
             <label className="field-label">Модель<select value={filters.model} onChange={(e) => update('model', e.target.value)}><option value="">Любая модель</option>{visibleModels.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
             <label className="field-label">Город<select value={filters.city} onChange={(e) => update('city', e.target.value)}><option value="">Любой город</option>{lookups.cities.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
             <label className="field-label">Автосалон<select value={filters.dealer} onChange={(e) => update('dealer', e.target.value)}><option value="">Все салоны</option>{(lookups.dealers || []).map((item) => <option value={item.slug} key={item.id}>{item.name}</option>)}</select></label>
             <div className="field-label">Цена, сом<div className="field-range"><input type="number" min="0" placeholder="От" value={filters.price_min} onChange={(e) => update('price_min', e.target.value)} /><input type="number" min="0" placeholder="До" value={filters.price_max} onChange={(e) => update('price_max', e.target.value)} /></div></div>
             <div className="field-label">Год выпуска<div className="field-range"><input type="number" min="1980" max="2100" placeholder="От" value={filters.year_min} onChange={(e) => update('year_min', e.target.value)} /><input type="number" min="1980" max="2100" placeholder="До" value={filters.year_max} onChange={(e) => update('year_max', e.target.value)} /></div></div>
-            <div className="field-label">Пробег, км<div className="field-range"><input type="number" min="0" placeholder="От" value={filters.mileage_min} onChange={(e) => update('mileage_min', e.target.value)} /><input type="number" min="0" placeholder="До" value={filters.mileage_max} onChange={(e) => update('mileage_max', e.target.value)} /></div></div>
-            {Object.entries(filtersOptions).map(([field, options]) => (
+            {(!specs || specs.mileage) && <div className="field-label">Пробег, км<div className="field-range"><input type="number" min="0" placeholder="От" value={filters.mileage_min} onChange={(e) => update('mileage_min', e.target.value)} /><input type="number" min="0" placeholder="До" value={filters.mileage_max} onChange={(e) => update('mileage_max', e.target.value)} /></div></div>}
+            {Object.entries(filtersOptions).filter(([field]) => filterApplies(field, filters.vehicle_type)).map(([field, options]) => (
               <label className="field-label" key={field}>{{
                 engine_type: 'Двигатель',
                 transmission: 'Коробка передач',

@@ -48,7 +48,8 @@ SYSTEM_PROMPT = """Ты — ИИ-помощник сайта AutoBuy, площа
 - Цены бывают в сомах и долларах. Бюджет пользователя передавай в search_cars в той валюте, которую он назвал.
 
 Что ты знаешь о сайте:
-- Каталог: /catalog (фильтры по марке, цене, году, пробегу, кузову, мурабахе). Салоны: /dealers. Сравнение авто: /compare.
+- Кроме автомобилей на AutoBuy продаются мотоциклы и мопеды, муравьи (грузовые трициклы), велосипеды и самокаты — для них передавай vehicle_type в search_cars.
+- Каталог: /catalog (вкладки по видам транспорта, фильтры по марке, цене, году, пробегу, кузову, мурабахе). Салоны: /dealers. Сравнение авто: /compare.
 - Номер продавца открывается кнопкой «Показать номер» на странице автомобиля, там же кнопка WhatsApp салона.
 - Мурабаха — исламская рассрочка без процентов: салон продаёт авто с фиксированной наценкой, известной заранее, покупатель платит первый взнос и равные ежемесячные платежи. Не все салоны и не все авто её предлагают — ищи с murabaha=true. На странице такого авто есть калькулятор платежа. Точные условия покупатель уточняет у салона.
 - Совет безопасности: не переводить предоплату до личного осмотра автомобиля.
@@ -69,6 +70,10 @@ SEARCH_TOOL = {
         "type": "object",
         "properties": {
             "query": {"type": "string", "description": "Марка и/или модель, например 'Toyota Camry'"},
+            "vehicle_type": {
+                "type": "string", "enum": ["car", "moto", "muravey", "bicycle", "scooter"],
+                "description": "Вид транспорта: car — автомобиль, moto — мотоцикл/мопед/скутер, muravey — муравей (грузовой трицикл), bicycle — велосипед, scooter — самокат",
+            },
             "body_type": {"type": "string", "enum": ["sedan", "hatchback", "suv", "wagon", "coupe", "minivan", "pickup"]},
             "condition": {"type": "string", "enum": ["new", "used"]},
             "transmission": {"type": "string", "enum": ["manual", "automatic", "cvt", "robotic"]},
@@ -138,7 +143,7 @@ def search_cars(args):
     query = (args.get("query") or "").strip()
     for word in query.split()[:4]:
         qs = qs.filter(Q(model__brand__name__icontains=word) | Q(model__name__icontains=word))
-    for field in ("body_type", "condition", "transmission", "engine_type", "drive_type"):
+    for field in ("vehicle_type", "body_type", "condition", "transmission", "engine_type", "drive_type"):
         if args.get(field):
             qs = qs.filter(**{field: args[field]})
     if args.get("city"):
@@ -237,6 +242,7 @@ def car_summary(car):
         "mileage": car.mileage,
         "city": car.city.name if car.city_id else "",
         "dealer": car.dealer.name if car.dealer_id else "",
+        "vehicle_type": car.vehicle_type,
         "body_type": car.body_type,
         "transmission": car.transmission,
         "engine_type": car.engine_type,

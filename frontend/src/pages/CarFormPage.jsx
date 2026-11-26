@@ -15,6 +15,7 @@ import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage, getFieldErrors } from '../utils/errors.js'
 import { formatDate } from '../utils/format.js'
 import { DEFAULT_LISTING_DAYS, LISTING_DURATIONS } from '../utils/listing.js'
+import { VEHICLE_TYPES, vehicleSpecs } from '../utils/vehicles.js'
 
 const MAX_YEAR = new Date().getFullYear() + 1
 const MIN_YEAR = 1980
@@ -23,6 +24,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 const initialForm = {
+  vehicle_type: 'car',
   model: '',
   city: '',
   year: '',
@@ -47,6 +49,15 @@ const choiceLabels = {
   drive_type: [['fwd', 'Передний'], ['rwd', 'Задний'], ['awd', 'Полный']],
   body_type: [['sedan', 'Седан'], ['hatchback', 'Хэтчбек'], ['suv', 'Внедорожник'], ['wagon', 'Универсал'], ['coupe', 'Купе'], ['minivan', 'Минивэн'], ['pickup', 'Пикап'], ['other', 'Другое']],
   condition: [['new', 'Новый'], ['used', 'С пробегом'], ['damaged', 'Требует ремонта']],
+}
+
+// Значения характеристик по умолчанию при выборе вида транспорта
+const SPEC_DEFAULTS = {
+  car: { engine_type: 'petrol', transmission: 'automatic', drive_type: 'fwd', body_type: 'sedan' },
+  moto: { engine_type: 'petrol', transmission: '', drive_type: '', body_type: '' },
+  muravey: { engine_type: 'petrol', transmission: '', drive_type: '', body_type: '' },
+  bicycle: { engine_type: '', transmission: '', drive_type: '', body_type: '', engine_volume: '', mileage: '0' },
+  scooter: { engine_type: 'electric', transmission: '', drive_type: '', body_type: '', engine_volume: '' },
 }
 
 export default function CarFormPage() {
@@ -93,13 +104,14 @@ export default function CarFormPage() {
           setCurrentExpiry({ expires_at: car.expires_at, is_expired: car.is_expired })
           setSelectedBrandId(String(catalog.models.find((m) => m.id === car.model)?.brand || ''))
           setForm({
+            vehicle_type: car.vehicle_type || 'car',
             model: String(car.model),
             city: String(car.city),
             year: String(car.year),
             price: String(Math.round(Number(car.price))),
             currency: car.currency || 'KGS',
             mileage: String(car.mileage),
-            engine_volume: car.engine_volume || '',
+            engine_volume: car.engine_volume ? String(Number(car.engine_volume)) : '',
             engine_type: car.engine_type,
             transmission: car.transmission,
             drive_type: car.drive_type,
@@ -208,7 +220,16 @@ export default function CarFormPage() {
     }
   }
 
-  const availableModels = lookups.models.filter((m) => !selectedBrandId || String(m.brand) === selectedBrandId)
+  const specs = vehicleSpecs(form.vehicle_type)
+  const typeModels = lookups.models.filter((m) => (m.vehicle_type || 'car') === form.vehicle_type)
+  const typeBrandIds = new Set(typeModels.map((m) => m.brand))
+  const availableBrands = lookups.brands.filter((b) => typeBrandIds.has(b.id))
+  const availableModels = typeModels.filter((m) => !selectedBrandId || String(m.brand) === selectedBrandId)
+  const selectVehicleType = (vehicleType) => {
+    if (vehicleType === form.vehicle_type) return
+    setSelectedBrandId('')
+    setForm((current) => ({ ...current, ...SPEC_DEFAULTS[vehicleType], vehicle_type: vehicleType, model: '' }))
+  }
   const fieldError = (key) => fieldErrors[key]?.[0] && <small className="field-error">{fieldErrors[key][0]}</small>
 
   if (loading) return <LoadingState label="Загружаем форму…" />
@@ -217,13 +238,27 @@ export default function CarFormPage() {
   return (
     <section className="account-page car-form-page">
       <Link to="/dashboard" className="back-link"><ArrowLeft size={17} /> К объявлениям</Link>
-      <PageTitle eyebrow="Кабинет салона" title={isEditing ? 'Редактировать объявление' : 'Добавить автомобиль'} description="Заполните характеристики и добавьте фотографии автомобиля." />
+      <PageTitle eyebrow="Кабинет салона" title={isEditing ? 'Редактировать объявление' : 'Добавить объявление'} description="Выберите вид транспорта, заполните характеристики и добавьте фотографии." />
       {error && <div className="form-alert" role="alert">{error}</div>}
       <form className="listing-form" onSubmit={submit}>
         <section className="form-section">
-          <div className="form-section-heading"><span>01</span><div><h2>Основная информация</h2><p>Марка, модель и расположение автомобиля.</p></div></div>
+          <div className="form-section-heading"><span>01</span><div><h2>Основная информация</h2><p>Вид транспорта, марка, модель и город.</p></div></div>
+          <div className="vehicle-tabs" role="radiogroup" aria-label="Вид транспорта">
+            {VEHICLE_TYPES.map(({ value, single, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={form.vehicle_type === value}
+                className={`vehicle-tab ${form.vehicle_type === value ? 'vehicle-tab--active' : ''}`}
+                onClick={() => selectVehicleType(value)}
+              >
+                <Icon size={17} /> {single}
+              </button>
+            ))}
+          </div>
           <div className="form-grid">
-            <label className="field-label">Марка<select value={selectedBrandId} onChange={(e) => { setSelectedBrandId(e.target.value); setForm((c) => ({ ...c, model: '' })) }} required><option value="">Выберите марку</option>{lookups.brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
+            <label className="field-label">Марка<select value={selectedBrandId} onChange={(e) => { setSelectedBrandId(e.target.value); setForm((c) => ({ ...c, model: '' })) }} required><option value="">Выберите марку</option>{availableBrands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
             <label className="field-label">Модель<select value={form.model} onChange={update('model')} required><option value="">Выберите модель</option>{availableModels.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>{fieldError('model')}</label>
             <label className="field-label">Город<select value={form.city} onChange={update('city')} required><option value="">Выберите город</option>{lookups.cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
             <label className="field-label">Год выпуска<input type="number" min={MIN_YEAR} max={MAX_YEAR} required value={form.year} onChange={update('year')} placeholder="Например, 2020" />{fieldError('year')}</label>
@@ -250,12 +285,16 @@ export default function CarFormPage() {
           <div className="form-section-heading"><span>02</span><div><h2>Цена и характеристики</h2><p>Помогите покупателю понять, подходит ли ему автомобиль.</p></div></div>
           <div className="form-grid">
             <label className="field-label">Цена<span className="field-range"><input type="number" min="1" step="1" required value={form.price} onChange={update('price')} placeholder="1 250 000" /><select value={form.currency} onChange={update('currency')} aria-label="Валюта"><option value="KGS">сом</option><option value="USD">$</option></select></span>{fieldError('price')}</label>
-            <label className="field-label">Пробег, км<input type="number" min="0" required value={form.mileage} onChange={update('mileage')} placeholder="85 000" /></label>
-            <label className="field-label">Топливо<select value={form.engine_type} onChange={update('engine_type')}>{choiceLabels.engine_type.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-            <label className="field-label">Объём двигателя, л<input type="number" min="0.1" max="99.9" step="0.1" value={form.engine_volume} onChange={update('engine_volume')} placeholder="2.0" /></label>
-            <label className="field-label">Коробка передач<select value={form.transmission} onChange={update('transmission')}>{choiceLabels.transmission.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-            <label className="field-label">Привод<select value={form.drive_type} onChange={update('drive_type')}>{choiceLabels.drive_type.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-            <label className="field-label">Тип кузова<select value={form.body_type} onChange={update('body_type')}>{choiceLabels.body_type.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+            {specs.mileage && <label className="field-label">Пробег, км<input type="number" min="0" required value={form.mileage} onChange={update('mileage')} placeholder={form.vehicle_type === 'car' ? '85 000' : '5 000'} /></label>}
+            {specs.electricOnly ? (
+              <label className="field-label">Мотор<select value={form.engine_type} onChange={update('engine_type')}><option value="">Без мотора</option><option value="electric">Электро</option></select></label>
+            ) : (
+              <label className="field-label">Топливо<select value={form.engine_type} onChange={update('engine_type')} required>{choiceLabels.engine_type.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>{fieldError('engine_type')}</label>
+            )}
+            {specs.engineVolume && <label className="field-label">{form.vehicle_type === 'car' ? 'Объём двигателя, л' : 'Объём двигателя, л (50 куб. см = 0.05)'}<input type="number" min="0.01" max="99.9" step="0.01" value={form.engine_volume} onChange={update('engine_volume')} placeholder={form.vehicle_type === 'car' ? '2.0' : '0.15'} /></label>}
+            {specs.transmission && <label className="field-label">Коробка передач<select value={form.transmission} onChange={update('transmission')} required={specs.transmissionRequired}>{!specs.transmissionRequired && <option value="">Не указано</option>}{choiceLabels.transmission.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>{fieldError('transmission')}</label>}
+            {specs.drive && <label className="field-label">Привод<select value={form.drive_type} onChange={update('drive_type')}>{choiceLabels.drive_type.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>}
+            {specs.body && <label className="field-label">Тип кузова<select value={form.body_type} onChange={update('body_type')}>{choiceLabels.body_type.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>}
             <label className="field-label">Состояние<select value={form.condition} onChange={update('condition')}>{choiceLabels.condition.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
             <label className="field-label">Цвет<input maxLength="50" value={form.color} onChange={update('color')} placeholder="Белый" /></label>
             <label className="field-label">Телефон для связи<input type="tel" value={form.contact_phone} onChange={update('contact_phone')} placeholder="По умолчанию — телефон салона" />{fieldError('contact_phone')}</label>

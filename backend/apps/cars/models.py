@@ -29,6 +29,15 @@ def not_expired_q(prefix="", at=None):
     return Q(**{f"{prefix}expires_at__isnull": True}) | Q(**{f"{prefix}expires_at__gt": at})
 
 
+class VehicleType(models.TextChoices):
+    """Вид транспорта. У велосипеда и самоката нет коробки, привода и кузова."""
+    CAR = "car", "Автомобиль"
+    MOTO = "moto", "Мото и мопед"
+    MURAVEY = "muravey", "Муравей"
+    BICYCLE = "bicycle", "Велосипед"
+    SCOOTER = "scooter", "Самокат"
+
+
 class CarStatus(models.TextChoices):
     ACTIVE = "active", "Активно"
     HIDDEN = "hidden", "Скрыто"
@@ -101,6 +110,10 @@ class Model(models.Model):
     )
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=120)
+    vehicle_type = models.CharField(
+        "Вид транспорта", max_length=16, choices=VehicleType.choices,
+        default=VehicleType.CAR, db_index=True,
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -142,6 +155,7 @@ class City(models.Model):
 
 class Car(models.Model):
     Status = CarStatus
+    VehicleType = VehicleType
     EngineType = CarEngineType
     Transmission = CarTransmission
     DriveType = CarDriveType
@@ -185,17 +199,24 @@ class Car(models.Model):
         default=CarCurrency.KGS,
     )
     mileage = models.PositiveIntegerField(default=0)
+    # Литры с тремя знаками: мопед 50 куб. см = 0.05, мотоцикл 125 куб. см = 0.125
     engine_volume = models.DecimalField(
-        max_digits=4,
-        decimal_places=1,
+        max_digits=5,
+        decimal_places=3,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal("0.1"))],
+        validators=[MinValueValidator(Decimal("0.01"))],
     )
-    engine_type = models.CharField(max_length=16, choices=CarEngineType.choices)
-    transmission = models.CharField(max_length=16, choices=CarTransmission.choices)
-    drive_type = models.CharField(max_length=8, choices=CarDriveType.choices)
-    body_type = models.CharField(max_length=16, choices=CarBodyType.choices)
+    vehicle_type = models.CharField(
+        "Вид транспорта", max_length=16, choices=VehicleType.choices,
+        default=VehicleType.CAR, db_index=True,
+    )
+    # Для автомобиля обязательны все четыре; для мото/муравья — топливо;
+    # у велосипеда и самоката могут быть пустыми.
+    engine_type = models.CharField(max_length=16, choices=CarEngineType.choices, blank=True)
+    transmission = models.CharField(max_length=16, choices=CarTransmission.choices, blank=True)
+    drive_type = models.CharField(max_length=8, choices=CarDriveType.choices, blank=True)
+    body_type = models.CharField(max_length=16, choices=CarBodyType.choices, blank=True)
     condition = models.CharField(max_length=16, choices=CarCondition.choices)
     color = models.CharField(max_length=50, blank=True)
     # Продаётся ли это авто по мурабахе (условия — в профиле салона)
@@ -264,20 +285,29 @@ class Car(models.Model):
                 name="car_status_is_valid",
             ),
             models.CheckConstraint(
-                condition=Q(engine_type__in=CarEngineType.values),
+                condition=Q(engine_type__in=[*CarEngineType.values, ""]),
                 name="car_engine_type_is_valid",
             ),
             models.CheckConstraint(
-                condition=Q(transmission__in=CarTransmission.values),
+                condition=Q(transmission__in=[*CarTransmission.values, ""]),
                 name="car_transmission_is_valid",
             ),
             models.CheckConstraint(
-                condition=Q(drive_type__in=CarDriveType.values),
+                condition=Q(drive_type__in=[*CarDriveType.values, ""]),
                 name="car_drive_type_is_valid",
             ),
             models.CheckConstraint(
-                condition=Q(body_type__in=CarBodyType.values),
+                condition=Q(body_type__in=[*CarBodyType.values, ""]),
                 name="car_body_type_is_valid",
+            ),
+            models.CheckConstraint(
+                condition=Q(vehicle_type__in=VehicleType.values),
+                name="car_vehicle_type_is_valid",
+            ),
+            models.CheckConstraint(
+                condition=~Q(vehicle_type=VehicleType.CAR)
+                | (~Q(engine_type="") & ~Q(transmission="") & ~Q(drive_type="") & ~Q(body_type="")),
+                name="car_specs_required_for_cars",
             ),
             models.CheckConstraint(
                 condition=Q(condition__in=CarCondition.values),

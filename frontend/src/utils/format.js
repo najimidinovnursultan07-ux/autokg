@@ -48,3 +48,9 @@ export function formatDate(value) {
   if (!value) return ''
   return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(value))
 }
+
+// Объём двигателя без лишних нулей: «2.500» → «2.5 л», «0.050» → «0.05 л»
+export function formatEngineVolume(value) {
+  const amount = Number(value)
+  return value && Number.isFinite(amount) && amount > 0 ? `${amount} л` : '—'
+}

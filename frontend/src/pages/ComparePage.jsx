@@ -5,7 +5,7 @@ import { getCar } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
 import { LoadingState } from '../components/common/States.jsx'
 import { clearCompare, getCompareList, removeFromCompare } from '../utils/compare.js'
-import { formatMileage, formatPrice, getCarTitle } from '../utils/format.js'
+import { formatEngineVolume, formatMileage, formatPrice, getCarTitle } from '../utils/format.js'
 
 const labels = {
   engine_type: { petrol: 'Бензин', diesel: 'Дизель', hybrid: 'Гибрид', electric: 'Электро', lpg: 'Газ', other: 'Другое' },
@@ -20,7 +20,7 @@ const rows = [
   { key: 'year', label: 'Год выпуска' },
   { key: 'mileage', label: 'Пробег', format: (v) => formatMileage(v) },
   { key: 'engine_type', label: 'Двигатель', format: (v) => labels.engine_type[v] || v },
-  { key: 'engine_volume', label: 'Объём', format: (v) => v ? `${v} л` : '—' },
+  { key: 'engine_volume', label: 'Объём', format: formatEngineVolume },
   { key: 'transmission', label: 'Коробка', format: (v) => labels.transmission[v] || v },
   { key: 'drive_type', label: 'Привод', format: (v) => labels.drive_type[v] || v },
   { key: 'body_type', label: 'Кузов', format: (v) => labels.body_type[v] || v },

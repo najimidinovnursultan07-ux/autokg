@@ -1841,3 +1841,23 @@ body:has(.assistant-fab) .footer-bottom { padding-bottom: calc(90px + env(safe-a
 .murabaha-car-info { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
 .murabaha-car-info strong { overflow: hidden; color: var(--ink); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .murabaha-car-info small { color: var(--muted); font-size: 12px; }
+
+/* ── Каталог: вкладки видов транспорта ── */
+.vehicle-tabs { display: flex; gap: 8px; margin: 0 0 18px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.vehicle-tabs::-webkit-scrollbar { display: none; }
+.vehicle-tab { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 7px; height: 40px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: white; color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+.vehicle-tab:hover { border-color: var(--accent); color: var(--accent); }
+.vehicle-tab--active { border-color: var(--accent); background: var(--accent); color: white; }
+.vehicle-tab--active:hover { color: white; }
+
+/* ── Главная: виды транспорта ── */
+.vehicle-tiles-section { margin-top: 28px; }
+.vehicle-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.vehicle-tile { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 10px; border: 1px solid var(--line); border-radius: 14px; background: white; color: var(--ink); font-size: 14px; font-weight: 700; text-align: center; text-decoration: none; transition: border-color .15s, transform .15s, box-shadow .15s; }
+.vehicle-tile:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow); }
+.vehicle-tile-icon { display: grid; width: 54px; height: 54px; place-items: center; border-radius: 50%; background: var(--green-soft); color: var(--accent); }
+@media (max-width: 760px) {
+  .vehicle-tiles { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .vehicle-tiles::-webkit-scrollbar { display: none; }
+  .vehicle-tile { flex: 0 0 116px; padding: 14px 8px; font-size: 13px; }
+}

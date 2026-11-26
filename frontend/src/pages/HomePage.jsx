@@ -25,6 +25,7 @@ import CarCard from '../components/cars/CarCard.jsx'
 import { EmptyState, ErrorState } from '../components/common/States.jsx'
 import Shelf, { ShelfSkeleton } from '../components/home/Shelf.jsx'
 import { getErrorMessage } from '../utils/errors.js'
+import { VEHICLE_TYPES } from '../utils/vehicles.js'
 import coupeImg from '../assets/body-types/coupe.webp'
 import hatchbackImg from '../assets/body-types/hatchback.webp'
 import minivanImg from '../assets/body-types/minivan.webp'
@@ -205,6 +206,18 @@ export default function HomePage() {
               </Link>
             ))}
           </Shelf>
+
+          {/* Виды транспорта: авто, мото, муравьи, велосипеды, самокаты */}
+          <section className="container vehicle-tiles-section" aria-label="Виды транспорта">
+            <div className="vehicle-tiles">
+              {VEHICLE_TYPES.map(({ value, label, icon: Icon }) => (
+                <Link key={value} to={`/catalog?vehicle_type=${value}`} className="vehicle-tile">
+                  <span className="vehicle-tile-icon"><Icon size={26} /></span>
+                  <span>{label}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
 
           {/* Категории по типу кузова */}
           <Shelf title="Что ищете?" allTo="/catalog" variant="categories">

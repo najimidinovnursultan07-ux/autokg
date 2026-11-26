@@ -10,6 +10,7 @@ import {
 import { ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
+import { VEHICLE_LABELS, VEHICLE_TYPES } from '../utils/vehicles.js'
 
 const PAGE_SIZE = 10
 const catalogTabs = [
@@ -25,6 +26,7 @@ function initialForm(kind, brands = []) {
     slug: '',
     is_active: true,
     brand: kind === 'models' ? String(brands[0]?.id || '') : '',
+    vehicle_type: 'car',
   }
 }
 
@@ -112,6 +114,7 @@ export default function AdminCatalogPage() {
       slug: item.slug,
       is_active: item.is_active,
       brand: kind === 'models' ? String(item.brand) : '',
+      vehicle_type: item.vehicle_type || 'car',
     })
   }
 
@@ -129,7 +132,10 @@ export default function AdminCatalogPage() {
       slug: form.slug.trim(),
       is_active: form.is_active,
     }
-    if (kind === 'models') payload.brand = Number(form.brand)
+    if (kind === 'models') {
+      payload.brand = Number(form.brand)
+      payload.vehicle_type = form.vehicle_type
+    }
     try {
       if (editingId) {
         await updateAdminCatalogItem(kind, editingId, payload)
@@ -204,6 +210,13 @@ export default function AdminCatalogPage() {
               </select>
             </label>
           )}
+          {kind === 'models' && (
+            <label className="field-label">Вид транспорта
+              <select value={form.vehicle_type} onChange={(event) => setForm({ ...form, vehicle_type: event.target.value })}>
+                {VEHICLE_TYPES.map(({ value, single }) => <option key={value} value={value}>{single}</option>)}
+              </select>
+            </label>
+          )}
           <label className="admin-checkbox-label"><input type="checkbox" checked={form.is_active} onChange={(event) => setForm({ ...form, is_active: event.target.checked })} /> Активен и доступен в каталоге</label>
           <button type="submit" className="button button--primary" disabled={saving || (kind === 'models' && !form.brand)}>
             {editingId ? <Check size={16} /> : <Plus size={16} />}
@@ -226,7 +239,7 @@ export default function AdminCatalogPage() {
                   <article className="admin-catalog-row" key={item.id}>
                     <span className="admin-catalog-row-copy">
                       <strong>{item.name}</strong>
-                      <small>{kind === 'models' ? `${brandNames.get(item.brand) || 'Марка'} · ` : ''}{item.slug}</small>
+                      <small>{kind === 'models' ? `${brandNames.get(item.brand) || 'Марка'} · ${VEHICLE_LABELS[item.vehicle_type] || 'Автомобиль'} · ` : ''}{item.slug}</small>
                     </span>
                     <span className={`admin-status ${item.is_active ? 'admin-status--active' : 'admin-status--blocked'}`}>{item.is_active ? 'Активен' : 'Неактивен'}</span>
                     <div className="admin-catalog-actions">

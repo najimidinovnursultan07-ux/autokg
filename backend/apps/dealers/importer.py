@@ -117,7 +117,7 @@ def build_template():
     ref_col = 1
     for col, (field, title, _, choices) in enumerate(COLUMNS, start=1):
         if field == "brand":
-            values = sorted({m.brand.name for m in Model.objects.filter(is_active=True, brand__is_active=True).select_related("brand")})
+            values = sorted({m.brand.name for m in Model.objects.filter(is_active=True, brand__is_active=True, vehicle_type="car").select_related("brand")})
         elif field == "city":
             values = list(City.objects.filter(is_active=True).values_list("name", flat=True))
         elif field == "duration_days":
@@ -145,7 +145,7 @@ def build_template():
     # Модели по маркам — отдельной таблицей
     ref.cell(row=1, column=ref_col + 1, value="Марка").font = Font(bold=True)
     ref.cell(row=1, column=ref_col + 2, value="Модели").font = Font(bold=True)
-    models = Model.objects.filter(is_active=True, brand__is_active=True).select_related("brand").order_by("brand__name", "name")
+    models = Model.objects.filter(is_active=True, brand__is_active=True, vehicle_type="car").select_related("brand").order_by("brand__name", "name")
     row = 2
     by_brand = {}
     for m in models:
@@ -273,7 +273,7 @@ def import_cars(upload, *, user, dealer, publish):
     rows = _read_rows(upload)
     models = {
         (_norm(m.brand.name), _norm(m.name)): m
-        for m in Model.objects.filter(is_active=True, brand__is_active=True).select_related("brand")
+        for m in Model.objects.filter(is_active=True, brand__is_active=True, vehicle_type="car").select_related("brand")
     }
     cities = {_norm(c.name): c for c in City.objects.filter(is_active=True)}
     lookups = {f: _choice_lookup(ch) for f, _, _, ch in COLUMNS if ch is not None}
