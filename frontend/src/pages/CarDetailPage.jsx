@@ -5,6 +5,7 @@ import { getCar, revealCarContacts } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
 import AdBanner from '../components/ads/AdBanner.jsx'
 import FavoriteButton from '../components/cars/FavoriteButton.jsx'
+import MurabahaCalculator from '../components/cars/MurabahaCalculator.jsx'
 import ShareButtons from '../components/cars/ShareButtons.jsx'
 import { ErrorState, LoadingState } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
@@ -222,6 +223,9 @@ export default function CarDetailPage() {
             <div className="detail-card-heading"><h2>Характеристики</h2><span><ShieldCheck size={16} /> Проверенное объявление</span></div>
             <div className="spec-grid">{features.map(([label, value]) => <div className="spec-item" key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
           </div>
+          {car.dealer_detail?.murabaha && (
+            <MurabahaCalculator price={car.price} currency={car.currency} terms={car.dealer_detail.murabaha} />
+          )}
           <div className="detail-card description-card"><h2>Описание</h2><p>{car.description || 'Продавец не добавил описание.'}</p></div>
           <PriceHistory history={car.price_history} />
         </div>

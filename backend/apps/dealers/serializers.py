@@ -23,6 +23,12 @@ def check_location(attrs, instance=None):
         )
 
 
+MURABAHA_FIELDS = (
+    "murabaha_enabled", "murabaha_markup_percent", "murabaha_min_down_percent",
+    "murabaha_max_term_months", "murabaha_note",
+)
+
+
 class LogoUrlMixin(serializers.Serializer):
     logo_url = serializers.SerializerMethodField()
 
@@ -49,6 +55,7 @@ class DealerSerializer(LogoUrlMixin, serializers.ModelSerializer):
             "id", "name", "slug", "logo", "logo_url", "description",
             "phone", "whatsapp", "address", "latitude", "longitude", "city", "city_name",
             "is_active", "car_count", "managers_count", "created_at",
+            *MURABAHA_FIELDS,
             "admin_email", "admin_password", "admin_first_name",
         )
         read_only_fields = ("id", "car_count", "managers_count", "created_at")
@@ -143,6 +150,7 @@ class DealerProfileSerializer(LogoUrlMixin, serializers.ModelSerializer):
         fields = (
             "id", "name", "slug", "logo", "logo_url", "description",
             "phone", "whatsapp", "address", "latitude", "longitude", "city", "city_name", "is_active",
+            *MURABAHA_FIELDS,
         )
         read_only_fields = ("id", "slug", "is_active")
 

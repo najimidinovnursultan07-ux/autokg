@@ -58,6 +58,22 @@ class Dealer(models.Model):
         related_name="dealers",
         verbose_name="Город",
     )
+    # Мурабаха (исламская рассрочка): салон задаёт свои условия,
+    # покупатель видит калькулятор платежа на странице автомобиля.
+    murabaha_enabled = models.BooleanField("Мурабаха доступна", default=False)
+    murabaha_markup_percent = models.DecimalField(
+        "Наценка мурабахи, % в год", max_digits=5, decimal_places=2, default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
+    murabaha_min_down_percent = models.PositiveSmallIntegerField(
+        "Минимальный первый взнос, %", default=30,
+        validators=[MinValueValidator(0), MaxValueValidator(90)],
+    )
+    murabaha_max_term_months = models.PositiveSmallIntegerField(
+        "Максимальный срок, мес.", default=24,
+        validators=[MinValueValidator(3), MaxValueValidator(120)],
+    )
+    murabaha_note = models.CharField("Условия мурабахи (примечание)", max_length=300, blank=True)
     is_active = models.BooleanField("Активен", default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

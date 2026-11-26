@@ -160,6 +160,18 @@ class CarDealerSerializer(serializers.Serializer):
     whatsapp = serializers.CharField(read_only=True)
     address = serializers.CharField(read_only=True)
     city_name = serializers.SerializerMethodField()
+    murabaha = serializers.SerializerMethodField()
+
+    def get_murabaha(self, obj):
+        """Условия мурабахи салона для калькулятора; None, если салон её не предлагает."""
+        if not obj.murabaha_enabled:
+            return None
+        return {
+            "markup_percent": float(obj.murabaha_markup_percent),
+            "min_down_percent": obj.murabaha_min_down_percent,
+            "max_term_months": obj.murabaha_max_term_months,
+            "note": obj.murabaha_note,
+        }
 
     def get_city_name(self, obj):
         return obj.city.name if obj.city else None

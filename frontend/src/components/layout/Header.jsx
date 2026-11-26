@@ -6,6 +6,7 @@ import { getCompareList } from '../../utils/compare.js'
 import LanguageSwitcher from './LanguageSwitcher.jsx'
 
 const links = [
+  { to: '/', label: 'Главная', end: true },
   { to: '/catalog', label: 'Каталог' },
   { to: '/dealers', label: 'Салоны' },
   { to: '/about', label: 'О проекте' },
@@ -52,7 +53,7 @@ export default function Header() {
 
         <nav className={`main-nav ${menuOpen ? 'main-nav--open' : ''}`}>
           {links.map((link) => (
-            <NavLink key={link.to} to={link.to} onClick={close} className={navClass()}>{link.label}</NavLink>
+            <NavLink key={link.to} to={link.to} end={link.end} onClick={close} className={navClass()}>{link.label}</NavLink>
           ))}
           {/* Ссылку на админку на публичном сайте не показываем — админ заходит по /admin */}
           {isDealer && (

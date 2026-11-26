@@ -1748,3 +1748,23 @@ body:has(.floating-whatsapp) .footer-bottom { padding-bottom: calc(90px + env(sa
 .lang-switcher-option:hover { color: var(--ink); }
 .lang-switcher-option--active, .lang-switcher-option--active:hover { background: var(--accent); color: #fff; }
 .lang-switcher-option:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ── Мурабаха: калькулятор на странице авто ── */
+.murabaha-inputs { display: grid; grid-template-columns: minmax(0, 1fr) 160px; gap: 18px; align-items: end; margin-top: 16px; }
+.murabaha-label-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; }
+.murabaha-label-row strong { color: var(--ink); font-size: 13px; }
+.murabaha-inputs input[type="range"] { width: 100%; accent-color: var(--accent); }
+.murabaha-result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 18px; margin-top: 18px; padding: 16px; border-radius: 10px; background: var(--soft); }
+.murabaha-monthly { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.murabaha-monthly span { color: var(--muted); font-size: 12px; }
+.murabaha-monthly strong { color: var(--accent); font-size: 26px; line-height: 1.15; }
+.murabaha-breakdown { margin: 0; }
+.murabaha-breakdown div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.murabaha-breakdown div:first-child { border-top: 0; }
+.murabaha-breakdown dt { color: var(--muted); }
+.murabaha-breakdown dd { margin: 0; font-weight: 700; color: var(--ink); text-align: right; }
+.murabaha-note { margin: 14px 0 4px; font-size: 13px; color: var(--ink); }
+.murabaha-card .field-hint { margin: 8px 0 0; }
+@media (max-width: 760px) {
+  .murabaha-inputs, .murabaha-result { grid-template-columns: 1fr; }
+}
