@@ -7,6 +7,7 @@
 """
 import json
 import logging
+import re
 from decimal import Decimal
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -37,7 +38,7 @@ RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
 SYSTEM_PROMPT = """Ты — ИИ-помощник сайта AutoBuy, площадки продажи автомобилей от проверенных автосалонов Кыргызстана.
 
 Как отвечать:
-- Отвечай на языке пользователя: по-русски или по-кыргызски. Коротко и по делу (2–5 предложений).
+- Язык: смотри на ПОСЛЕДНЕЕ сообщение пользователя. Написано по-кыргызски — отвечай только по-кыргызски, по-русски — только по-русски. Признаки кыргызского, даже если слова русские: буквы ң, ө, ү; окончания -лар/-лер/-дар/-тар, -ды/-ди/-ну/-нү, -бы/-би; слова «бер», «барбы», «кандай», «канча», «керек», «жок», «эмне». Например, «рекламаларды бер» — это кыргызский. Коротко и по делу (2–5 предложений).
 - Пиши обычным текстом: без markdown, звёздочек, решёток и таблиц. Для списка — строки, начинающиеся с «• ».
 - Помогай подобрать автомобиль. Когда пользователь ищет машину, ВСЕГДА вызывай search_cars и предлагай только найденные объявления. Никогда не выдумывай автомобили, цены и салоны.
 - Если ничего не нашлось — скажи об этом и предложи смягчить условия (бюджет, год, марку).
@@ -51,7 +52,13 @@ SYSTEM_PROMPT = """Ты — ИИ-помощник сайта AutoBuy, площа
 - Совет безопасности: не переводить предоплату до личного осмотра автомобиля.
 - Автосалонам: размещение по тарифам, страница /pricing. Поддержка AutoBuy в WhatsApp: {support_phone}.
 
-Не давай юридических и финансовых гарантий. На вопросы не про автомобили и AutoBuy вежливо отвечай, что помогаешь только с покупкой авто на сайте."""
+Реклама на сайте:
+- На сайте крутятся рекламные баннеры партнёров (банки, страховые, автосервисы и др.). Когда пользователь просит показать рекламу, рекламные предложения, акции, баннеры («реклама», «рекламалар», «рекламаларды бер») — вызови list_site_ads; баннеры покажутся карточками под ответом, кратко скажи, от кого они.
+- «Жарнама/жарнамалар» по-кыргызски обычно значит объявления о продаже авто — для них используй search_cars.
+- Если баннеров сейчас нет — так и скажи и предложи посмотреть автомобили.
+- Как разместить рекламу на AutoBuy: написать в поддержку в WhatsApp {support_phone}. Цены на рекламу не называй — их сообщает поддержка.
+
+Не давай юридических и финансовых гарантий. Отказывай только на темы, совсем не связанные с AutoBuy, автомобилями и рекламой на сайте — вежливо, на языке пользователя."""
 
 SEARCH_TOOL = {
     "name": "search_cars",
@@ -76,6 +83,12 @@ SEARCH_TOOL = {
             "sort": {"type": "string", "enum": ["cheapest", "newest", "lowest_mileage"]},
         },
     },
+}
+
+ADS_TOOL = {
+    "name": "list_site_ads",
+    "description": "Возвращает рекламные баннеры партнёров, которые сейчас показываются на сайте AutoBuy.",
+    "parameters": {"type": "object", "properties": {}},
 }
 
 SORTS = {"cheapest": "price", "newest": "-year", "lowest_mileage": "mileage"}
@@ -136,6 +149,13 @@ def search_cars(args):
     return total, list(qs[:MAX_RESULTS])
 
 
+def live_ads():
+    """Баннеры, которые сейчас показываются на сайте (по одному разу, даже если в нескольких местах)."""
+    from apps.ads.models import AdBanner
+
+    return list(AdBanner.objects.live().order_by("-priority", "id")[:MAX_RESULTS])
+
+
 def car_summary(car):
     """Короткое описание авто для модели и для карточки в чате."""
     cover = next((img for img in car.images.all() if img.is_cover), None) or next(iter(car.images.all()), None)
@@ -156,14 +176,28 @@ def car_summary(car):
     }
 
 
-def _call_gemini(contents, model):
+KYRGYZ_LETTERS = re.compile(r"[ңөүҢӨҮ]")
+KYRGYZ_WORDS = re.compile(
+    r"(?:\w(?:лар|лер|дар|дер|тар|тер)(?:ды|ди|ду|дү|ны|ни|ну|нү|га|ге|да|де)?"
+    r"|(?:^|\s)(?:бер|бериңиз|барбы|кандай|канча|керек|жок|эмне|кайда|кантип|салам|рахмат|сатып|унаа|болобу|беричи)(?=\s|$|[?!.,]))",
+    re.IGNORECASE,
+)
+KYRGYZ_REPLY_RULE = "Пользователь пишет по-кыргызски. Ответь ТОЛЬКО на кыргызском языке."
+
+
+def looks_kyrgyz(text):
+    """Грубая проверка: кыргызские буквы или типичные кыргызские слова/окончания."""
+    return bool(KYRGYZ_LETTERS.search(text) or KYRGYZ_WORDS.search(text))
+
+
+def _call_gemini(contents, model, extra_rule=""):
     key = getattr(settings, "GEMINI_API_KEY", "")
     if not key:
         raise AssistantUnavailable("GEMINI_API_KEY не задан")
     body = {
-        "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT.replace("{support_phone}", SUPPORT_PHONE)}]},
+        "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT.replace("{support_phone}", SUPPORT_PHONE) + extra_rule}]},
         "contents": contents,
-        "tools": [{"functionDeclarations": [SEARCH_TOOL]}],
+        "tools": [{"functionDeclarations": [SEARCH_TOOL, ADS_TOOL]}],
         "generationConfig": {"temperature": 0.4, "maxOutputTokens": 1024},
     }
     request = Request(
@@ -188,38 +222,47 @@ def _call_gemini(contents, model):
 def chat(history):
     """
     history — [{"role": "user"|"model", "text": "..."}], последнее сообщение от пользователя.
-    Возвращает (текст ответа, найденные машины — список моделей Car).
+    Возвращает (текст ответа, найденные машины — модели Car, рекламные баннеры — модели AdBanner).
     """
     contents = [{"role": m["role"], "parts": [{"text": m["text"]}]} for m in history]
+    extra_rule = "\n\n" + KYRGYZ_REPLY_RULE if looks_kyrgyz(history[-1]["text"]) else ""
     models = [settings.GEMINI_MODEL] + [m for m in settings.GEMINI_FALLBACK_MODELS if m != settings.GEMINI_MODEL]
     last_error = None
     for model in models:
         try:
-            return _chat_with_model(contents, model)
+            return _chat_with_model(contents, model, extra_rule)
         except ModelBusy as exc:
             last_error = exc
     raise last_error
 
 
-def _chat_with_model(contents, model):
+def _chat_with_model(contents, model, extra_rule=""):
     # Весь диалог с вызовами функций — на одной модели: подписи «мыслей»
     # (thoughtSignature) одной модели другая не принимает.
     contents = list(contents)
     found = {}
+    ads = {}
 
     for _ in range(MAX_TOOL_ROUNDS + 1):
-        data = _call_gemini(contents, model)
+        data = _call_gemini(contents, model, extra_rule)
         candidate = (data.get("candidates") or [{}])[0]
         parts = (candidate.get("content") or {}).get("parts") or []
         calls = [p["functionCall"] for p in parts if "functionCall" in p]
         if not calls:
             text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
-            return text, list(found.values())
+            return text, list(found.values()), list(ads.values())
 
         contents.append({"role": "model", "parts": parts})
         responses = []
         for call in calls:
-            if call.get("name") != "search_cars":
+            if call.get("name") == "list_site_ads":
+                banners = live_ads()
+                ads.update((banner.pk, banner) for banner in banners)
+                result = {
+                    "total_found": len(banners),
+                    "ads": [{"title": b.title, "advertiser": b.advertiser} for b in banners],
+                }
+            elif call.get("name") != "search_cars":
                 result = {"error": "unknown function"}
             else:
                 total, cars = search_cars(call.get("args") or {})
@@ -236,4 +279,4 @@ def _chat_with_model(contents, model):
             responses.append({"functionResponse": response})
         contents.append({"role": "user", "parts": responses})
 
-    return "", list(found.values())
+    return "", list(found.values()), list(ads.values())

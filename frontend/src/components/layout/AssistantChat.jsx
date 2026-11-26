@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { LoaderCircle, MessageCircle, SendHorizontal, Sparkles, X } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
+import { adClickUrl, trackAdImpression } from '../../api/ads.js'
 import { askAssistant } from '../../api/assistant.js'
 import { resolveMediaUrl } from '../../api/client.js'
 import { getErrorMessage } from '../../utils/errors.js'
@@ -57,6 +58,18 @@ function CarResult({ car, onOpen }) {
   )
 }
 
+function AdResult({ ad }) {
+  // Баннер в чате — тоже показ: считаем его в статистике рекламодателя
+  useEffect(() => { trackAdImpression(ad.id) }, [ad.id])
+  const image = ad.mobile_image_url || ad.image_url
+  return (
+    <a href={adClickUrl(ad.id)} className="assistant-ad" target="_blank" rel="noopener sponsored">
+      {image && <img src={resolveMediaUrl(image)} alt={ad.title} loading="lazy" />}
+      <span><small>Реклама</small> {ad.advertiser}</span>
+    </a>
+  )
+}
+
 export default function AssistantChat() {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
@@ -97,7 +110,7 @@ export default function AssistantChat() {
     setSending(true)
     try {
       const data = await askAssistant(next.slice(-MAX_HISTORY).map(({ role, text: body }) => ({ role, text: body })))
-      setMessages((current) => [...current, { role: 'model', text: data.reply, cars: data.cars || [] }])
+      setMessages((current) => [...current, { role: 'model', text: data.reply, cars: data.cars || [], ads: data.ads || [] }])
     } catch (requestError) {
       setError(getErrorMessage(requestError, 'Помощник временно недоступен. Попробуйте позже.'))
     } finally {
@@ -136,6 +149,11 @@ export default function AssistantChat() {
             {messages.map((message, index) => (
               <div key={index} className={`assistant-message assistant-message--${message.role}`}>
                 <p>{message.role === 'model' ? cleanText(message.text) : message.text}</p>
+                {message.ads?.length > 0 && (
+                  <div className="assistant-cars">
+                    {message.ads.map((ad) => <AdResult key={ad.id} ad={ad} />)}
+                  </div>
+                )}
                 {message.cars?.length > 0 && (
                   <div className="assistant-cars">
                     {message.cars.map((car) => <CarResult key={car.id} car={car} onOpen={() => setOpen(false)} />)}

@@ -77,7 +77,7 @@ class AssistantChatView(APIView):
     """
     POST /api/assistant/chat/ — ИИ-помощник (Gemini).
     Тело: {"messages": [{"role": "user"|"model", "text": "..."}]} — история диалога,
-    последнее сообщение от пользователя. Ответ: {"reply": "...", "cars": [...]}.
+    последнее сообщение от пользователя. Ответ: {"reply": "...", "cars": [...], "ads": [...]}.
     """
 
     authentication_classes = []
@@ -110,7 +110,7 @@ class AssistantChatView(APIView):
             return Response({"detail": "Напишите сообщение."}, status=400)
 
         try:
-            reply, cars = chat(history)
+            reply, cars, ads = chat(history)
         except AssistantUnavailable:
             return Response(
                 {"detail": "Помощник временно недоступен. Попробуйте позже или напишите нам в WhatsApp."},
@@ -125,6 +125,9 @@ class AssistantChatView(APIView):
                 file_url(image.image, request), "f_auto,q_auto,c_limit,w_400"
             ) if image else None
             cards.append(summary)
+        from apps.ads.serializers import PublicAdSerializer
+
+        ad_cards = PublicAdSerializer(ads, many=True, context={"request": request}).data
         if not reply:
-            reply = "Вот что нашлось в каталоге:" if cards else "Не получилось ответить. Переформулируйте вопрос, пожалуйста."
-        return Response({"reply": reply, "cars": cards})
+            reply = "Вот что нашлось:" if cards or ad_cards else "Не получилось ответить. Переформулируйте вопрос, пожалуйста."
+        return Response({"reply": reply, "cars": cards, "ads": ad_cards})

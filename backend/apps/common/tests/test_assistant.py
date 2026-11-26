@@ -13,9 +13,9 @@ def text_reply(text):
     return {"candidates": [{"content": {"role": "model", "parts": [{"text": text}]}}]}
 
 
-def tool_call(**args):
+def tool_call(name="search_cars", **args):
     return {"candidates": [{"content": {"role": "model", "parts": [
-        {"functionCall": {"name": "search_cars", "args": args}},
+        {"functionCall": {"name": name, "args": args}},
     ]}}]}
 
 
@@ -35,7 +35,7 @@ class AssistantTests(MarketplaceTestCase):
         gemini.return_value = text_reply("Здравствуйте! Чем помочь?")
         response = self.ask()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {"reply": "Здравствуйте! Чем помочь?", "cars": []})
+        self.assertEqual(response.data, {"reply": "Здравствуйте! Чем помочь?", "cars": [], "ads": []})
 
     @mock.patch("apps.common.assistant._call_gemini")
     def test_search_returns_only_real_public_cars(self, gemini):
@@ -75,6 +75,48 @@ class AssistantTests(MarketplaceTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["reply"], "Ответ запасной модели")
         self.assertNotEqual(gemini.call_args_list[0].args[1], gemini.call_args_list[1].args[1])
+
+    @mock.patch("apps.common.assistant._call_gemini")
+    def test_shows_live_ads(self, gemini):
+        import datetime
+
+        from django.utils import timezone
+
+        from apps.ads.models import AdBanner
+        from apps.common.testing import make_image
+
+        def banner(**extra):
+            return AdBanner.objects.create(
+                title="Автокредит", advertiser="Банк", placement="home_top",
+                image=make_image("ad.png", fmt="PNG"),
+                link_url="https://bank.example.kg", **extra,
+            )
+
+        live = banner()
+        banner(is_active=False)
+        banner(ends_on=timezone.localdate() - datetime.timedelta(days=1))
+        gemini.side_effect = [tool_call("list_site_ads"), text_reply("Сейчас на сайте реклама банка.")]
+
+        response = self.ask("рекламаларды бер")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([ad["id"] for ad in response.data["ads"]], [live.pk])
+        self.assertNotIn("link_url", response.data["ads"][0])  # переход только через /ads/<id>/click/
+
+    def test_kyrgyz_detection(self):
+        from apps.common.assistant import looks_kyrgyz
+
+        for text in ("рекламаларды бер", "камри барбы", "Мурабаха деген эмне?", "Унаа керек", "Сүрөт"):
+            self.assertTrue(looks_kyrgyz(text), text)
+        for text in ("Покажи рекламу", "Ищу Toyota Camry до 25000", "Какие авто по мурабахе?", "Привет"):
+            self.assertFalse(looks_kyrgyz(text), text)
+
+    @mock.patch("apps.common.assistant._call_gemini")
+    def test_kyrgyz_question_gets_kyrgyz_rule(self, gemini):
+        gemini.return_value = text_reply("Саламатсызбы!")
+        self.ask("рекламаларды бер")
+        self.assertIn("кыргызском", gemini.call_args.args[2])
+        self.ask("Покажи рекламу")
+        self.assertEqual(gemini.call_args.args[2], "")
 
     def test_validation(self):
         for body in ({}, {"messages": []}, {"messages": [{"role": "user", "text": "  "}]},

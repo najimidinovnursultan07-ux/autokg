@@ -1401,6 +1401,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .assistant-car-info > span { color: var(--accent); font-size: 13px; font-weight: 700; }
 .assistant-car-info small { color: var(--muted); font-size: 11px; }
 .assistant-car-info .car-badge--murabaha { position: static; margin-top: 2px; padding: 2px 7px; font-size: 10px; font-style: normal; }
+.assistant-ad { display: block; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: white; color: var(--ink); text-decoration: none; transition: border-color .15s; }
+.assistant-ad:hover { border-color: var(--accent); }
+.assistant-ad img { display: block; width: 100%; max-height: 160px; object-fit: cover; }
+.assistant-ad span { display: block; padding: 7px 10px; font-size: 12px; font-weight: 700; }
+.assistant-ad small { margin-right: 4px; color: var(--muted); font-size: 10px; font-weight: 400; text-transform: uppercase; }
 .assistant-error { margin: 0; padding: 8px 12px; border-radius: 10px; background: #fef2f2; color: #b91c1c; font-size: 13px; }
 .assistant-form { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); background: white; }
 .assistant-form input { min-width: 0; flex: 1; height: 42px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; font: inherit; font-size: 14px; }
