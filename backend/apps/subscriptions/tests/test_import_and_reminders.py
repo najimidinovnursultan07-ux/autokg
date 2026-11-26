@@ -178,7 +178,7 @@ class ReminderTests(MarketplaceTestCase):
         self.assertEqual(resp.status_code, 201)
         text = self.telegram.call_args[0][0]
         self.assertIn("Салон А", text)
-        self.assertIn("8 070 сом", text)
+        self.assertIn("5 670 сом", text)
         self.assertIn("звоните после 14", text)
 
     def test_cron_endpoint_requires_secret(self):
