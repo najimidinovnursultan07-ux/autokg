@@ -77,7 +77,7 @@ class AssistantChatView(APIView):
     """
     POST /api/assistant/chat/ — ИИ-помощник (Gemini).
     Тело: {"messages": [{"role": "user"|"model", "text": "..."}]} — история диалога,
-    последнее сообщение от пользователя. Ответ: {"reply": "...", "cars": [...], "ads": [...]}.
+    последнее сообщение от пользователя. Ответ: {"reply": "...", "cars": [...], "ads": [...], "dealers": [...]}.
     """
 
     authentication_classes = []
@@ -110,7 +110,7 @@ class AssistantChatView(APIView):
             return Response({"detail": "Напишите сообщение."}, status=400)
 
         try:
-            reply, cars, ads = chat(history)
+            reply, cars, ads, dealers = chat(history)
         except AssistantUnavailable:
             return Response(
                 {"detail": "Помощник временно недоступен. Попробуйте позже или напишите нам в WhatsApp."},
@@ -127,7 +127,14 @@ class AssistantChatView(APIView):
             cards.append(summary)
         from apps.ads.serializers import PublicAdSerializer
 
+        from apps.dealers.serializers import DealerPublicSerializer
+
         ad_cards = PublicAdSerializer(ads, many=True, context={"request": request}).data
+        dealer_cards = [
+            {key: item[key] for key in ("id", "slug", "name", "logo_url", "city_name", "car_count", "rating")}
+            for item in DealerPublicSerializer(dealers, many=True, context={"request": request}).data
+        ]
         if not reply:
-            reply = "Вот что нашлось:" if cards or ad_cards else "Не получилось ответить. Переформулируйте вопрос, пожалуйста."
-        return Response({"reply": reply, "cars": cards, "ads": ad_cards})
+            found_any = cards or ad_cards or dealer_cards
+            reply = "Вот что нашлось:" if found_any else "Не получилось ответить. Переформулируйте вопрос, пожалуйста."
+        return Response({"reply": reply, "cars": cards, "ads": ad_cards, "dealers": dealer_cards})

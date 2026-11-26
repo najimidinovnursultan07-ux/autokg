@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { LoaderCircle, MessageCircle, SendHorizontal, Sparkles, X } from 'lucide-react'
+import { Building2, LoaderCircle, MessageCircle, SendHorizontal, Sparkles, Star, X } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { adClickUrl, trackAdImpression } from '../../api/ads.js'
 import { askAssistant } from '../../api/assistant.js'
@@ -58,6 +58,24 @@ function CarResult({ car, onOpen }) {
   )
 }
 
+function DealerResult({ dealer, onOpen }) {
+  return (
+    <Link to={`/dealers/${dealer.slug}`} className="assistant-car assistant-dealer" onClick={onOpen}>
+      <span className="assistant-dealer-logo">
+        {dealer.logo_url ? <img src={resolveMediaUrl(dealer.logo_url)} alt="" loading="lazy" /> : <Building2 size={22} />}
+      </span>
+      <span className="assistant-car-info">
+        <strong>{dealer.name}</strong>
+        <small>{dealer.city_name || 'Кыргызстан'}</small>
+        <small>
+          {`${dealer.car_count} авто`}
+          {dealer.rating != null && <> · <Star size={11} /> {dealer.rating}</>}
+        </small>
+      </span>
+    </Link>
+  )
+}
+
 function AdResult({ ad }) {
   // Баннер в чате — тоже показ: считаем его в статистике рекламодателя
   useEffect(() => { trackAdImpression(ad.id) }, [ad.id])
@@ -110,7 +128,7 @@ export default function AssistantChat() {
     setSending(true)
     try {
       const data = await askAssistant(next.slice(-MAX_HISTORY).map(({ role, text: body }) => ({ role, text: body })))
-      setMessages((current) => [...current, { role: 'model', text: data.reply, cars: data.cars || [], ads: data.ads || [] }])
+      setMessages((current) => [...current, { role: 'model', text: data.reply, cars: data.cars || [], ads: data.ads || [], dealers: data.dealers || [] }])
     } catch (requestError) {
       setError(getErrorMessage(requestError, 'Помощник временно недоступен. Попробуйте позже.'))
     } finally {
@@ -149,6 +167,11 @@ export default function AssistantChat() {
             {messages.map((message, index) => (
               <div key={index} className={`assistant-message assistant-message--${message.role}`}>
                 <p>{message.role === 'model' ? cleanText(message.text) : message.text}</p>
+                {message.dealers?.length > 0 && (
+                  <div className="assistant-cars">
+                    {message.dealers.map((dealer) => <DealerResult key={dealer.id} dealer={dealer} onOpen={() => setOpen(false)} />)}
+                  </div>
+                )}
                 {message.ads?.length > 0 && (
                   <div className="assistant-cars">
                     {message.ads.map((ad) => <AdResult key={ad.id} ad={ad} />)}

@@ -42,7 +42,8 @@ SYSTEM_PROMPT = """Ты — ИИ-помощник сайта AutoBuy, площа
 - Пиши обычным текстом: без markdown, звёздочек, решёток и таблиц. Для списка — строки, начинающиеся с «• ».
 - Помогай подобрать автомобиль. Когда пользователь ищет машину, ВСЕГДА вызывай search_cars и предлагай только найденные объявления. Никогда не выдумывай автомобили, цены и салоны.
 - Если ничего не нашлось — скажи об этом и предложи смягчить условия (бюджет, год, марку).
-- Найденные автомобили покажутся пользователю карточками под твоим ответом, поэтому не перечисляй ссылки — достаточно кратко сказать, что подходит и почему.
+- Про автосалоны (есть ли салон, где находится, телефон, рейтинг, сколько машин, есть ли мурабаха) — вызывай search_dealers. Машины конкретного салона — search_cars с параметром dealer. Название салона передавай как написал пользователь.
+- Найденные автомобили и салоны покажутся пользователю карточками под твоим ответом, поэтому не перечисляй ссылки — достаточно кратко сказать, что подходит и почему.
 - Цены бывают в сомах и долларах. Бюджет пользователя передавай в search_cars в той валюте, которую он назвал.
 
 Что ты знаешь о сайте:
@@ -79,8 +80,22 @@ SEARCH_TOOL = {
             "year_max": {"type": "integer"},
             "mileage_max": {"type": "integer"},
             "city": {"type": "string", "description": "Город, например 'Бишкек'"},
+            "dealer": {"type": "string", "description": "Название автосалона, например 'Магнат'"},
             "murabaha": {"type": "boolean", "description": "true — только авто, доступные по мурабахе"},
             "sort": {"type": "string", "enum": ["cheapest", "newest", "lowest_mileage"]},
+        },
+    },
+}
+
+DEALERS_TOOL = {
+    "name": "search_dealers",
+    "description": "Ищет автосалоны на AutoBuy: адрес, телефон, рейтинг, число машин, условия мурабахи. Без параметров — все салоны.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Название салона, например 'Магнат'"},
+            "city": {"type": "string"},
+            "murabaha": {"type": "boolean", "description": "true — только салоны с мурабахой"},
         },
     },
 }
@@ -127,6 +142,8 @@ def search_cars(args):
             qs = qs.filter(**{field: args[field]})
     if args.get("city"):
         qs = qs.filter(city__name__icontains=str(args["city"]).strip())
+    if args.get("dealer"):
+        qs = qs.filter(_dealer_name_q(args["dealer"], prefix="dealer__"))
     if args.get("year_min"):
         qs = qs.filter(year__gte=int(args["year_min"]))
     if args.get("year_max"):
@@ -147,6 +164,58 @@ def search_cars(args):
     qs = qs.order_by(SORTS.get(args.get("sort"), "-published_at"), "-created_at")
     total = qs.count()
     return total, list(qs[:MAX_RESULTS])
+
+
+def _dealer_name_q(name, prefix=""):
+    """Салон по названию: и кириллицей, и латиницей («Магнат», «magnat»)."""
+    from apps.dealers.models import make_ascii_slug
+
+    name = str(name).strip()
+    q = Q(**{f"{prefix}name__icontains": name})
+    slug = make_ascii_slug(name)
+    if slug:
+        q |= Q(**{f"{prefix}slug__icontains": slug})
+    return q
+
+
+def search_dealers(args):
+    from apps.dealers.models import Dealer
+    from apps.dealers.views import with_public_info
+
+    qs = with_public_info(Dealer.objects.filter(is_active=True))
+    if args.get("query"):
+        qs = qs.filter(_dealer_name_q(args["query"]))
+    if args.get("city"):
+        qs = qs.filter(city__name__icontains=str(args["city"]).strip())
+    if args.get("murabaha"):
+        qs = qs.filter(murabaha_enabled=True)
+    qs = qs.order_by("-list_priority", "name")
+    return qs.count(), list(qs[:MAX_RESULTS])
+
+
+def dealer_summary(dealer):
+    rating = getattr(dealer, "rating", None)
+    data = {
+        "slug": dealer.slug,
+        "name": dealer.name,
+        "city": dealer.city.name if dealer.city_id else "",
+        "address": dealer.address,
+        "phone": dealer.phone,
+        "whatsapp": dealer.whatsapp,
+        "cars_on_site": getattr(dealer, "car_count", 0),
+        "rating": round(float(rating), 1) if rating is not None else None,
+        "reviews_count": getattr(dealer, "reviews_count", 0),
+        "verified": bool(getattr(dealer, "is_verified", False)),
+        "url": f"/dealers/{dealer.slug}",
+        "murabaha": None,
+    }
+    if dealer.murabaha_enabled:
+        data["murabaha"] = {
+            "markup_percent_per_year": float(dealer.murabaha_markup_percent),
+            "min_down_percent": dealer.murabaha_min_down_percent,
+            "max_term_months": dealer.murabaha_max_term_months,
+        }
+    return data
 
 
 def live_ads():
@@ -197,7 +266,7 @@ def _call_gemini(contents, model, extra_rule=""):
     body = {
         "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT.replace("{support_phone}", SUPPORT_PHONE) + extra_rule}]},
         "contents": contents,
-        "tools": [{"functionDeclarations": [SEARCH_TOOL, ADS_TOOL]}],
+        "tools": [{"functionDeclarations": [SEARCH_TOOL, DEALERS_TOOL, ADS_TOOL]}],
         "generationConfig": {"temperature": 0.4, "maxOutputTokens": 1024},
     }
     request = Request(
@@ -222,7 +291,7 @@ def _call_gemini(contents, model, extra_rule=""):
 def chat(history):
     """
     history — [{"role": "user"|"model", "text": "..."}], последнее сообщение от пользователя.
-    Возвращает (текст ответа, найденные машины — модели Car, рекламные баннеры — модели AdBanner).
+    Возвращает (текст, машины — модели Car, баннеры — AdBanner, салоны — Dealer).
     """
     contents = [{"role": m["role"], "parts": [{"text": m["text"]}]} for m in history]
     extra_rule = "\n\n" + KYRGYZ_REPLY_RULE if looks_kyrgyz(history[-1]["text"]) else ""
@@ -242,6 +311,7 @@ def _chat_with_model(contents, model, extra_rule=""):
     contents = list(contents)
     found = {}
     ads = {}
+    dealers = {}
 
     for _ in range(MAX_TOOL_ROUNDS + 1):
         data = _call_gemini(contents, model, extra_rule)
@@ -250,7 +320,7 @@ def _chat_with_model(contents, model, extra_rule=""):
         calls = [p["functionCall"] for p in parts if "functionCall" in p]
         if not calls:
             text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
-            return text, list(found.values()), list(ads.values())
+            return text, list(found.values()), list(ads.values()), list(dealers.values())
 
         contents.append({"role": "model", "parts": parts})
         responses = []
@@ -262,6 +332,10 @@ def _chat_with_model(contents, model, extra_rule=""):
                     "total_found": len(banners),
                     "ads": [{"title": b.title, "advertiser": b.advertiser} for b in banners],
                 }
+            elif call.get("name") == "search_dealers":
+                total, items = search_dealers(call.get("args") or {})
+                dealers.update((dealer.pk, dealer) for dealer in items)
+                result = {"total_found": total, "dealers": [dealer_summary(d) for d in items]}
             elif call.get("name") != "search_cars":
                 result = {"error": "unknown function"}
             else:
@@ -279,4 +353,4 @@ def _chat_with_model(contents, model, extra_rule=""):
             responses.append({"functionResponse": response})
         contents.append({"role": "user", "parts": responses})
 
-    return "", list(found.values()), list(ads.values())
+    return "", list(found.values()), list(ads.values()), list(dealers.values())

@@ -35,7 +35,7 @@ class AssistantTests(MarketplaceTestCase):
         gemini.return_value = text_reply("Здравствуйте! Чем помочь?")
         response = self.ask()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {"reply": "Здравствуйте! Чем помочь?", "cars": [], "ads": []})
+        self.assertEqual(response.data, {"reply": "Здравствуйте! Чем помочь?", "cars": [], "ads": [], "dealers": []})
 
     @mock.patch("apps.common.assistant._call_gemini")
     def test_search_returns_only_real_public_cars(self, gemini):
@@ -101,6 +101,27 @@ class AssistantTests(MarketplaceTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual([ad["id"] for ad in response.data["ads"]], [live.pk])
         self.assertNotIn("link_url", response.data["ads"][0])  # переход только через /ads/<id>/click/
+
+    @mock.patch("apps.common.assistant._call_gemini")
+    def test_dealer_search_by_name_cyrillic_and_latin(self, gemini):
+        self.dealer_a.name = "Магнат"
+        self.dealer_a.slug = "magnat"
+        self.dealer_a.save()
+        for query in ("Магнат", "Magnat"):
+            gemini.side_effect = [tool_call("search_dealers", query=query), text_reply("Да, есть.")]
+            response = self.ask(f"{query} автосалон барбы?")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual([d["slug"] for d in response.data["dealers"]], ["magnat"], query)
+            sent = gemini.call_args_list[-1].args[0][-1]["parts"][0]["functionResponse"]["response"]
+            self.assertEqual(sent["dealers"][0]["url"], "/dealers/magnat")
+
+    @mock.patch("apps.common.assistant._call_gemini")
+    def test_cars_of_dealer(self, gemini):
+        own = self.make_car(self.dealer_a)
+        self.make_car(self.dealer_b)
+        gemini.side_effect = [tool_call(dealer=self.dealer_a.name), text_reply("Вот машины салона.")]
+        response = self.ask("Какие машины у салона?")
+        self.assertEqual([car["id"] for car in response.data["cars"]], [str(own.pk)])
 
     def test_kyrgyz_detection(self):
         from apps.common.assistant import looks_kyrgyz
