@@ -1768,3 +1768,27 @@ body:has(.floating-whatsapp) .footer-bottom { padding-bottom: calc(90px + env(sa
 @media (max-width: 760px) {
   .murabaha-inputs, .murabaha-result { grid-template-columns: 1fr; }
 }
+
+/* Бейджи на карточке — в ряд, а не друг на друге */
+.car-badges .car-badge { position: static; }
+.car-badge--murabaha {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 6px;
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: white; font-size: 11px; font-weight: 800;
+  letter-spacing: .03em;
+  box-shadow: 0 2px 8px rgba(13,148,136,.45);
+}
+
+/* ── Кабинет: раздел «Мурабаха» ── */
+.murabaha-cars { margin-top: 18px; }
+.murabaha-cars .admin-search-form { margin-bottom: 14px; }
+.murabaha-off-hint { margin: 0 0 12px; color: #b45309; }
+.murabaha-car-list { margin: 0; padding: 0; list-style: none; }
+.murabaha-car-list li { border-top: 1px solid var(--line); }
+.murabaha-car-list li:first-child { border-top: 0; }
+.murabaha-car-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; cursor: pointer; }
+.murabaha-car-row input { width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--accent); }
+.murabaha-car-info { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.murabaha-car-info strong { overflow: hidden; color: var(--ink); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.murabaha-car-info small { color: var(--muted); font-size: 12px; }

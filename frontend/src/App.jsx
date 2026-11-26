@@ -22,6 +22,7 @@ const DealersPage = lazy(() => import('./pages/DealersPage.jsx'))
 const DealerDetailPage = lazy(() => import('./pages/DealerDetailPage.jsx'))
 const DealerDashboardPage = lazy(() => import('./pages/DealerDashboardPage.jsx'))
 const DealerProfilePage = lazy(() => import('./pages/DealerProfilePage.jsx'))
+const DealerMurabahaPage = lazy(() => import('./pages/DealerMurabahaPage.jsx'))
 const AdminDealersPage = lazy(() => import('./pages/AdminDealersPage.jsx'))
 const AdminManagersPage = lazy(() => import('./pages/AdminManagersPage.jsx'))
 const AdminReviewsPage = lazy(() => import('./pages/AdminReviewsPage.jsx'))
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="dashboard/cars/new" element={<CarFormPage />} />
             <Route path="dashboard/cars/:id/edit" element={<CarFormPage />} />
             <Route path="dashboard/profile" element={<DealerProfilePage />} />
+            <Route path="dashboard/murabaha" element={<DealerMurabahaPage />} />
             <Route path="dashboard/subscription" element={<MySubscriptionPage />} />
             <Route path="dashboard/report" element={<DealerReportPage />} />
             <Route path="dashboard/payments" element={<PaymentHistoryPage />} />

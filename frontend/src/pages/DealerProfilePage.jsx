@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Building2, ExternalLink, ImagePlus, Landmark, LoaderCircle } from 'lucide-react'
+import { Building2, ExternalLink, ImagePlus, LoaderCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getLookups } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
@@ -10,10 +10,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { getErrorMessage } from '../utils/errors.js'
 
-const FIELDS = [
-  'name', 'description', 'phone', 'whatsapp', 'address', 'city', 'latitude', 'longitude',
-  'murabaha_enabled', 'murabaha_markup_percent', 'murabaha_min_down_percent', 'murabaha_max_term_months', 'murabaha_note',
-]
+const FIELDS = ['name', 'description', 'phone', 'whatsapp', 'address', 'city', 'latitude', 'longitude']
 const MAX_LOGO = 5 * 1024 * 1024
 
 export default function DealerProfilePage() {
@@ -113,21 +110,6 @@ export default function DealerProfilePage() {
             onChange={(latitude, longitude) => setForm((current) => ({ ...current, latitude, longitude }))}
           />
           <label className="field-label">Описание<textarea rows="4" value={form.description} onChange={set('description')} placeholder="Расскажите о салоне: опыт, гарантии, услуги…" /></label>
-        </section>
-        <section className="form-section">
-          <div className="form-section-heading"><span><Landmark size={15} /></span><div><h2>Мурабаха</h2><p>Покупка в рассрочку без процентов: фиксированная наценка, известная заранее. Отметьте в объявлениях, какие автомобили продаются по мурабахе — у них появится калькулятор платежа.</p></div></div>
-          <label className="checkbox-label">
-            <input type="checkbox" checked={Boolean(form.murabaha_enabled)} onChange={(e) => setForm({ ...form, murabaha_enabled: e.target.checked })} />
-            Салон продаёт автомобили по мурабахе
-          </label>
-          {form.murabaha_enabled && <>
-            <div className="form-grid">
-              <label className="field-label">Наценка, % в год<input type="number" required min="0" max="100" step="0.1" value={form.murabaha_markup_percent} onChange={set('murabaha_markup_percent')} placeholder="12" /></label>
-              <label className="field-label">Минимальный первый взнос, %<input type="number" required min="0" max="90" step="1" value={form.murabaha_min_down_percent} onChange={set('murabaha_min_down_percent')} placeholder="30" /></label>
-              <label className="field-label">Максимальный срок, мес.<input type="number" required min="3" max="120" step="1" value={form.murabaha_max_term_months} onChange={set('murabaha_max_term_months')} placeholder="24" /></label>
-            </div>
-            <label className="field-label">Примечание для покупателей<input maxLength="300" value={form.murabaha_note} onChange={set('murabaha_note')} placeholder="Например: без поручителей, оформление за 1 день" /></label>
-          </>}
         </section>
         <div className="form-actions">
           <button className="button button--primary" type="submit" disabled={saving}>{saving && <LoaderCircle className="spin" size={16} />} Сохранить</button>

@@ -26,6 +26,7 @@ const emptyFilters = {
   drive_type: '',
   body_type: '',
   condition: '',
+  murabaha: '',
   ordering: '-published_at',
 }
 
@@ -226,6 +227,7 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
                 condition: 'Состояние',
               }[field]}<select value={filters[field]} onChange={(e) => update(field, e.target.value)}><option value="">Не важно</option>{options.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
             ))}
+            <label className="checkbox-label"><input type="checkbox" checked={filters.murabaha === 'true'} onChange={(e) => update('murabaha', e.target.checked ? 'true' : '')} /> Можно купить по мурабахе</label>
             <label className="field-label">Сортировка<select value={filters.ordering} onChange={(e) => update('ordering', e.target.value)}><option value="-published_at">Сначала новые</option><option value="price">Сначала дешевле</option><option value="-price">Сначала дороже</option><option value="-year">Сначала новее по году</option><option value="mileage">По пробегу</option></select></label>
             <button type="submit" className="button button--primary filter-submit"><Search size={16} /> Показать автомобили</button>
             <button type="button" className="filter-reset" onClick={clearFilters}>Сбросить фильтры</button>

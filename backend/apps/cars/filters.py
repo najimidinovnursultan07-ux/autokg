@@ -15,6 +15,13 @@ class CarFilter(django_filters.FilterSet):
     year_max = django_filters.NumberFilter(field_name="year", lookup_expr="lte")
     mileage_min = django_filters.NumberFilter(field_name="mileage", lookup_expr="gte")
     mileage_max = django_filters.NumberFilter(field_name="mileage", lookup_expr="lte")
+    # Только авто, отмеченные салоном, и только если салон включил мурабаху
+    murabaha = django_filters.BooleanFilter(method="filter_murabaha")
+
+    def filter_murabaha(self, queryset, name, value):
+        if value:
+            return queryset.filter(murabaha_available=True, dealer__murabaha_enabled=True)
+        return queryset
 
     class Meta:
         model = Car

@@ -54,6 +54,16 @@ class MurabahaTests(MarketplaceTestCase):
         self.assertEqual(response.status_code, 200, response.data)
         self.assertIsNotNone(self.murabaha_of(car))
 
+    def test_catalog_filter(self):
+        marked = self.make_car(self.dealer_a, murabaha_available=True)
+        self.make_car(self.dealer_a)
+        self.make_car(self.dealer_b, murabaha_available=True)  # салон Б мурабаху не включал
+        self.enable_for_dealer()
+        self.client.force_authenticate(None)
+        ids = [car["id"] for car in self.client.get("/api/cars/", {"murabaha": "true"}).data["results"]]
+        self.assertEqual(ids, [str(marked.pk)])
+        self.assertEqual(self.client.get("/api/cars/").data["count"], 3)
+
     def test_validation(self):
         self.client.force_authenticate(self.manager_a)
         for bad in (
