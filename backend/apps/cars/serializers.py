@@ -160,18 +160,6 @@ class CarDealerSerializer(serializers.Serializer):
     whatsapp = serializers.CharField(read_only=True)
     address = serializers.CharField(read_only=True)
     city_name = serializers.SerializerMethodField()
-    murabaha = serializers.SerializerMethodField()
-
-    def get_murabaha(self, obj):
-        """Условия мурабахи салона для калькулятора; None, если салон её не предлагает."""
-        if not obj.murabaha_enabled:
-            return None
-        return {
-            "markup_percent": float(obj.murabaha_markup_percent),
-            "min_down_percent": obj.murabaha_min_down_percent,
-            "max_term_months": obj.murabaha_max_term_months,
-            "note": obj.murabaha_note,
-        }
 
     def get_city_name(self, obj):
         return obj.city.name if obj.city else None
@@ -192,6 +180,7 @@ class CarSerializer(serializers.ModelSerializer):
     dealer = serializers.PrimaryKeyRelatedField(read_only=True)
     contact_phone = serializers.CharField(max_length=16, required=False, allow_blank=True)
     dealer_detail = CarDealerSerializer(source="dealer", read_only=True)
+    murabaha = serializers.SerializerMethodField()
     images = CarImageSerializer(many=True, read_only=True)
     is_top = serializers.SerializerMethodField()
     is_highlighted = serializers.SerializerMethodField()
@@ -253,6 +242,18 @@ class CarSerializer(serializers.ModelSerializer):
             car=obj, promotion_type="highlight", is_active=True, expires_at__gt=timezone.now()
         ).exists()
 
+    def get_murabaha(self, obj):
+        """Условия мурабахи для калькулятора: только если авто отмечено и салон её предлагает."""
+        dealer = obj.dealer
+        if not (obj.murabaha_available and dealer and dealer.murabaha_enabled):
+            return None
+        return {
+            "markup_percent": float(dealer.murabaha_markup_percent),
+            "min_down_percent": dealer.murabaha_min_down_percent,
+            "max_term_months": dealer.murabaha_max_term_months,
+            "note": dealer.murabaha_note,
+        }
+
     def get_is_urgent(self, obj):
         from django.utils import timezone
         from apps.payments.models import Promotion
@@ -292,6 +293,8 @@ class CarSerializer(serializers.ModelSerializer):
             "body_type",
             "condition",
             "color",
+            "murabaha_available",
+            "murabaha",
             "description",
             "contact_phone",
             "status",

@@ -198,6 +198,8 @@ class Car(models.Model):
     body_type = models.CharField(max_length=16, choices=CarBodyType.choices)
     condition = models.CharField(max_length=16, choices=CarCondition.choices)
     color = models.CharField(max_length=50, blank=True)
+    # Продаётся ли это авто по мурабахе (условия — в профиле салона)
+    murabaha_available = models.BooleanField("Доступна мурабаха", default=False)
     description = models.TextField(max_length=10_000)
     contact_phone = models.CharField(
         max_length=16,

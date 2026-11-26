@@ -115,7 +115,7 @@ export default function DealerProfilePage() {
           <label className="field-label">Описание<textarea rows="4" value={form.description} onChange={set('description')} placeholder="Расскажите о салоне: опыт, гарантии, услуги…" /></label>
         </section>
         <section className="form-section">
-          <div className="form-section-heading"><span><Landmark size={15} /></span><div><h2>Мурабаха</h2><p>Покупка в рассрочку без процентов: фиксированная наценка, известная заранее. Покупатели увидят калькулятор платежа на страницах ваших автомобилей.</p></div></div>
+          <div className="form-section-heading"><span><Landmark size={15} /></span><div><h2>Мурабаха</h2><p>Покупка в рассрочку без процентов: фиксированная наценка, известная заранее. Отметьте в объявлениях, какие автомобили продаются по мурабахе — у них появится калькулятор платежа.</p></div></div>
           <label className="checkbox-label">
             <input type="checkbox" checked={Boolean(form.murabaha_enabled)} onChange={(e) => setForm({ ...form, murabaha_enabled: e.target.checked })} />
             Салон продаёт автомобили по мурабахе

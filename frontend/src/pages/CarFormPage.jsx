@@ -36,6 +36,7 @@ const initialForm = {
   body_type: 'sedan',
   condition: 'used',
   color: '',
+  murabaha_available: false,
   description: '',
   contact_phone: '',
 }
@@ -105,6 +106,7 @@ export default function CarFormPage() {
             body_type: car.body_type,
             condition: car.condition,
             color: car.color || '',
+            murabaha_available: Boolean(car.murabaha_available),
             description: car.description,
             contact_phone: car.contact_phone,
           })
@@ -258,6 +260,11 @@ export default function CarFormPage() {
             <label className="field-label">Цвет<input maxLength="50" value={form.color} onChange={update('color')} placeholder="Белый" /></label>
             <label className="field-label">Телефон для связи<input type="tel" value={form.contact_phone} onChange={update('contact_phone')} placeholder="По умолчанию — телефон салона" />{fieldError('contact_phone')}</label>
           </div>
+          <label className="checkbox-label">
+            <input type="checkbox" checked={form.murabaha_available} onChange={(e) => setForm((value) => ({ ...value, murabaha_available: e.target.checked }))} />
+            Доступна покупка по мурабахе
+          </label>
+          <p className="field-hint">Покупатель увидит калькулятор платежа. Наценку, взнос и срок задайте в <Link className="text-link" to="/dashboard/profile">профиле салона</Link>.</p>
           <label className="field-label">Описание<textarea rows="5" maxLength="10000" required value={form.description} onChange={update('description')} placeholder="Состояние, комплектация, история обслуживания…" /><small>{form.description.length} / 10 000</small></label>
         </section>
 
