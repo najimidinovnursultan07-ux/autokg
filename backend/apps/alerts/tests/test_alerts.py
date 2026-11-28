@@ -182,7 +182,7 @@ class RunAlertsTests(AlertsTestCase):
         watch.refresh_from_db()
         self.assertFalse(watch.is_active)
 
-    def test_blocked_chat_is_disabled(self):
+    def test_blocked_chat_keeps_subscriptions_and_resumes(self):
         search = self.subscribe_search({})
         self.publish()
 
@@ -193,8 +193,14 @@ class RunAlertsTests(AlertsTestCase):
             result = run_alerts()
         self.assertEqual(result["blocked"], 1)
         search.refresh_from_db()
-        self.assertFalse(search.is_active)
+        self.assertTrue(search.is_active)  # подписку не теряем
         self.assertTrue(TelegramChat.objects.get(chat_id=CHAT_ID).is_blocked)
+
+        self.sent.clear()
+        self.assertEqual(run_alerts()["cars_sent"], 0)  # недоступному чату не пишем
+        self.webhook({"message": {"chat": {"id": CHAT_ID}, "text": "/list"}})  # человек вернулся
+        self.assertFalse(TelegramChat.objects.get(chat_id=CHAT_ID).is_blocked)
+        self.assertEqual(run_alerts()["cars_sent"], 1)
 
     def test_unclaimed_links_are_cleaned_up(self):
         self.client.post("/api/alerts/searches/", {"filters": {}}, format="json")

@@ -194,6 +194,7 @@ def handle_message(message):
     command, _, argument = text.partition(" ")
     command = command.split("@")[0].lower()
     buttons = None
+    logger.info("Бот уведомлений: чат %s, команда %s%s", chat.pk, command, " (ссылка)" if argument.strip() else "")
     if command == "/start":
         reply = claim(chat, argument.strip()) if argument.strip() else WELCOME
     elif command == "/list":
@@ -233,18 +234,22 @@ def handle_update(update):
             handle_message(update["message"])
         elif "callback_query" in update:
             handle_callback(update["callback_query"])
-    except telegram.BotBlocked:
+    except telegram.BotBlocked as exc:
         chat_id = ((update.get("message") or {}).get("chat") or {}).get("id")
         if chat_id:
-            mark_blocked(TelegramChat.objects.filter(chat_id=chat_id).first())
+            mark_blocked(TelegramChat.objects.filter(chat_id=chat_id).first(), str(exc))
 
 
-def mark_blocked(chat):
+def mark_blocked(chat, reason=""):
+    """
+    Telegram не даёт писать в чат (бот заблокирован, чат удалён). Подписки НЕ удаляем:
+    рассылка пропускает такой чат, а когда человек снова напишет боту, всё продолжит работать.
+    """
     if chat is None:
         return
+    logger.warning("Бот уведомлений: чат %s недоступен (%s)", chat.pk, reason or "без описания")
     chat.is_blocked = True
     chat.save(update_fields=["is_blocked"])
-    stop_all(chat)
 
 
 # ── Периодическая рассылка ─────────────────────────────────────────────────
@@ -315,13 +320,17 @@ def run_alerts(now=None):
 
     public_cars = public_cars_queryset().prefetch_related(None)
     searches = SavedSearch.objects.filter(is_active=True, chat__isnull=False, chat__is_blocked=False).select_related("chat")
+    blocked = set()
     for search in searches:
+        if search.chat_id in blocked:
+            continue
         try:
             with transaction.atomic():
                 result["cars_sent"] += notify_search(search, public_cars)
             result["searches"] += 1
-        except telegram.BotBlocked:
-            mark_blocked(search.chat)
+        except telegram.BotBlocked as exc:
+            mark_blocked(search.chat, str(exc))
+            blocked.add(search.chat_id)
             result["blocked"] += 1
 
     watches = list(
@@ -329,14 +338,13 @@ def run_alerts(now=None):
         .select_related("chat", "car__model__brand")
     )
     public_ids = set(public_cars.filter(pk__in=[w.car_id for w in watches]).values_list("pk", flat=True))
-    blocked = set()
     for watch in watches:
         if watch.chat_id in blocked:
             continue
         try:
             result["price_messages"] += notify_watch(watch, public_ids)
-        except telegram.BotBlocked:
-            mark_blocked(watch.chat)
+        except telegram.BotBlocked as exc:
+            mark_blocked(watch.chat, str(exc))
             blocked.add(watch.chat_id)
             result["blocked"] += 1
     return result
