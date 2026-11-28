@@ -36,5 +36,7 @@ PASSWORD_RESET_URL = env(
 # даже если в .env лежат боевые ключи.
 if sys.argv[1:2] == ["test"]:
     TELEGRAM_BOT_TOKEN = TELEGRAM_BOT_ADMIN_TOKEN = TELEGRAM_ADMIN_CHAT_ID = TELEGRAM_ADMIN_2FA_CHAT_ID = ""
+    TELEGRAM_ALERTS_BOT_TOKEN = TELEGRAM_ALERTS_BOT_USERNAME = ""
+    ALERTS_RUN_INLINE = True  # без фоновых потоков в тестах
     BREVO_API_KEY = ""
     EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"

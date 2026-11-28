@@ -1870,3 +1870,12 @@ body:has(.assistant-fab) .footer-bottom { padding-bottom: calc(90px + env(safe-a
 @media (max-width: 640px) {
   .catalog-alert-btn { width: 100%; justify-content: center; margin-left: 0; }
 }
+
+/* Объявление на телефоне: кнопки «Сравнить», «Следить за ценой» и избранное в одну строку по ширине экрана */
+@media (max-width: 640px) {
+  .detail-heading-actions { width: 100%; flex-wrap: wrap; flex-shrink: 1; gap: 8px; }
+  .detail-views { width: 100%; }
+  .detail-heading-actions .detail-compare-btn,
+  .detail-heading-actions .telegram-alert-btn { flex: 1 1 0; min-width: 0; justify-content: center; padding: 9px 8px; font-size: 13px; line-height: 1.2; white-space: normal; text-align: center; }
+  .detail-heading-actions .detail-favorite { flex: 0 0 44px; }
+}

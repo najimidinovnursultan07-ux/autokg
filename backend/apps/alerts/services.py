@@ -348,3 +348,89 @@ def run_alerts(now=None):
             blocked.add(watch.chat_id)
             result["blocked"] += 1
     return result
+
+
+# ── Мгновенные уведомления при изменении объявления ────────────────────────
+
+WATCHED_FIELDS = {"price", "currency", "status", "published_at", "expires_at", "dealer", "model", "city"}
+
+
+def notify_for_car(car_id):
+    """
+    Объявление опубликовали или изменили (цена, статус): сразу пишем подписчикам,
+    не дожидаясь рассылки по расписанию.
+    """
+    from apps.cars.views import public_cars_queryset
+
+    if not telegram.is_configured():
+        return
+    public_cars = public_cars_queryset().prefetch_related(None)
+    is_public = public_cars.filter(pk=car_id).exists()
+
+    if is_public:
+        searches = SavedSearch.objects.filter(
+            is_active=True, chat__isnull=False, chat__is_blocked=False
+        ).select_related("chat")
+        for search in searches:
+            if not filter_cars(public_cars.filter(pk=car_id), search.filters).exists():
+                continue
+            try:
+                with transaction.atomic():
+                    notify_search(search, public_cars)
+            except telegram.BotBlocked as exc:
+                mark_blocked(search.chat, str(exc))
+
+    watches = PriceWatch.objects.filter(
+        car_id=car_id, is_active=True, chat__isnull=False, chat__is_blocked=False
+    ).select_related("chat", "car__model__brand")
+    for watch in watches:
+        try:
+            notify_watch(watch, {watch.car_id} if is_public else set())
+        except telegram.BotBlocked as exc:
+            mark_blocked(watch.chat, str(exc))
+
+
+def collect_deleted_car_watchers(car):
+    """Перед удалением объявления запоминаем, кому сообщить (подписки удалятся каскадом)."""
+    if not telegram.is_configured():
+        return []
+    watches = PriceWatch.objects.filter(
+        car=car, is_active=True, chat__isnull=False, chat__is_blocked=False
+    ).select_related("chat")
+    title = escape(car_title(car))
+    return [
+        (watch.chat_id, watch.chat.chat_id, f"🚫 Объявление <b>{title}</b> снято с продажи. Слежение остановлено.")
+        for watch in watches
+    ]
+
+
+def send_deleted_car_messages(messages):
+    for chat_pk, chat_id, text in messages:
+        try:
+            telegram.send_message(chat_id, text)
+        except telegram.BotBlocked as exc:
+            mark_blocked(TelegramChat.objects.filter(pk=chat_pk).first(), str(exc))
+
+
+def run_in_background(func, *args):
+    """Отправка в отдельном потоке, чтобы салон не ждал ответа Telegram при сохранении."""
+    import threading
+
+    from django.db import close_old_connections
+
+    def run():
+        try:
+            func(*args)
+        except Exception:
+            logger.exception("Не удалось отправить уведомления подписчикам")
+        finally:
+            close_old_connections()
+
+    if getattr(settings, "ALERTS_RUN_INLINE", False):
+        run()
+    else:
+        threading.Thread(target=run, daemon=True).start()
+
+
+def notify_for_car_in_background(car_id):
+    run_in_background(notify_for_car, car_id)

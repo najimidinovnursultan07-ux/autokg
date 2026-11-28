@@ -224,3 +224,55 @@ class WebhookAutoSetupTests(AlertsTestCase):
         hooks = [p for m, p in self.sent if m == "setWebhook"]
         self.assertEqual(len(hooks), 1)
         self.assertTrue(hooks[0]["url"].endswith("/api/alerts/telegram/webhook/"))
+
+
+@override_settings(ALERTS_RUN_INLINE=True)
+class InstantNotificationTests(AlertsTestCase):
+    def test_new_car_notifies_matching_search_immediately(self):
+        self.subscribe_search({"model": self.model.id})
+        self.sent.clear()
+        with self.captureOnCommitCallbacks(execute=True):
+            car = self.make_car(self.dealer_a, published_at=timezone.now())
+        self.assertEqual(len(self.messages()), 1)
+        self.assertIn(str(car.id), self.messages()[0])
+        self.sent.clear()
+        self.assertEqual(run_alerts()["cars_sent"], 0)  # повторно не присылаем
+
+    def test_price_drop_and_sold_notify_immediately(self):
+        car = self.make_car(self.dealer_a, price="1000000")
+        resp = self.client.post("/api/alerts/watches/", {"car": str(car.id)}, format="json")
+        self.start(resp.data["bot_url"].split("?start=")[1])
+        self.sent.clear()
+
+        car.price = "900000"
+        with self.captureOnCommitCallbacks(execute=True):
+            car.save()
+        self.assertIn("Цена снижена", self.messages()[0])
+
+        car.status = Car.Status.SOLD
+        with self.captureOnCommitCallbacks(execute=True):
+            car.save()
+        self.assertIn("снято с продажи", self.messages()[-1])
+        self.assertFalse(PriceWatch.objects.get().is_active)
+
+    def test_view_counter_does_not_trigger(self):
+        car = self.make_car(self.dealer_a)
+        self.subscribe_search({})
+        self.sent.clear()
+        with self.captureOnCommitCallbacks(execute=True):
+            car.save(update_fields=["views_count"])
+        self.assertEqual(self.messages(), [])
+
+
+@override_settings(ALERTS_RUN_INLINE=True)
+class DeletedCarTests(AlertsTestCase):
+    def test_deleting_car_notifies_watchers(self):
+        car = self.make_car(self.dealer_a)
+        resp = self.client.post("/api/alerts/watches/", {"car": str(car.id)}, format="json")
+        self.start(resp.data["bot_url"].split("?start=")[1])
+        self.sent.clear()
+        with self.captureOnCommitCallbacks(execute=True):
+            car.delete()
+        self.assertEqual(len(self.messages()), 1)
+        self.assertIn("снято с продажи", self.messages()[0])
+        self.assertFalse(PriceWatch.objects.exists())
