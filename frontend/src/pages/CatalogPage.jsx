@@ -8,6 +8,8 @@ import CarGrid from '../components/cars/CarGrid.jsx'
 import { EmptyState, ErrorState, LoadingState, PageTitle } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
 import { VEHICLE_TYPES, vehicleSpecs } from '../utils/vehicles.js'
+import TelegramAlertButton from '../components/alerts/TelegramAlertButton.jsx'
+import { createSearchAlert } from '../api/alerts.js'
 import { addSearchHistory, getSearchHistory, removeSearchHistory } from '../utils/searchHistory.js'
 import { usePageMeta } from '../hooks/usePageMeta.js'
 
@@ -62,6 +64,36 @@ const filtersOptions = {
   drive_type: [['fwd', 'Передний'], ['rwd', 'Задний'], ['awd', 'Полный']],
   body_type: [['sedan', 'Седан'], ['hatchback', 'Хэтчбек'], ['suv', 'Внедорожник'], ['wagon', 'Универсал'], ['coupe', 'Купе'], ['minivan', 'Минивэн'], ['pickup', 'Пикап'], ['other', 'Другое']],
   condition: [['new', 'Новый'], ['used', 'С пробегом'], ['damaged', 'Требует ремонта']],
+}
+
+const formatAmount = (value) => new Intl.NumberFormat('ru-RU').format(Number(value)).replace(/\s/g, ' ')
+
+// Человеческое описание подписки: «Toyota Camry, Бишкек, до 1 500 000 сом»
+function describeFilters(filters, lookups) {
+  const find = (list, id) => list.find((item) => String(item.id) === String(id))?.name
+  const parts = []
+  const brand = find(lookups.brands, filters.brand)
+  const model = find(lookups.models, filters.model)
+  if (brand || model) parts.push([brand, model].filter(Boolean).join(' '))
+  else if (filters.vehicle_type) parts.push(VEHICLE_TYPES.find((item) => item.value === filters.vehicle_type)?.label)
+  if (filters.search) parts.push(`«${filters.search}»`)
+  const city = find(lookups.cities, filters.city)
+  if (city) parts.push(city)
+  const dealer = (lookups.dealers || []).find((item) => item.slug === filters.dealer)?.name
+  if (dealer) parts.push(dealer)
+  if (filters.price_min) parts.push(`от ${formatAmount(filters.price_min)} сом`)
+  if (filters.price_max) parts.push(`до ${formatAmount(filters.price_max)} сом`)
+  if (filters.year_min || filters.year_max) parts.push(`${filters.year_min || '…'}–${filters.year_max || '…'} г.`)
+  Object.keys(filtersOptions).forEach((field) => {
+    const label = filtersOptions[field].find(([value]) => value === filters[field])?.[1]
+    if (label) parts.push(label.toLowerCase())
+  })
+  return parts.filter(Boolean).join(', ') || 'Все новые объявления'
+}
+
+// Подписка сохраняет только фильтры, без сортировки и страницы
+function alertFilters(filters) {
+  return Object.fromEntries(Object.entries(filters).filter(([key, value]) => value && key !== 'ordering'))
 }
 
 // Заголовок каталога по выбранной вкладке
@@ -305,6 +337,12 @@ function CatalogResults({ searchParams, setSearchParams, lookups, lookupsError }
           <div className="catalog-results-top">
             <span><strong>{count}</strong> объявлений</span>
             <span className="catalog-sort-label">{orderingLabels[appliedFilters.ordering]}</span>
+            <TelegramAlertButton
+              className="catalog-alert-btn"
+              label="Получать новые в Telegram"
+              title="Бот пришлёт новые объявления по выбранным фильтрам"
+              request={() => createSearchAlert(alertFilters(appliedFilters), describeFilters(appliedFilters, lookups))}
+            />
           </div>
           {loading ? <LoadingState label="Ищем подходящие автомобили…" /> : error ? <ErrorState message={error} onRetry={() => loadCars(page)} /> : cars.length ? (
             <>

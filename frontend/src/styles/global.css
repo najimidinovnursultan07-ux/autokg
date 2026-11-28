@@ -1861,3 +1861,12 @@ body:has(.assistant-fab) .footer-bottom { padding-bottom: calc(90px + env(safe-a
   .vehicle-tiles::-webkit-scrollbar { display: none; }
   .vehicle-tile { flex: 0 0 116px; padding: 14px 8px; font-size: 13px; }
 }
+
+/* Подписка через Telegram-бота */
+.telegram-alert-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 7px 13px; white-space: nowrap; }
+.telegram-alert-btn:disabled { opacity: .65; cursor: progress; }
+.catalog-results-top { gap: 10px; flex-wrap: wrap; }
+.catalog-alert-btn { margin-left: auto; font-size: 12px; padding: 6px 11px; }
+@media (max-width: 640px) {
+  .catalog-alert-btn { width: 100%; justify-content: center; margin-left: 0; }
+}

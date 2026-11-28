@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "apps.subscriptions.apps.SubscriptionsConfig",
     "apps.stats.apps.StatsConfig",
     "apps.ads.apps.AdsConfig",
+    "apps.alerts.apps.AlertsConfig",
 ]
 
 MIDDLEWARE = [
@@ -173,6 +174,7 @@ REST_FRAMEWORK = {
         "ads": "300/hour",
         "ad_events": "600/hour",
         "assistant": "40/hour",
+        "alerts": "30/hour",
     },
 }
 
@@ -247,6 +249,13 @@ TELEGRAM_ADMIN_2FA_CHAT_ID = env("TELEGRAM_ADMIN_2FA_CHAT_ID", default="")
 ADMIN_2FA_ENABLED = env.bool("ADMIN_2FA_ENABLED", default=True)
 # Секрет для ежедневного запуска напоминаний по HTTP (GitHub Actions / внешний cron)
 CRON_SECRET = env("CRON_SECRET", default="")
+
+# Бот уведомлений покупателям (сохранённые поиски, снижение цен). Отдельный от бота кодов входа.
+TELEGRAM_ALERTS_BOT_TOKEN = env("TELEGRAM_BOT_USER_TOKEN", default="")
+# Имя бота (без @); если не задано — узнаём у Telegram через getMe
+TELEGRAM_ALERTS_BOT_USERNAME = env("TELEGRAM_BOT_USER_USERNAME", default="")
+# Необязательно: адрес вебхука, если автоопределение по запросу не подходит
+TELEGRAM_ALERTS_WEBHOOK_URL = env("TELEGRAM_ALERTS_WEBHOOK_URL", default="")
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024

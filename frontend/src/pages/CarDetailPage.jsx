@@ -5,6 +5,8 @@ import { getCar, revealCarContacts } from '../api/cars.js'
 import { resolveMediaUrl } from '../api/client.js'
 import AdBanner from '../components/ads/AdBanner.jsx'
 import FavoriteButton from '../components/cars/FavoriteButton.jsx'
+import TelegramAlertButton from '../components/alerts/TelegramAlertButton.jsx'
+import { createPriceWatch } from '../api/alerts.js'
 import MurabahaCalculator from '../components/cars/MurabahaCalculator.jsx'
 import ShareButtons from '../components/cars/ShareButtons.jsx'
 import { ErrorState, LoadingState } from '../components/common/States.jsx'
@@ -216,6 +218,12 @@ export default function CarDetailPage() {
             <GitCompareArrows size={16} />
             {inCompare ? 'В сравнении' : 'Сравнить'}
           </button>
+          <TelegramAlertButton
+            className="detail-price-watch-btn"
+            label="Следить за ценой"
+            title="Бот в Telegram сообщит, если цена снизится"
+            request={() => createPriceWatch(car.id)}
+          />
           <FavoriteButton car={car} className="detail-favorite" />
         </div>
       </div>
