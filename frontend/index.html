@@ -10,6 +10,13 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- Соединения с API и хранилищем фото открываются сразу, до загрузки скриптов -->
+    <link rel="preconnect" href="https://autokg.onrender.com" crossorigin />
+    <link rel="preconnect" href="https://res.cloudinary.com" />
+    <script>
+      // Бесплатный сервер засыпает: будим его, пока грузится основной код сайта
+      try { fetch('https://autokg.onrender.com/api/health/', { mode: 'no-cors', cache: 'no-store' }) } catch (e) {}
+    </script>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="AutoBuy" />

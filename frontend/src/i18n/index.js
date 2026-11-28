@@ -5,7 +5,6 @@
 //
 // Сөздүк: орусча сап → кыргызча. {x} — өзгөрмө бөлүк (сан, аталыш, дата);
 // котормодо {x} ирети менен, же {1}, {2} — ирети өзгөргөндө.
-import dictionary from './ky/index.js'
 
 const STORAGE_KEY = 'autobuy:lang'
 const CYR = /[А-Яа-яЁё]/
@@ -24,18 +23,31 @@ const exact = new Map()
 const patterns = []
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-for (const [ru, ky] of Object.entries(dictionary)) {
-  const key = normalize(ru)
-  if (!key.includes('{x}')) {
-    exact.set(key, ky)
-    continue
+// Сөздүк (~145 КБ) кыргызча тандалганда гана жүктөлөт — орусча окугандар аны жүктөбөйт
+let dictionaryPromise = null
+
+function loadDictionary() {
+  if (!dictionaryPromise) {
+    dictionaryPromise = import('./ky/index.js').then(({ default: dictionary }) => {
+      for (const [ru, ky] of Object.entries(dictionary)) {
+        const key = normalize(ru)
+        if (!key.includes('{x}')) {
+          exact.set(key, ky)
+          continue
+        }
+        const parts = key.split('{x}')
+        const re = new RegExp(`^${parts.map(escapeRe).join('(.+?)')}$`, 's')
+        patterns.push({ re, ky, fixed: key.replace(/\{x\}/g, '').length })
+      }
+      // Узунураак туруктуу бөлүгү барлар биринчи — так дал келгени утат
+      patterns.sort((a, b) => b.fixed - a.fixed)
+    }).catch((error) => {
+      dictionaryPromise = null // кийинки жолу кайра аракет
+      throw error
+    })
   }
-  const parts = key.split('{x}')
-  const re = new RegExp(`^${parts.map(escapeRe).join('(.+?)')}$`, 's')
-  patterns.push({ re, ky, fixed: key.replace(/\{x\}/g, '').length })
+  return dictionaryPromise
 }
-// Узунураак туруктуу бөлүгү барлар биринчи — так дал келгени утат
-patterns.sort((a, b) => b.fixed - a.fixed)
 
 // ── Айлар (Intl ru-RU форматындагы даталар) ──
 const MONTHS_KY = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
@@ -268,6 +280,7 @@ function handleMutations(mutations) {
 }
 
 function start() {
+  if (lang !== 'ky') return
   const root = document.documentElement
   translateTree(root)
   if (!observer) observer = new MutationObserver(handleMutations)
@@ -306,12 +319,14 @@ export function setLanguage(next) {
     localStorage.setItem(STORAGE_KEY, value)
   } catch { /* жеке терезе — эстеп калбайт */ }
   document.documentElement.lang = value
-  if (value === 'ky') start()
+  if (value === 'ky') loadDictionary().then(start).catch(() => {})
   else stop()
   listeners.forEach((l) => l(value))
 }
 
+// Кыргызча тандалса — сөздүк жүктөлүп, которгуч иштегенден кийин гана Promise бүтөт
 export function initLanguage() {
   document.documentElement.lang = lang
-  if (lang === 'ky') start()
+  if (lang !== 'ky') return Promise.resolve()
+  return loadDictionary().then(start).catch(() => {})
 }

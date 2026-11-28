@@ -13,25 +13,26 @@ import { initLanguage } from './i18n/index.js'
 import './utils/pwaInstall.js'
 import { reloadForFreshVersion } from './utils/chunkReload.js'
 
-// Кыргызча тандалса — React чийгенге чейин которгуч иштей баштайт
-initLanguage()
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <BrowserRouter>
-      <ScrollToTop />
-      <ToastProvider>
-        <AuthProvider>
-          <FavoritesProvider>
-            <ErrorBoundary>
-              <App />
-            </ErrorBoundary>
-          </FavoritesProvider>
-        </AuthProvider>
-      </ToastProvider>
-    </BrowserRouter>
-  </StrictMode>,
-)
+// Кыргызча тандалса — сөздүк жүктөлүп, которгуч иштегенден кийин React чийет
+// (орусча — дароо; кыргызча сөздүк орусча окугандарга жүктөлбөйт)
+initLanguage().then(() => {
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <BrowserRouter>
+        <ScrollToTop />
+        <ToastProvider>
+          <AuthProvider>
+            <FavoritesProvider>
+              <ErrorBoundary>
+                <App />
+              </ErrorBoundary>
+            </FavoritesProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </BrowserRouter>
+    </StrictMode>,
+  )
+})
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
