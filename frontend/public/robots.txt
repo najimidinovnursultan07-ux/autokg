@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /login
+Disallow: /password-reset
+Disallow: /compare
+
+Sitemap: https://autobuy-kg.vercel.app/sitemap.xml

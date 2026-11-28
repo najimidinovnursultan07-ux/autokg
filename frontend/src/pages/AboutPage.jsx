@@ -1,5 +1,6 @@
 import { ArrowRight, BadgeCheck, CarFront, HeartHandshake, SearchCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 
 const values = [
   { icon: SearchCheck, title: 'Понятный поиск', text: 'Фильтры и характеристики помогают сравнивать объявления без лишних шагов.' },
@@ -8,6 +9,7 @@ const values = [
 ]
 
 export default function AboutPage() {
+  usePageMeta('О сервисе')
   return (
     <section className="container page-section">
       <div className="about-hero">

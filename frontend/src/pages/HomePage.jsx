@@ -33,6 +33,7 @@ import pickupImg from '../assets/body-types/pickup.webp'
 import sedanImg from '../assets/body-types/sedan.webp'
 import suvImg from '../assets/body-types/suv.webp'
 import wagonImg from '../assets/body-types/wagon.webp'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 
 // Постоянные картинки категорий (src/assets/body-types)
 const BODY_TYPES = [
@@ -69,6 +70,7 @@ function initials(name = '') {
 }
 
 export default function HomePage() {
+  usePageMeta('')
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [cars, setCars] = useState([])

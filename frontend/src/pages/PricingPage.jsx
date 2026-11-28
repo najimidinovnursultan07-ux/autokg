@@ -8,8 +8,10 @@ import { SUPPORT_PHONE, whatsappLink } from '../utils/contacts.js'
 import { getErrorMessage } from '../utils/errors.js'
 import { formatPrice } from '../utils/format.js'
 import { PERIODS, PLAN_ROWS, planPrice, yearSavings } from '../utils/plans.js'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 
 export default function PricingPage() {
+  usePageMeta('Тарифы для автосалонов', 'Тарифы AutoBuy для автосалонов: размещение объявлений, ТОП-поднятия, статистика и импорт из Excel.')
   const { user } = useAuth()
   const isDealer = user?.role === 'dealer'
   const [plans, setPlans] = useState([])

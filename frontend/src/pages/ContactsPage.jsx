@@ -1,6 +1,7 @@
 import { CarFront, CircleHelp, Mail, MapPin, MessageCircle, Phone, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { SUPPORT_PHONE, SUPPORT_PHONE_DIGITS } from '../utils/contacts.js'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 
 function ContactActions({ message }) {
   return (
@@ -19,6 +20,7 @@ function ContactActions({ message }) {
 }
 
 export default function ContactsPage() {
+  usePageMeta('Контакты')
   const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL
   return (
     <section className="container page-section">

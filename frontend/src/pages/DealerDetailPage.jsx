@@ -12,6 +12,7 @@ import TwoGisMap from '../components/dealers/TwoGisMap.jsx'
 import { LoadingState, ErrorState } from '../components/common/States.jsx'
 import { getErrorMessage } from '../utils/errors.js'
 import { hasLocation, toLatLng, twoGisPointUrl, twoGisRouteUrl } from '../utils/twoGis.js'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 
 const BRAND_COLORS = ['#1f2937', '#b91c1c', '#1d4ed8', '#047857', '#7c3aed', '#c2410c', '#0f766e']
 
@@ -42,6 +43,10 @@ const SORTS = {
 export default function DealerDetailPage() {
   const { slug } = useParams()
   const [dealer, setDealer] = useState(null)
+  usePageMeta(
+    dealer ? `Автосалон ${dealer.name}` : '',
+    dealer ? `Автомобили автосалона «${dealer.name}»${dealer.city_name ? ` (${dealer.city_name})` : ''}: цены, фото, адрес и контакты на AutoBuy.` : '',
+  )
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

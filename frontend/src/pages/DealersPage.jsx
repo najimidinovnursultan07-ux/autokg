@@ -8,6 +8,7 @@ import StarRating from '../components/dealers/StarRating.jsx'
 import TwoGisMap from '../components/dealers/TwoGisMap.jsx'
 import { getErrorMessage } from '../utils/errors.js'
 import { hasLocation, toLatLng, twoGisRouteUrl } from '../utils/twoGis.js'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 
 // Всплывающая карточка салона на карте (DOM-элемент, чтобы ссылка работала через роутер)
 function dealerPopup(dealer, navigate) {
@@ -42,6 +43,7 @@ function dealerPopup(dealer, navigate) {
 }
 
 export default function DealersPage() {
+  usePageMeta('Автосалоны Кыргызстана', 'Список автосалонов Кыргызстана на карте: адреса, контакты, отзывы и автомобили в наличии.')
   const [dealers, setDealers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

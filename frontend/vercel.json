@@ -27,6 +27,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "https://autokg.onrender.com/api/sitemap.xml" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
 }

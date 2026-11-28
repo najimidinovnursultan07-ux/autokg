@@ -9,6 +9,7 @@ import { EmptyState, ErrorState, LoadingState, PageTitle } from '../components/c
 import { getErrorMessage } from '../utils/errors.js'
 import { VEHICLE_TYPES, vehicleSpecs } from '../utils/vehicles.js'
 import { addSearchHistory, getSearchHistory, removeSearchHistory } from '../utils/searchHistory.js'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 
 const emptyFilters = {
   vehicle_type: '',
@@ -87,6 +88,7 @@ function filterApplies(field, vehicleType) {
 }
 
 export default function CatalogPage() {
+  usePageMeta('Каталог автомобилей', 'Автомобили с пробегом и новые в Кыргызстане: фильтры по марке, цене, году и городу. Только проверенные автосалоны.')
   const [searchParams, setSearchParams] = useSearchParams()
   const [lookups, setLookups] = useState({ brands: [], models: [], cities: [], dealers: [] })
   const [lookupsError, setLookupsError] = useState('')

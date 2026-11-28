@@ -14,6 +14,7 @@ import { VEHICLE_LABELS, vehicleSpecs } from '../utils/vehicles.js'
 import { whatsappLink } from '../utils/contacts.js'
 import useRates from '../hooks/useRates.js'
 import { addToCompare, isInCompare, removeFromCompare } from '../utils/compare.js'
+import { usePageMeta } from '../hooks/usePageMeta.js'
 
 const labels = {
   engine_type: { petrol: 'Бензин', diesel: 'Дизель', hybrid: 'Гибрид', electric: 'Электро', lpg: 'Газ', other: 'Другое' },
@@ -125,6 +126,10 @@ export default function CarDetailPage() {
   const [error, setError] = useState('')
   const [inCompare, setInCompare] = useState(false)
   const rates = useRates()
+  usePageMeta(
+    car ? `${getCarTitle(car)} — ${formatPrice(car.price, car.currency)}` : '',
+    car ? `${getCarTitle(car)}: ${[formatMileage(car.mileage), car.city_name, car.dealer_detail?.name].filter(Boolean).join(', ')}. Фото и контакты продавца на AutoBuy.` : '',
+  )
 
   useEffect(() => {
     if (car) setInCompare(isInCompare(car.id))
