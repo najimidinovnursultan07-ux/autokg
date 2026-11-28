@@ -209,3 +209,12 @@ class RunAlertsTests(AlertsTestCase):
         self.assertTrue(webhook["url"].endswith("/api/alerts/telegram/webhook/"))
         self.assertEqual(webhook["secret_token"], telegram.webhook_secret())
         self.assertEqual(self.client.post("/api/internal/alerts/run/", HTTP_X_CRON_SECRET="x").status_code, 403)
+
+
+class WebhookAutoSetupTests(AlertsTestCase):
+    def test_first_subscription_connects_bot_once(self):
+        self.client.post("/api/alerts/searches/", {"filters": {}}, format="json")
+        self.client.post("/api/alerts/searches/", {"filters": {}}, format="json")
+        hooks = [p for m, p in self.sent if m == "setWebhook"]
+        self.assertEqual(len(hooks), 1)
+        self.assertTrue(hooks[0]["url"].endswith("/api/alerts/telegram/webhook/"))

@@ -2,6 +2,7 @@ import hmac
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny
@@ -34,6 +35,15 @@ class PublicAlertView(APIView):
     throttle_scope = "alerts"
 
 
+def ensure_webhook_soon(request):
+    """Подключает бота к сайту при первой подписке, не дожидаясь рассылки (проверка раз в час)."""
+    if cache.add("alerts-webhook-checked", True, 60 * 60):
+        try:
+            telegram.ensure_webhook(webhook_url(request))
+        except Exception:
+            logger.exception("Не удалось настроить вебхук бота уведомлений")
+
+
 class SavedSearchCreateView(PublicAlertView):
     """Новая подписка на поиск; в ответе — ссылка на бота с токеном."""
 
@@ -45,6 +55,7 @@ class SavedSearchCreateView(PublicAlertView):
         filters = clean_filters(data.validated_data["filters"])
         if not filters_are_valid(filters):
             return Response({"detail": "Некорректные фильтры поиска."}, status=status.HTTP_400_BAD_REQUEST)
+        ensure_webhook_soon(request)
         search = SavedSearch.objects.create(
             filters=filters, title=ensure_title(data.validated_data["title"], filters)
         )
@@ -65,6 +76,7 @@ class PriceWatchCreateView(PublicAlertView):
         car = public_cars_queryset().prefetch_related(None).filter(pk=data.validated_data["car"]).first()
         if car is None:
             return Response({"detail": "Объявление не найдено."}, status=status.HTTP_404_NOT_FOUND)
+        ensure_webhook_soon(request)
         watch = PriceWatch.objects.create(car=car, last_price=car.price, currency=car.currency)
         return Response({"bot_url": telegram.start_link(f"w_{watch.token}")}, status=status.HTTP_201_CREATED)
 
