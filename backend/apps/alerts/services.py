@@ -5,7 +5,7 @@ from html import escape
 from urllib.parse import urlencode
 
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -254,14 +254,32 @@ def mark_blocked(chat, reason=""):
 
 # ── Периодическая рассылка ─────────────────────────────────────────────────
 
+def claim_new_matches(search, cars):
+    """
+    Бронирует объявления за подпиской (уникальная пара search+car в базе).
+    Одно сохранение объявления может вызвать несколько проверок одновременно —
+    отправит только та, что первой забронировала.
+    """
+    claimed = []
+    for car in cars:
+        try:
+            with transaction.atomic():
+                SearchMatch.objects.create(search=search, car=car)
+            claimed.append(car)
+        except IntegrityError:
+            pass
+    return claimed
+
+
 def notify_search(search, public_cars):
     since = search.subscribed_at or search.created_at
-    cars = list(
+    candidates = list(
         filter_cars(public_cars, search.filters)
         .filter(published_at__gt=since)
         .exclude(pk__in=SearchMatch.objects.filter(search=search).values("car_id"))
         .order_by("-published_at")
     )
+    cars = claim_new_matches(search, candidates)
     if not cars:
         return 0
     lines = [f"🔔 Новые объявления по подписке «<b>{escape(search.title)}</b>»:", ""]
@@ -269,39 +287,52 @@ def notify_search(search, public_cars):
     if len(cars) > CARS_PER_MESSAGE:
         link = site_url(f"/catalog?{urlencode(search.filters)}")
         lines += ["", f'И ещё {len(cars) - CARS_PER_MESSAGE}: <a href="{escape(link)}">смотреть все</a>']
-    if telegram.send_message(search.chat.chat_id, "\n".join(lines)) is None:
-        return 0  # сеть или Telegram недоступны — попробуем в следующий раз
-    SearchMatch.objects.bulk_create(
-        [SearchMatch(search=search, car=car) for car in cars], ignore_conflicts=True
-    )
+    try:
+        sent = telegram.send_message(search.chat.chat_id, "\n".join(lines))
+    except telegram.BotBlocked:
+        SearchMatch.objects.filter(search=search, car__in=cars).delete()
+        raise
+    if sent is None:
+        # сеть или Telegram недоступны — снимаем бронь, попробуем в следующий раз
+        SearchMatch.objects.filter(search=search, car__in=cars).delete()
+        return 0
     return len(cars)
 
 
 def notify_watch(watch, public_ids):
+    """
+    Каждое изменение сначала «забираем» условным UPDATE (по старому значению),
+    и только успешный UPDATE отправляет сообщение — без дублей при параллельных проверках.
+    """
     car = watch.car
     url = escape(site_url(f"/cars/{car.pk}"))
     title = escape(car_title(car))
     if car.pk not in public_ids:
+        if not PriceWatch.objects.filter(pk=watch.pk, is_active=True).update(is_active=False):
+            return 0
+        watch.is_active = False
         telegram.send_message(
             watch.chat.chat_id,
             f'🚫 Объявление <a href="{url}">{title}</a> снято с продажи. Слежение остановлено.',
         )
-        watch.is_active = False
-        watch.save(update_fields=["is_active"])
         return 1
-    if car.currency == watch.currency and car.price < watch.last_price:
-        old, new = format_price(watch.last_price, watch.currency), format_price(car.price, car.currency)
+    if car.price == watch.last_price and car.currency == watch.currency:
+        return 0
+    old_price, old_currency = watch.last_price, watch.currency
+    claimed = PriceWatch.objects.filter(
+        pk=watch.pk, is_active=True, last_price=old_price, currency=old_currency
+    ).update(last_price=car.price, currency=car.currency)
+    if not claimed:
+        return 0
+    watch.last_price, watch.currency = car.price, car.currency
+    if car.currency == old_currency and car.price < old_price:
+        old, new = format_price(old_price, old_currency), format_price(car.price, car.currency)
         telegram.send_message(
             watch.chat.chat_id,
             f'📉 Цена снижена: <a href="{url}">{title}</a>\n<s>{escape(old)}</s> → <b>{escape(new)}</b>',
         )
-        sent = 1
-    else:
-        sent = 0
-    if car.price != watch.last_price or car.currency != watch.currency:
-        watch.last_price, watch.currency = car.price, car.currency
-        watch.save(update_fields=["last_price", "currency"])
-    return sent
+        return 1
+    return 0
 
 
 def run_alerts(now=None):

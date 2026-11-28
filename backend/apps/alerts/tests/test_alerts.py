@@ -276,3 +276,67 @@ class DeletedCarTests(AlertsTestCase):
         self.assertEqual(len(self.messages()), 1)
         self.assertIn("снято с продажи", self.messages()[0])
         self.assertFalse(PriceWatch.objects.exists())
+
+
+@override_settings(ALERTS_RUN_INLINE=True)
+class NoDuplicateTests(AlertsTestCase):
+    def watch_car(self, car):
+        resp = self.client.post("/api/alerts/watches/", {"car": str(car.id)}, format="json")
+        self.start(resp.data["bot_url"].split("?start=")[1])
+        self.sent.clear()
+
+    def test_parallel_checks_send_price_drop_once(self):
+        from apps.alerts.services import notify_watch
+
+        car = self.make_car(self.dealer_a, price="1000000")
+        self.watch_car(car)
+        Car.objects.filter(pk=car.pk).update(price="900000")
+        # две проверки, загрузившие подписку до того, как другая её обновила
+        copy1 = PriceWatch.objects.select_related("chat", "car__model__brand").get()
+        copy2 = PriceWatch.objects.select_related("chat", "car__model__brand").get()
+        notify_watch(copy1, {car.pk})
+        notify_watch(copy2, {car.pk})
+        self.assertEqual(len(self.messages()), 1)
+
+    def test_parallel_checks_send_sold_once(self):
+        from apps.alerts.services import notify_watch
+
+        car = self.make_car(self.dealer_a)
+        self.watch_car(car)
+        copies = [PriceWatch.objects.select_related("chat", "car__model__brand").get() for _ in range(3)]
+        for copy in copies:
+            notify_watch(copy, set())
+        self.assertEqual(len(self.messages()), 1)
+
+    def test_repeated_saves_in_one_edit_send_once(self):
+        car = self.make_car(self.dealer_a, price="1000000")
+        self.watch_car(car)
+        car.price = "950000"
+        with self.captureOnCommitCallbacks(execute=True):
+            car.save()
+            car.save()  # кабинет сохраняет объявление несколько раз за одну правку
+            car.save(update_fields=["price"])
+        self.assertEqual(len(self.messages()), 1)
+
+    def test_parallel_search_checks_send_car_once(self):
+        from apps.alerts.services import notify_search
+        from apps.cars.views import public_cars_queryset
+
+        search = self.subscribe_search({})
+        self.make_car(self.dealer_a, published_at=timezone.now())
+        self.sent.clear()
+        public = public_cars_queryset().prefetch_related(None)
+        notify_search(search, public)
+        notify_search(search, public)
+        self.assertEqual(len(self.messages()), 1)
+
+    def test_failed_send_releases_claim(self):
+        from apps.alerts.services import notify_search
+        from apps.cars.views import public_cars_queryset
+
+        search = self.subscribe_search({})
+        self.make_car(self.dealer_a, published_at=timezone.now())
+        public = public_cars_queryset().prefetch_related(None)
+        with patch("apps.alerts.telegram.call", return_value=None):
+            self.assertEqual(notify_search(search, public), 0)
+        self.assertEqual(notify_search(search, public), 1)  # повторная попытка отправит
